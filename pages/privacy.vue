@@ -80,7 +80,7 @@
 
           <h2 class="text-2xl font-serif font-bold text-earth-900 mt-8 mb-4">9. Contacto</h2>
           <p>
-            Si tiene alguna pregunta, comentario o inquietud acerca de este Aviso de Privacidad, o desea ejercer sus derechos ARCO, puede contactarnos a través de nuestro <NuxtLink to="/contact" class="text-primary-600 hover:text-primary-700 underline">buzón de mensajes</NuxtLink> o bien a través de nuestra <a :href="AMAZON_LINK" target="_blank" rel="noopener noreferrer" class="text-primary-600 hover:text-primary-700 underline">tienda oficial en Amazon México</a>.
+            Si tiene alguna pregunta, comentario o inquietud acerca de este Aviso de Privacidad, o desea ejercer sus derechos ARCO, puede contactarnos al correo: contacto@pitayalab.com.mx o utilizar nuestro <NuxtLink to="/contact" class="text-primary-600 hover:text-primary-700 underline">buzón de mensajes</NuxtLink> o bien a través de nuestra <a :href="AMAZON_LINK" target="_blank" rel="noopener noreferrer" class="text-primary-600 hover:text-primary-700 underline">tienda oficial en Amazon México</a>.
           </p>
 
           <div class="mt-10 p-6 bg-amber-50 rounded-2xl border border-amber-100">
