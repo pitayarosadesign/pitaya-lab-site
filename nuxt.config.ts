@@ -50,7 +50,7 @@ export default defineNuxtConfig({
 
   seo: {
     redirectToCanonical: true,
-    autoMeta: true,
+    autoMeta: false,
     experimental: {
       noScriptLinks: true
     }
