@@ -1,5 +1,6 @@
 {
-  "buildCommand": null,
-  "installCommand": null,
-  "framework": null
+  "buildCommand": "npx nuxt build",
+  "outputDirectory": ".output/public",
+  "installCommand": "npm install",
+  "framework": "nuxtjs"
 }
