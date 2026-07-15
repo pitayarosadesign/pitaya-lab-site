@@ -3,3 +3,21 @@ node_modules
 .output
 .DS_Store
 .vercel
+.nuxt
+
+# Monorepo
+apps/store/.nuxt
+apps/store/.output
+apps/admin/.nuxt
+apps/admin/.output
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+
+# System files
+Users/
+packages/

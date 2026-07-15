@@ -1,25 +1,27 @@
 {
-  "name": "pitaya-lab-site",
+  "name": "pitaya-lab-monorepo",
   "version": "1.0.0",
   "private": true,
-  "description": "Sitio web informativo de PITAYA LAB - Velas de soya perfumadas, aceites aromáticos y brumas ecológicas",
+  "description": "PITAYA LAB - Monorepo: Tienda online + Panel de Administración",
   "type": "module",
   "scripts": {
-    "dev": "nuxt dev",
-    "build": "nuxt build",
-    "generate": "nuxt generate",
-    "preview": "nuxt preview"
+    "dev": "concurrently \"npm run dev:store\" \"npm run dev:admin\"",
+    "dev:store": "npm -w store run dev",
+    "dev:admin": "npm -w admin run dev",
+    "build": "npm -w store run build && npm -w admin run build",
+    "build:store": "npm -w store run build",
+    "build:admin": "npm -w admin run build",
+    "preview:store": "npm -w store run preview",
+    "preview:admin": "npm -w admin run preview",
+    "clean": "rm -rf apps/store/.nuxt apps/store/.output apps/admin/.nuxt apps/admin/.output node_modules"
   },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "devDependencies": {
-    "nuxt": "^4.4.8"
-  },
-  "dependencies": {
-    "@emailjs/browser": "^4.4.1",
-    "@nuxtjs/seo": "^5.3.0",
-    "@tailwindcss/vite": "^4.3.1",
-    "@takumi-rs/core": "^1.8.6",
-    "nuxt-og-image": "^6.6.0",
-    "tailwindcss": "^4.3.1",
-    "vue-router": "^4.6.4"
+    "concurrently": "^9.1.0",
+    "typescript": "^5.7.0"
   }
 }
+
