@@ -17,7 +17,7 @@
       <!-- Overlay en hover -->
       <div class="absolute inset-0 bg-gradient-to-t from-earth-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-4">
         <span class="text-white text-sm font-medium bg-primary-600/80 backdrop-blur-sm px-3 py-1 rounded-full">
-          Ver en Amazon →
+          Ver detalle →
         </span>
       </div>
     </div>
@@ -41,30 +41,36 @@
       </p>
 
       <!-- Botones de acción -->
-      <div class="mt-auto space-y-2">
-        <!-- Botón Ver detalle (si tiene slug) -->
+      <div class="mt-auto flex gap-2">
+        <!-- Botón Agregar al carrito / Ver detalle -->
         <NuxtLink
           v-if="detailLink"
           :to="detailLink"
-          class="block w-full text-center px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border-2 border-primary-200 text-primary-700 hover:bg-primary-50 hover:border-primary-300"
+          class="flex-1 inline-flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 rounded-xl text-sm font-semibold transition-all hover:shadow-lg hover:shadow-primary-200"
         >
-          Ver detalle →
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/>
+          </svg>
+          Agregar
         </NuxtLink>
 
-        <!-- Botón Amazon -->
+        <!-- Botón Amazon (solo icono) -->
         <a
+          v-if="amazonLink"
           :href="amazonLink"
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:shadow-lg hover:shadow-amber-200 w-full"
+          class="w-12 h-12 flex items-center justify-center rounded-xl border-2 border-amber-300 hover:border-amber-500 bg-amber-50 hover:bg-amber-100 transition-all flex-shrink-0"
           itemprop="offers"
           itemscope
           itemtype="https://schema.org/Offer"
+          :title="'Comprar en Amazon'"
         >
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M13.483 0a1.374 1.374 0 0 0-.961.438L7.116 6.226l-3.854 4.126a1.375 1.375 0 0 0 0 1.994l2.414 2.585a1.375 1.375 0 0 0 1.994 0l3.779-3.788-3.787 3.787-2.414-2.585a1.374 1.374 0 0 1 0-1.994l3.705-3.964 3.675-3.675a1.375 1.375 0 0 0-.044-1.92A1.374 1.374 0 0 0 13.483 0zm-1.587 2.585-3.673 3.675 3.673 3.675h7.252v-1.53h-5.733l-2.358-2.585 2.358-2.585h5.733v-1.53h-7.252z"/>
-          </svg>
-          Comprar en Amazon
+          <img
+            src="/images/amazon-tile.svg"
+            alt="Amazon"
+            class="w-6 h-6"
+          />
           <meta itemprop="priceCurrency" content="MXN" />
           <meta itemprop="availability" content="https://schema.org/InStock" />
         </a>
