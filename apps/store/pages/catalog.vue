@@ -51,15 +51,15 @@
     <!-- Grid de productos -->
     <section class="py-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Sin resultados -->
-        <div v-if="filteredProducts.length === 0" class="text-center py-20">
-          <p class="text-earth-500 text-lg">No hay productos en esta categoría.</p>
-        </div>
-
         <!-- Cargando -->
         <div v-if="loading" class="text-center py-20">
           <div class="w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-4"></div>
           <p class="text-earth-500">Cargando productos...</p>
+        </div>
+
+        <!-- Sin resultados -->
+        <div v-else-if="filteredProducts.length === 0" class="text-center py-20">
+          <p class="text-earth-500 text-lg">No hay productos en esta categoría.</p>
         </div>
 
         <!-- Grid -->
@@ -168,26 +168,20 @@
             <thead class="bg-earth-50">
               <tr>
                 <th class="px-4 py-3 text-left font-semibold text-earth-700">Producto</th>
-                <th class="px-4 py-3 text-left font-semibold text-earth-700">Presentación</th>
-                <th class="px-4 py-3 text-left font-semibold text-earth-700">Uso</th>
-                <th class="px-4 py-3 text-left font-semibold text-earth-700">Aromas</th>
+                <th class="px-4 py-3 text-left font-semibold text-earth-700">Precio</th>
+                <th class="px-4 py-3 text-left font-semibold text-earth-700">Categoría</th>
+                <th class="px-4 py-3 text-left font-semibold text-earth-700">Stock</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-earth-100">
               <tr v-for="product in products" :key="product.id" class="hover:bg-earth-50/50 transition-colors">
                 <td class="px-4 py-3 font-medium text-earth-800">{{ product.name }}</td>
-                <td class="px-4 py-3 text-earth-600">{{ product.size }}</td>
-                <td class="px-4 py-3 text-earth-600">{{ product.subtitle || 'Uso general' }}</td>
+                <td class="px-4 py-3 text-earth-600 font-semibold">${{ formatPrice(product.price) }}</td>
+                <td class="px-4 py-3 text-earth-600">{{ product.category || '—' }}</td>
                 <td class="px-4 py-3">
-                  <div class="flex flex-wrap gap-1">
-                    <span
-                      v-for="scentId in product.scents"
-                      :key="scentId"
-                      class="inline-block px-2 py-0.5 bg-primary-50 text-primary-700 text-xs rounded-full"
-                    >
-                      {{ getScentById(scentId)?.name }}
-                    </span>
-                  </div>
+                  <span class="inline-flex px-2 py-0.5 bg-primary-50 text-primary-700 text-xs rounded-full">
+                    {{ product.stock > 0 ? product.stock + ' en stock' : 'Agotado' }}
+                  </span>
                 </td>
               </tr>
             </tbody>
@@ -294,6 +288,10 @@ async function loadProducts() {
   } finally {
     loading.value = false
   }
+}
+
+function formatPrice(price) {
+  return Number(price).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 function goToAmazon(product) {

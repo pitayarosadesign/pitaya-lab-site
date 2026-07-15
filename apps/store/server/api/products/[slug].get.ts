@@ -11,10 +11,13 @@ export default defineEventHandler(async (event) => {
   )
 
   try {
+    // Normalizar slug: quitar guiones al inicio/final y espacios
+    const cleanSlug = slug.trim().replace(/^-+|-+$/g, '')
+
     const { data: product, error } = await supabase
       .from('products')
       .select('*, product_categories(name, slug), product_images(url, alt_text, sort_order, is_primary), product_variants(*, product_id)')
-      .eq('slug', slug)
+      .eq('slug', cleanSlug)
       .eq('is_active', true)
       .single()
 

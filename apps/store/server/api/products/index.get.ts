@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
-  const { category, featured, limit } = getQuery(event)
+  const { category, featured, limit, search } = getQuery(event)
 
   // Cliente con service role para leer productos (incluyendo inactivos si es necesario)
   const supabase = createClient(
