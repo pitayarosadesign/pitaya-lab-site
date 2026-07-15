@@ -56,19 +56,25 @@
           <p class="text-earth-500 text-lg">No hay productos en esta categoría.</p>
         </div>
 
+        <!-- Cargando -->
+        <div v-if="loading" class="text-center py-20">
+          <div class="w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p class="text-earth-500">Cargando productos...</p>
+        </div>
+
         <!-- Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           <div
             v-for="product in filteredProducts"
             :key="product.id"
-            class="cursor-pointer"
-            @click="selectedProduct = product"
           >
             <ProductCard
               :product-name="`${product.name}${product.subtitle ? ' – ' + product.subtitle : ''}`"
-              :short-description="`${product.description} (${product.size})`"
+              :short-description="`${product.description}${product.size ? ' (' + product.size + ')' : ''}`"
               :image-url="product.image"
               :amazon-link="product.amazonLink"
+              :product-slug="product.slug"
+              :show-detail-link="true"
             />
           </div>
         </div>
@@ -219,7 +225,7 @@
 </template>
 
 <script setup>
-import { products, SCENTS, getScentById } from '~/products/data'
+import { SCENTS as staticSCENTS, getScentById as staticGetScentById } from '~/products/data'
 
 useSeoMeta({
   title: 'Catálogo de Productos | PITAYA LAB',
@@ -239,14 +245,62 @@ const categories = [
 
 const activeCategory = ref('all')
 const selectedProduct = ref(null)
-const scentsWithImage = SCENTS.filter(s => s.image)
+const loading = ref(true)
 
+// Productos desde API
+const products = ref([])
+const SCENTS = ref(staticSCENTS)
+
+// Filtrar aromas con imagen
+const scentsWithImage = computed(() => SCENTS.value.filter(s => s.image))
+
+// Helper para obtener aroma
+function getScentById(id) {
+  const found = SCENTS.value.find(s => s.id === id)
+  if (found) return found
+  return staticGetScentById(id)
+}
+
+// Productos filtrados
 const filteredProducts = computed(() => {
-  if (activeCategory.value === 'all') return products
-  return products.filter(p => p.category === activeCategory.value)
+  if (activeCategory.value === 'all') return products.value
+  return products.value.filter(p => p.categorySlug === activeCategory.value)
 })
 
-function goToAmazon(product) {
-  window.open(product.amazonLink, '_blank', 'noopener,noreferrer')
+// Cargar productos desde Supabase
+async function loadProducts() {
+  loading.value = true
+  try {
+    const data = await $fetch('/api/products', {
+      query: { limit: 50 }
+    })
+    if (data?.products?.length > 0) {
+      products.value = data.products
+    } else {
+      // Fallback a datos estáticos
+      const { products: staticProducts } = await import('~/products/data')
+      products.value = staticProducts.map(p => ({
+        ...p,
+        categorySlug: p.category,
+      }))
+    }
+  } catch (e) {
+    console.warn('Error cargando productos, usando estáticos:', e.message)
+    const { products: staticProducts } = await import('~/products/data')
+    products.value = staticProducts.map(p => ({
+      ...p,
+      categorySlug: p.category,
+    }))
+  } finally {
+    loading.value = false
+  }
 }
+
+function goToAmazon(product) {
+  window.open(product.amazonLink || AMAZON_LINK, '_blank', 'noopener,noreferrer')
+}
+
+onMounted(() => {
+  loadProducts()
+})
 </script>

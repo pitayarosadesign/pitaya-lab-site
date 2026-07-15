@@ -47,7 +47,8 @@ export default defineNuxtConfig({
   },
 
   modules: [
-    '@nuxtjs/seo'
+    '@nuxtjs/seo',
+    '@pinia/nuxt',
   ],
 
   vite: {

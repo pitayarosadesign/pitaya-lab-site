@@ -40,29 +40,41 @@
         {{ shortDescription }}
       </p>
 
-      <!-- Botón Amazon -->
-      <a
-        :href="amazonLink"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:shadow-lg hover:shadow-amber-200 mt-auto"
-        itemprop="offers"
-        itemscope
-        itemtype="https://schema.org/Offer"
-      >
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M13.483 0a1.374 1.374 0 0 0-.961.438L7.116 6.226l-3.854 4.126a1.375 1.375 0 0 0 0 1.994l2.414 2.585a1.375 1.375 0 0 0 1.994 0l3.779-3.788-3.787 3.787-2.414-2.585a1.374 1.374 0 0 1 0-1.994l3.705-3.964 3.675-3.675a1.375 1.375 0 0 0-.044-1.92A1.374 1.374 0 0 0 13.483 0zm-1.587 2.585-3.673 3.675 3.673 3.675h7.252v-1.53h-5.733l-2.358-2.585 2.358-2.585h5.733v-1.53h-7.252z"/>
-        </svg>
-        Comprar en Amazon
-        <meta itemprop="priceCurrency" content="MXN" />
-        <meta itemprop="availability" content="https://schema.org/InStock" />
-      </a>
+      <!-- Botones de acción -->
+      <div class="mt-auto space-y-2">
+        <!-- Botón Ver detalle (si tiene slug) -->
+        <NuxtLink
+          v-if="detailLink"
+          :to="detailLink"
+          class="block w-full text-center px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border-2 border-primary-200 text-primary-700 hover:bg-primary-50 hover:border-primary-300"
+        >
+          Ver detalle →
+        </NuxtLink>
+
+        <!-- Botón Amazon -->
+        <a
+          :href="amazonLink"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:shadow-lg hover:shadow-amber-200 w-full"
+          itemprop="offers"
+          itemscope
+          itemtype="https://schema.org/Offer"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M13.483 0a1.374 1.374 0 0 0-.961.438L7.116 6.226l-3.854 4.126a1.375 1.375 0 0 0 0 1.994l2.414 2.585a1.375 1.375 0 0 0 1.994 0l3.779-3.788-3.787 3.787-2.414-2.585a1.374 1.374 0 0 1 0-1.994l3.705-3.964 3.675-3.675a1.375 1.375 0 0 0-.044-1.92A1.374 1.374 0 0 0 13.483 0zm-1.587 2.585-3.673 3.675 3.673 3.675h7.252v-1.53h-5.733l-2.358-2.585 2.358-2.585h5.733v-1.53h-7.252z"/>
+          </svg>
+          Comprar en Amazon
+          <meta itemprop="priceCurrency" content="MXN" />
+          <meta itemprop="availability" content="https://schema.org/InStock" />
+        </a>
+      </div>
     </div>
   </article>
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   productName: {
     type: String,
     required: true
@@ -78,6 +90,19 @@ defineProps({
   amazonLink: {
     type: String,
     required: true
+  },
+  productSlug: {
+    type: String,
+    default: null
+  },
+  showDetailLink: {
+    type: Boolean,
+    default: false
   }
+})
+
+const detailLink = computed(() => {
+  if (props.productSlug) return `/product/${props.productSlug}`
+  return null
 })
 </script>

@@ -36,6 +36,22 @@
             </svg>
             Tienda Amazon
           </a>
+          <!-- Carrito -->
+          <button
+            @click="cart.openCart()"
+            class="relative p-2.5 rounded-xl text-earth-600 hover:text-primary-600 hover:bg-primary-50 transition-all"
+            aria-label="Abrir carrito"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/>
+            </svg>
+            <span
+              v-if="cart.totalItems > 0"
+              class="absolute -top-1 -right-1 w-5 h-5 bg-primary-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center"
+            >
+              {{ cart.totalItems > 9 ? '9+' : cart.totalItems }}
+            </span>
+          </button>
         </nav>
 
         <!-- Botón menú móvil -->
@@ -72,6 +88,15 @@
           >
             {{ link.label }}
           </NuxtLink>
+          <button
+            @click="mobileMenuOpen = false; cart.openCart()"
+            class="flex items-center justify-between w-full py-2 text-earth-700 hover:text-primary-600 font-medium transition-colors"
+          >
+            <span>🛒 Carrito</span>
+            <span v-if="cart.totalItems > 0" class="bg-primary-600 text-white text-xs px-2 py-0.5 rounded-full">
+              {{ cart.totalItems }}
+            </span>
+          </button>
           <a
             :href="AMAZON_LINK"
             target="_blank"
@@ -84,9 +109,13 @@
       </div>
     </Transition>
   </header>
+
+  <!-- Cart Sidebar -->
+  <CartSidebar />
 </template>
 
 <script setup>
+const cart = useCartStore()
 const AMAZON_LINK = 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329?'
 
 const mobileMenuOpen = ref(false)
