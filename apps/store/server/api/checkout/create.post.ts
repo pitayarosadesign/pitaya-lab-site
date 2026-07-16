@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   )
 
   try {
-    const { items, successUrl, cancelUrl, customerEmail } = body
+    const { items, successUrl, cancelUrl, customerEmail, shippingCost } = body
 
     if (!items || items.length === 0) {
       throw createError({ statusCode: 400, message: 'El carrito está vacío' })
@@ -46,6 +46,21 @@ export default defineEventHandler(async (event) => {
       },
       quantity: item.quantity,
     }))
+
+    // Agregar costo de envío si aplica
+    if (shippingCost && shippingCost > 0) {
+      lineItems.push({
+        price_data: {
+          currency: 'mxn',
+          product_data: {
+            name: 'Envío estándar',
+            description: 'Costo de envío a todo México (3-5 días hábiles)',
+          },
+          unit_amount: Math.round(shippingCost * 100), // convertir a centavos
+        },
+        quantity: 1,
+      })
+    }
 
     // Configurar la sesión de Stripe Checkout
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
@@ -77,7 +92,20 @@ export default defineEventHandler(async (event) => {
     const session = await stripe.checkout.sessions.create(sessionParams)
 
     // Guardar la sesión en la BD como orden pendiente
-    const orderNumber = `PIT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`
+    // Generar número de orden: PIT-1001, PIT-1002, etc.
+    const { data: lastOrder } = await supabaseAdmin
+      .from('orders')
+      .select('order_number')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    let nextNumber = 1001
+    if (lastOrder?.order_number) {
+      const lastNum = parseInt(lastOrder.order_number.replace('PIT-', ''), 10)
+      if (!isNaN(lastNum)) nextNumber = lastNum + 1
+    }
+    const orderNumber = `PIT-${nextNumber}`
 
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
@@ -104,6 +132,7 @@ export default defineEventHandler(async (event) => {
     return {
       url: session.url,
       sessionId: session.id,
+      orderNumber: orderNumber,
     }
   } catch (e) {
     console.error('Error creando checkout:', e)

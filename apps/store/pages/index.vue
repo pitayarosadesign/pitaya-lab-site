@@ -30,6 +30,9 @@
             :short-description="product.description"
             :image-url="product.image"
             :amazon-link="product.amazonLink"
+            :product-slug="product.slug || product.id"
+            :price="product.price"
+            :product-id="product.id"
           />
         </div>
 
@@ -82,6 +85,62 @@
             <p class="text-sm text-earth-500 leading-relaxed">{{ value.description }}</p>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- 📦 Sección de confianza: envíos -->
+    <section class="py-16 bg-gradient-to-b from-white to-primary-50/30">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+          <span class="text-primary-600 font-semibold text-sm uppercase tracking-wider">Envíos</span>
+          <h2 class="text-3xl md:text-4xl font-serif font-bold text-earth-900 mt-2 mb-4">
+            Envíos seguros a todo México
+          </h2>
+          <p class="text-earth-600 max-w-2xl mx-auto">
+            Recibe tus productos de forma rápida y confiable
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          <!-- Envío gratis -->
+          <div class="text-center p-6 rounded-2xl bg-white border border-earth-100 hover:border-primary-200 transition-all hover:shadow-lg">
+            <div class="w-16 h-16 mx-auto mb-5 bg-gradient-to-br from-primary-100 to-green-100 rounded-2xl flex items-center justify-center">
+              <svg class="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2-1h12l2 1"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10h4l3 3v3h-1"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-earth-800 mb-2">Envío gratis</h3>
+            <p class="text-sm text-earth-500 leading-relaxed">En todas tus compras mayores a $299 MXN</p>
+          </div>
+
+          <!-- Costo simbólico -->
+          <div class="text-center p-6 rounded-2xl bg-white border border-earth-100 hover:border-primary-200 transition-all hover:shadow-lg">
+            <div class="w-16 h-16 mx-auto mb-5 bg-gradient-to-br from-amber-100 to-orange-100 rounded-2xl flex items-center justify-center">
+              <svg class="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-earth-800 mb-2">Costo simbólico</h3>
+            <p class="text-sm text-earth-500 leading-relaxed">Compras menores a $299 solo $50 MXN de envío</p>
+          </div>
+
+          <!-- Tiempo de entrega -->
+          <div class="text-center p-6 rounded-2xl bg-white border border-earth-100 hover:border-primary-200 transition-all hover:shadow-lg">
+            <div class="w-16 h-16 mx-auto mb-5 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center">
+              <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-earth-800 mb-2">3 a 5 días hábiles</h3>
+            <p class="text-sm text-earth-500 leading-relaxed">Entregamos a todo México con mensajerías de prestigio</p>
+          </div>
+        </div>
+
+        <p class="text-center text-earth-400 text-sm mt-8">
+          📦 Paquete Express · Estafeta · FedEx
+        </p>
       </div>
     </section>
 
@@ -210,11 +269,11 @@ async function loadConfig() {
       data.forEach(item => {
         if (item.key === 'hero') Object.assign(siteConfig.hero, item.value)
         else if (item.key === 'products_section') Object.assign(siteConfig.products_section, item.value)
-        else if (item.key === 'brand_values') brandValues.value = item.value
+        else if (item.key === 'brand_values' && Array.isArray(item.value)) brandValues.value = item.value
         else if (item.key === 'scents_section') Object.assign(siteConfig.scents_section, item.value)
         else if (item.key === 'cta_section') {
           Object.assign(siteConfig.cta_section, item.value)
-          if (item.value.button_link) AMAZON_LINK.value = item.value.button_link
+          if (item.value?.button_link) AMAZON_LINK.value = item.value.button_link
         }
       })
     }
@@ -228,6 +287,8 @@ async function loadProducts() {
   if (!supabase) {
     featuredProducts.value = staticProducts.map(p => ({
       ...p,
+      price: p.price || 0,
+      slug: p.slug || p.id,
       amazonLink: p.amazonLink || AMAZON_LINK.value,
     }))
     return
@@ -248,9 +309,11 @@ async function loadProducts() {
         const primaryImg = p.product_images?.find(img => img.is_primary) || p.product_images?.[0]
         return {
           id: p.slug || p.id,
+          slug: p.slug,
           name: p.name,
           subtitle: p.subtitle || '',
           description: p.description || '',
+          price: p.price || 0,
           image: primaryImg?.url || null,
           amazonLink: p.amazon_link || AMAZON_LINK.value,
           category: p.product_categories?.name || '',
@@ -260,6 +323,8 @@ async function loadProducts() {
       // Fallback a datos estáticos
       featuredProducts.value = staticProducts.map(p => ({
         ...p,
+        price: p.price || 0,
+        slug: p.slug || p.id,
         amazonLink: p.amazonLink || AMAZON_LINK.value,
       }))
     }
@@ -267,6 +332,8 @@ async function loadProducts() {
     console.warn('Error cargando productos, usando estáticos:', e.message)
     featuredProducts.value = staticProducts.map(p => ({
       ...p,
+      price: p.price || 0,
+      slug: p.slug || p.id,
       amazonLink: p.amazonLink || AMAZON_LINK.value,
     }))
   }

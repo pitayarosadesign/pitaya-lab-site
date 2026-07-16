@@ -74,7 +74,8 @@
               :image-url="product.image"
               :amazon-link="product.amazonLink"
               :product-slug="product.slug"
-              :show-detail-link="true"
+              :price="product.price"
+              :product-id="product.id"
             />
           </div>
         </div>
@@ -157,39 +158,67 @@
       </div>
     </Teleport>
 
-    <!-- Tabla informativa de productos -->
-    <section class="py-16 bg-white/70">
+    <!-- 🎯 Guía de Aromas por Mood -->
+    <section class="py-16 bg-gradient-to-b from-white to-primary-50/30">
       <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-2xl font-serif font-bold text-earth-900 text-center mb-8">
-          Guía Rápida de Productos
-        </h2>
-        <div class="overflow-x-auto rounded-2xl shadow-sm border border-earth-100">
+        <div class="text-center mb-10">
+          <span class="text-primary-600 font-semibold text-sm uppercase tracking-wider">Guía de Aromas</span>
+          <h2 class="text-3xl font-serif font-bold text-earth-900 mt-2 mb-4">
+            Encuentra tu aroma ideal
+          </h2>
+          <p class="text-earth-500 max-w-2xl mx-auto">
+            Cada aroma de PITAYA LAB está diseñado para una experiencia única. Elige según tu mood y el momento.
+          </p>
+        </div>
+
+        <!-- Contenedor scrollable con altura fija -->
+        <div class="max-h-[420px] overflow-y-auto rounded-2xl border border-earth-100 bg-white shadow-sm scrollbar-thin scrollbar-thumb-earth-200 scrollbar-track-earth-50">
           <table class="w-full text-sm">
-            <thead class="bg-earth-50">
+            <thead class="bg-earth-50 sticky top-0 z-10">
               <tr>
-                <th class="px-4 py-3 text-left font-semibold text-earth-700">Producto</th>
-                <th class="px-4 py-3 text-left font-semibold text-earth-700">Precio</th>
-                <th class="px-4 py-3 text-left font-semibold text-earth-700">Categoría</th>
-                <th class="px-4 py-3 text-left font-semibold text-earth-700">Stock</th>
+                <th class="px-5 py-4 text-left font-semibold text-earth-700 w-[120px]">Aroma</th>
+                <th class="px-5 py-4 text-left font-semibold text-earth-700 w-[100px]">Categoría</th>
+                <th class="px-5 py-4 text-left font-semibold text-earth-700 w-[100px]">Vibra</th>
+                <th class="px-5 py-4 text-left font-semibold text-earth-700">Ideal para</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-earth-100">
-              <tr v-for="product in products" :key="product.id" class="hover:bg-earth-50/50 transition-colors">
-                <td class="px-4 py-3 font-medium text-earth-800">{{ product.name }}</td>
-                <td class="px-4 py-3 text-earth-600 font-semibold">${{ formatPrice(product.price) }}</td>
-                <td class="px-4 py-3 text-earth-600">{{ product.category || '—' }}</td>
-                <td class="px-4 py-3">
-                  <span class="inline-flex px-2 py-0.5 bg-primary-50 text-primary-700 text-xs rounded-full">
-                    {{ product.stock > 0 ? product.stock + ' en stock' : 'Agotado' }}
+              <tr v-for="scent in SCENTS" :key="scent.id" class="hover:bg-primary-50/40 transition-colors">
+                <td class="px-5 py-4">
+                  <div class="flex items-center gap-3">
+                    <!-- Círculo con foto del aroma o emoji fallback -->
+                    <div class="w-10 h-10 rounded-full overflow-hidden bg-earth-100 flex-shrink-0 shadow-sm border border-earth-200">
+                      <img
+                        v-if="scent.image"
+                        :src="scent.image"
+                        :alt="scent.name"
+                        class="w-full h-full object-cover"
+                      />
+                      <span v-else class="w-full h-full flex items-center justify-center text-base">{{ scent.emoji || '🌸' }}</span>
+                    </div>
+                    <span class="font-semibold text-earth-800">{{ scent.name }}</span>
+                  </div>
+                </td>
+                <td class="px-5 py-4">
+                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
+                    :class="scent.category === 'vela' || scent.category === 'velas' ? 'bg-amber-50 text-amber-700' : scent.category === 'aceite' || scent.category === 'aceites' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'">
+                    {{ scent.categoryLabel || scent.category }}
                   </span>
+                </td>
+                <td class="px-5 py-4">
+                  <span class="text-earth-600 font-medium">{{ scent.vibe || '—' }}</span>
+                </td>
+                <td class="px-5 py-4 text-earth-500">
+                  {{ scent.bestFor || scent.description || '—' }}
                 </td>
               </tr>
             </tbody>
           </table>
-          <p class="text-[10px] text-earth-400 text-center py-3 px-4 border-t border-earth-100">
-            * Los aromas Xcaret y Vidanta son referencias inspiracionales. PITAYA LAB no tiene afiliación con los hoteles o marcas de dichos nombres.
-          </p>
         </div>
+
+        <p class="text-center text-[10px] text-earth-400 mt-4">
+          * Los aromas "Xcaret" y "Vidanta" son referencias inspiracionales. PITAYA LAB no tiene afiliación con los hoteles o marcas de dichos nombres.
+        </p>
       </div>
     </section>
 
@@ -288,10 +317,6 @@ async function loadProducts() {
   } finally {
     loading.value = false
   }
-}
-
-function formatPrice(price) {
-  return Number(price).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 function goToAmazon(product) {

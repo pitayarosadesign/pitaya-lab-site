@@ -1,5 +1,10 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import tailwindcss from '@tailwindcss/vite'
+import { config } from 'dotenv'
+import { resolve } from 'path'
+
+// Cargar variables del .env raíz para workspaces
+config({ path: resolve(__dirname, '../../.env') })
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-06-01',

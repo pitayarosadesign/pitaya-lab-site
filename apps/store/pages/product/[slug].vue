@@ -212,7 +212,8 @@
               :image-url="rp.image"
               :amazon-link="rp.amazonLink"
               :product-slug="rp.slug"
-              :show-detail-link="true"
+              :price="rp.price"
+              :product-id="rp.id"
             />
           </div>
         </div>

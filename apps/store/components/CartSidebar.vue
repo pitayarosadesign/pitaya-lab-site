@@ -1,15 +1,15 @@
 <template>
   <Teleport to="body">
-    <!-- Overlay -->
+    <!-- Overlay (z-[60] para estar arriba del navbar z-50) -->
     <div
       v-if="cart.isOpen"
-      class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition-opacity"
+      class="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm transition-opacity"
       @click="cart.closeCart()"
     ></div>
 
-    <!-- Sidebar -->
+    <!-- Sidebar (z-[60]) -->
     <div
-      class="fixed top-0 right-0 z-50 h-full w-full max-w-md bg-white shadow-2xl transform transition-transform duration-300 ease-out"
+      class="fixed top-0 right-0 z-[60] h-full w-full max-w-md bg-white shadow-2xl transform transition-transform duration-300 ease-out"
       :class="cart.isOpen ? 'translate-x-0' : 'translate-x-full'"
     >
       <!-- Header -->
@@ -30,9 +30,33 @@
         </button>
       </div>
 
-      <!-- Contenido -->
-      <div class="flex flex-col h-[calc(100%-140px)]">
-        <!-- Items del carrito -->
+      <!-- Contenido + Footer en flex col -->
+      <div class="flex flex-col h-[calc(100%-73px)]">
+        <!-- 🚚 Barra de progreso para envío gratis -->
+        <div v-if="cart.hasItems" class="px-6 pt-4 pb-2">
+          <div v-if="remainingForFreeShipping > 0" class="bg-primary-50/70 rounded-xl p-3">
+            <div class="flex items-center justify-between mb-1.5">
+              <p class="text-xs text-primary-700 font-medium">
+                🚚 <span>Te faltan <strong>${{ formatPrice(remainingForFreeShipping) }}</strong> para envío gratis</span>
+              </p>
+            </div>
+            <!-- Barra de progreso -->
+            <div class="w-full h-2 bg-primary-100 rounded-full overflow-hidden">
+              <div
+                class="h-full bg-gradient-to-r from-primary-400 to-primary-600 rounded-full transition-all duration-500"
+                :style="{ width: freeShippingProgress + '%' }"
+              ></div>
+            </div>
+          </div>
+          <div v-else class="bg-green-50 rounded-xl p-3">
+            <p class="text-xs text-green-700 font-medium flex items-center gap-1.5">
+              <span>✅</span>
+              <span>¡Envío gratis garantizado!</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Items del carrito (scroll) -->
         <div v-if="cart.hasItems" class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
           <div
             v-for="(item, index) in cart.items"
@@ -109,29 +133,50 @@
             </button>
           </div>
         </div>
-      </div>
 
-      <!-- Footer con total y checkout -->
-      <div v-if="cart.hasItems" class="border-t border-earth-100 px-6 py-4 bg-white">
-        <div class="flex items-center justify-between mb-4">
-          <span class="text-sm font-medium text-earth-600">Subtotal</span>
-          <span class="text-lg font-bold text-earth-900">${{ cart.formattedTotal }}</span>
+        <!-- Footer con total y checkout -->
+        <div v-if="cart.hasItems" class="border-t border-earth-100 px-6 py-5 bg-white flex-shrink-0 pb-8">
+          <!-- Subtotal -->
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-earth-600">Subtotal</span>
+            <span class="text-base font-semibold text-earth-900">${{ cart.formattedTotal }}</span>
+          </div>
+          <!-- Envío -->
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-sm font-medium text-earth-600">Envío</span>
+            <span v-if="shippingCost > 0" class="text-sm font-medium text-earth-900">${{ formatPrice(shippingCost) }}</span>
+            <span v-else class="text-sm font-medium text-green-600">Gratis</span>
+          </div>
+          <!-- Total -->
+          <div class="flex items-center justify-between mb-3 pt-3 border-t border-earth-100">
+            <span class="text-base font-bold text-earth-800">Total</span>
+            <span class="text-xl font-bold text-earth-900">${{ formatPrice(cart.totalPrice + shippingCost) }}</span>
+          </div>
+          <p class="text-[11px] text-earth-400 mb-3">
+            IVA incluido · Envío a todo México
+          </p>
+          <!-- Info de envío -->
+          <div class="bg-primary-50 rounded-xl p-3 mb-4 text-xs text-primary-700">
+            <p class="flex items-center gap-1.5 font-medium">
+              <span>🚚</span>
+              <span>Envío gratis en compras mayores a <strong>$200 MXN</strong></span>
+            </p>
+            <p class="text-primary-500 mt-0.5">Menores a $200: solo $50 · 3 a 5 días hábiles</p>
+          </div>
+          <button
+            @click="handleCheckout"
+            :disabled="checkoutLoading"
+            class="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-2xl transition-all hover:shadow-lg flex items-center justify-center gap-2"
+          >
+            <svg v-if="checkoutLoading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            {{ checkoutLoading ? 'Procesando...' : 'Proceder al pago' }}
+          </button>
         </div>
-        <p class="text-xs text-earth-400 mb-4">
-          Impuestos y envío calculados al finalizar la compra.
-        </p>
-        <button
-          @click="handleCheckout"
-          :disabled="checkoutLoading"
-          class="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-2xl transition-all hover:shadow-lg flex items-center justify-center gap-2"
-        >
-          <svg v-if="checkoutLoading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-          </svg>
-          {{ checkoutLoading ? 'Procesando...' : 'Proceder al pago' }}
-        </button>
       </div>
+      <!-- /Contenido + Footer -->
     </div>
   </Teleport>
 </template>
@@ -140,9 +185,38 @@
 const cart = useCartStore()
 const checkoutLoading = ref(false)
 
+const FREE_SHIPPING_THRESHOLD = 200
+const SHIPPING_COST = 50
+
+const remainingForFreeShipping = computed(() => {
+  return Math.max(0, FREE_SHIPPING_THRESHOLD - cart.totalPrice)
+})
+
+const freeShippingProgress = computed(() => {
+  return Math.min(100, (cart.totalPrice / FREE_SHIPPING_THRESHOLD) * 100)
+})
+
+const shippingCost = computed(() => {
+  return cart.totalPrice >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST
+})
+
 function formatPrice(price) {
   return Number(price).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
+
+// Bloquear scroll del body cuando el carrito está abierto
+watch(() => cart.isOpen, (open) => {
+  if (import.meta.client) {
+    document.body.style.overflow = open ? 'hidden' : ''
+  }
+})
+
+// Limpiar al desmontar
+onUnmounted(() => {
+  if (import.meta.client) {
+    document.body.style.overflow = ''
+  }
+})
 
 async function handleCheckout() {
   if (cart.items.length === 0) return
@@ -153,6 +227,7 @@ async function handleCheckout() {
       method: 'POST',
       body: {
         items: cart.getCheckoutItems(),
+        shippingCost: shippingCost.value, // ← Enviamos el costo de envío
         successUrl: `${window.location.origin}/checkout/success`,
         cancelUrl: `${window.location.origin}/checkout/cancel`,
       },

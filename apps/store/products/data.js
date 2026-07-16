@@ -17,49 +17,84 @@ const IMAGES = {
   velaMistica: '/images/products/vela-mistica.png',
 }
 
-// 🌸 AROMAS DISPONIBLES (con imagen conceptual)
+// 🌸 AROMAS DISPONIBLES (con imagen conceptual y guía por mood)
 export const SCENTS = [
   { 
     id: 'xcaret', 
     name: 'Xcaret', 
     description: 'Inspirado en la esencia de los hoteles de lujo Xcaret México*',
-    image: '/images/scents/aroma-xcaret.png'
+    image: '/images/scents/aroma-xcaret.png',
+    emoji: '🏝️',
+    category: 'brumas',
+    categoryLabel: 'Bruma',
+    vibe: 'Vacaciones de lujo',
+    bestFor: 'Ropa de cama, cortinas, salas y espacios amplios'
   },
   { 
     id: 'vidanta', 
     name: 'Vidanta', 
     description: 'Inspirado en la esencia de los hoteles de lujo Vidanta*',
-    image: '/images/scents/aroma-vidanta.png'
+    image: '/images/scents/aroma-vidanta.png',
+    emoji: '🌴',
+    category: 'brumas',
+    categoryLabel: 'Bruma',
+    vibe: 'Resort tropical',
+    bestFor: 'Habitaciones, baños, y después de la ducha'
   },
   { 
     id: 'solara', 
     name: 'Solara', 
     description: 'Cítrico floral vibrante',
-    image: '/images/scents/aroma-solara.png'
+    image: '/images/scents/aroma-solara.png',
+    emoji: '🌞',
+    category: 'aceites',
+    categoryLabel: 'Aceite',
+    vibe: 'Energía y frescura',
+    bestFor: 'Difusores en áreas de trabajo, mañanas y estudio'
   },
   { 
     id: 'maderas-eden', 
     name: 'Maderas del Edén', 
     description: 'Notas amaderadas que evocan la naturaleza',
-    image: null
+    image: null,
+    emoji: '🌲',
+    category: 'velas',
+    categoryLabel: 'Vela',
+    vibe: 'Conexión con la naturaleza',
+    bestFor: 'Noches de lectura, cenas íntimas y meditación'
   },
   { 
     id: 'jazmin-blanco', 
     name: 'Jazmín Blanco', 
     description: 'Elegancia floral con jazmín puro y bambú verde',
-    image: '/images/scents/aroma-jazmin-blanco.png'
+    image: '/images/scents/aroma-jazmin-blanco.png',
+    emoji: '🤍',
+    category: 'aceites',
+    categoryLabel: 'Aceite',
+    vibe: 'Elegancia y sofisticación',
+    bestFor: 'Difusores en recámaras, salas de estar y spa en casa'
   },
   { 
     id: 'kiyosumi', 
     name: 'Kiyosumi', 
     description: 'Inspiración japonesa, sereno y sofisticado',
-    image: null
+    image: null,
+    emoji: '🎋',
+    category: 'velas',
+    categoryLabel: 'Vela',
+    vibe: 'Spa de lujo zen',
+    bestFor: 'Baños de inmersión, yoga, relajación y sueño profundo'
   },
   { 
     id: 'te-verde', 
     name: 'Té Verde', 
     description: 'Fresco y revitalizante como el té verde',
-    image: null
+    image: null,
+    emoji: '🍵',
+    category: 'brumas',
+    categoryLabel: 'Bruma',
+    vibe: 'Frescura revitalizante',
+    bestFor: 'Textiles, ropa, espacios de lectura y áreas de descanso'
   },
 ]
 

@@ -1,6 +1,22 @@
-<template>
-  <header class="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-earth-100">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+que <template>
+  <header class="fixed top-0 left-0 right-0 z-50">
+    <!-- ✅ Barra promocional de envíos -->
+    <div class="bg-gradient-to-r from-primary-900 via-primary-800 to-primary-900 text-white text-center text-xs sm:text-sm py-2.5 px-4 leading-relaxed">
+      <p class="flex items-center justify-center gap-1.5 flex-wrap">
+        <span class="hidden sm:inline">🚚</span>
+        <span class="font-semibold">Envío gratis</span>
+        <span>en compras mayores a</span>
+        <span class="font-bold text-amber-300">$200 MXN</span>
+        <span class="hidden sm:inline">• Paquete Express, Estafeta y FedEx</span>
+        <span class="hidden sm:inline">|</span>
+        <span>Menores: solo</span>
+        <span class="font-bold text-amber-300">$50</span>
+        <span class="hidden xs:inline">|</span>
+        <span class="text-primary-200">3 a 5 días hábiles</span>
+      </p>
+    </div>
+    <div class="bg-white/90 backdrop-blur-md border-b border-earth-100">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-20">
         <!-- Logo -->
         <NuxtLink to="/" class="flex items-center gap-3 group">
@@ -65,6 +81,7 @@
             <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
         </button>
+      </div>
       </div>
     </div>
 

@@ -121,6 +121,82 @@
       </div>
     </div>
 
+    <!-- 🚚 Barra de Envíos -->
+    <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900">🚚 Barra de Envíos</h2>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" v-model="config.shipping_bar.enabled" class="sr-only peer">
+          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+          <span class="ms-3 text-sm font-medium text-gray-600">{{ config.shipping_bar.enabled ? 'Activo' : 'Inactivo' }}</span>
+        </label>
+      </div>
+      <p class="text-sm text-gray-400">Barra promocional que aparece arriba del navbar.</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="md:col-span-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Texto del mensaje</label>
+          <textarea v-model="config.shipping_bar.text" rows="2" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Monto mínimo envío gratis ($)</label>
+          <input v-model.number="config.shipping_bar.free_shipping_min" type="number" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Costo envío menor ($)</label>
+          <input v-model.number="config.shipping_bar.shipping_fee" type="number" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Tiempo estimado</label>
+          <input v-model="config.shipping_bar.delivery_days" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+        </div>
+        <div class="md:col-span-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Mensajerías (separadas por coma)</label>
+          <input v-model="couriersText" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+        </div>
+      </div>
+    </div>
+
+    <!-- 📦 Sección de Confianza -->
+    <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900">📦 Sección de Confianza</h2>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" v-model="config.shipping_trust.enabled" class="sr-only peer">
+          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+          <span class="ms-3 text-sm font-medium text-gray-600">{{ config.shipping_trust.enabled ? 'Activo' : 'Inactivo' }}</span>
+        </label>
+      </div>
+      <p class="text-sm text-gray-400">Aparece en la página principal entre los valores y la sección de aromas.</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
+          <input v-model="config.shipping_trust.title" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Subtítulo</label>
+          <input v-model="config.shipping_trust.subtitle" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+        </div>
+      </div>
+      <div v-for="(feature, index) in config.shipping_trust.features" :key="index" class="p-4 bg-gray-50 rounded-lg space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-700">Característica {{ index + 1 }}</span>
+          <button @click="config.shipping_trust.features.splice(index, 1)" class="text-red-400 hover:text-red-600 text-xs">Eliminar</button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <input v-model="feature.title" type="text" placeholder="Título" class="px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+          <input v-model="feature.description" type="text" placeholder="Descripción" class="px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+          <select v-model="feature.icon" class="px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm">
+            <option value="truck">🚚 Camión</option>
+            <option value="package">📦 Paquete</option>
+            <option value="clock">⏱ Reloj</option>
+            <option value="shield">🛡️ Escudo</option>
+            <option value="heart">❤️ Corazón</option>
+          </select>
+        </div>
+      </div>
+      <button @click="config.shipping_trust.features.push({ icon: 'truck', title: '', description: '' })" class="text-sm text-primary-600 hover:text-primary-700 font-medium">+ Agregar característica</button>
+    </div>
+
     <!-- Botón guardar (abajo también) -->
     <div class="flex items-center justify-end gap-3">
       <button
@@ -142,6 +218,7 @@
 
 <script setup>
 const supabase = useSupabase()
+const supabaseAdmin = useSupabaseAdmin()
 const saving = ref(false)
 
 const config = reactive({
@@ -150,6 +227,30 @@ const config = reactive({
   brand_values: [],
   scents_section: { title: '', subtitle: '', description: '' },
   cta_section: { title: '', description: '', button_text: '', button_link: '' },
+  shipping_bar: {
+    enabled: true,
+    text: 'Envío gratis en compras mayores a $299 MXN • Paquete Express, Estafeta y FedEx • 3 a 5 días hábiles',
+    free_shipping_min: 299,
+    shipping_fee: 50,
+    couriers: ['Paquete Express', 'Estafeta', 'FedEx'],
+    delivery_days: '3 a 5 días hábiles',
+  },
+  shipping_trust: {
+    enabled: true,
+    title: 'Envíos seguros a todo México',
+    subtitle: 'Recibe tus productos de forma rápida y confiable',
+    features: [
+      { icon: 'truck', title: 'Envío gratis', description: 'En todas tus compras mayores a $299 MXN' },
+      { icon: 'package', title: 'Costo simbólico', description: 'Compras menores a $299 solo $50 MXN de envío' },
+      { icon: 'clock', title: '3 a 5 días hábiles', description: 'Entregamos a todo México con mensajerías de prestigio' },
+    ],
+  },
+})
+
+// Computed para manejar couriers como texto separado por comas
+const couriersText = computed({
+  get: () => config.shipping_bar.couriers.join(', '),
+  set: (val) => { config.shipping_bar.couriers = val.split(',').map(c => c.trim()).filter(c => c) }
 })
 
 async function loadConfig() {
@@ -164,6 +265,8 @@ async function loadConfig() {
         else if (item.key === 'brand_values') config.brand_values = item.value
         else if (item.key === 'scents_section') config.scents_section = item.value
         else if (item.key === 'cta_section') config.cta_section = item.value
+        else if (item.key === 'shipping_bar') Object.assign(config.shipping_bar, item.value)
+        else if (item.key === 'shipping_trust') Object.assign(config.shipping_trust, item.value)
       })
     }
   } catch (e) {
@@ -174,16 +277,21 @@ async function loadConfig() {
 async function handleSave() {
   saving.value = true
   try {
+    // Usamos supabaseAdmin (service role) para saltar RLS al escribir
+    const client = supabaseAdmin || supabase
+
     const sections = [
       { key: 'hero', value: config.hero },
       { key: 'products_section', value: config.products_section },
       { key: 'brand_values', value: config.brand_values },
       { key: 'scents_section', value: config.scents_section },
       { key: 'cta_section', value: config.cta_section },
+      { key: 'shipping_bar', value: config.shipping_bar },
+      { key: 'shipping_trust', value: config.shipping_trust },
     ]
 
     for (const section of sections) {
-      const { error } = await supabase
+      const { error } = await client
         .from('site_config')
         .upsert({ key: section.key, value: section.value, updated_at: new Date().toISOString() }, { onConflict: 'key' })
 

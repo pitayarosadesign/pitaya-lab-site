@@ -132,12 +132,35 @@ const loginMode = ref('password')
 // Detectar si venimos de un magic link (redirección de Supabase)
 onMounted(async () => {
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    // 1. Escuchar cambios de autenticación (captura el evento del magic link automático)
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        navigateTo('/dashboard')
+      }
+    })
+
+    // 2. Revisar si ya hay sesión activa
+    const { data: { session } } = await supabase.auth.getSession()
     if (session) {
       await navigateTo('/dashboard')
+      return
+    }
+
+    // 3. Si llegamos con un code PKCE en la URL (después del redirect del magic link)
+    const params = new URLSearchParams(window.location.search)
+    const code = params.get('code')
+    if (code) {
+      console.log('🔑 Intercambiando código PKCE por sesión...')
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+      if (error) {
+        console.error('Error al intercambiar código:', error.message)
+        error.value = 'Error al iniciar sesión con el magic link. Intenta de nuevo.'
+      } else if (data?.session) {
+        await navigateTo('/dashboard')
+      }
     }
   } catch (e) {
-    // Ignorar errores de redirección
+    console.error('Error al verificar sesión:', e)
   }
 })
 
@@ -149,10 +172,12 @@ async function handleLogin() {
   try {
     if (loginMode.value === 'magic') {
       // Magic Link
+      // En Vercel, usar la URL de producción; en local, la de desarrollo
+      const siteUrl = window.location.origin
       const { error: authError } = await supabase.auth.signInWithOtp({
         email: form.email,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          emailRedirectTo: `${siteUrl}/dashboard`,
         },
       })
 

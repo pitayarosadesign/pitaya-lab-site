@@ -16,6 +16,10 @@ export default defineNuxtConfig({
       title: 'Panel Administrativo | PITAYA LAB',
       meta: [
         { name: 'robots', content: 'noindex, nofollow' }
+      ],
+      link: [
+        { rel: 'icon', type: 'image/png', href: '/favicon.png' },
+        { rel: 'apple-touch-icon', href: '/favicon.png' }
       ]
     }
   },
