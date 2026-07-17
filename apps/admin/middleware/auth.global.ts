@@ -4,10 +4,15 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     return
   }
 
-  const { $supabase } = useNuxtApp()
+  // Solo ejecutar en el cliente (SSR no tiene session)
+  if (process.server) {
+    return
+  }
+
+  const nuxtApp = useNuxtApp()
   
   try {
-    const { data: { session } } = await $supabase.auth.getSession()
+    const { data: { session } } = await nuxtApp.$supabase.auth.getSession()
     
     if (!session) {
       return navigateTo('/login')
