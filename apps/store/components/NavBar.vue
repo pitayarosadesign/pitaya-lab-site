@@ -127,8 +127,10 @@
     </Transition>
   </header>
 
-  <!-- Cart Sidebar -->
-  <CartSidebar />
+  <ClientOnly>
+    <!-- Cart Sidebar -->
+    <CartSidebar />
+  </ClientOnly>
 </template>
 
 <script setup>
