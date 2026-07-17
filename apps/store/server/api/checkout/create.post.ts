@@ -63,10 +63,13 @@ export default defineEventHandler(async (event) => {
     }
 
     // Configurar la sesión de Stripe Checkout
+    const successWithOrder = body.successUrl || `${event.node.req.headers.origin || 'http://localhost:3002'}/checkout/success`
+    const successUrlWithOrder = `${successWithOrder}${successWithOrder.includes('?') ? '&' : '?'}session_id={CHECKOUT_SESSION_ID}&order=${orderNumber}`
+
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: 'payment',
       line_items: lineItems,
-      success_url: successUrl || `${event.node.req.headers.origin || 'http://localhost:3002'}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: successUrlWithOrder,
       cancel_url: cancelUrl || `${event.node.req.headers.origin || 'http://localhost:3002'}/checkout/cancel`,
       payment_method_types: ['card'],
       billing_address_collection: 'required',

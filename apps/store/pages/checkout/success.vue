@@ -86,6 +86,9 @@ onMounted(async () => {
   // Stripe puede pasar session_id como query param o como hash fragment
   let sessionId = route.query.session_id
 
+  // También podemos recibir el orderNumber directo en la URL
+  const orderFromUrl = route.query.order
+
   // Si no está en query, revisar el hash de la URL
   if (!sessionId && typeof window !== 'undefined') {
     const hash = window.location.hash
@@ -93,6 +96,11 @@ onMounted(async () => {
       const params = new URLSearchParams(hash.replace('#', ''))
       sessionId = params.get('session_id') || ''
     }
+  }
+
+  // Si tenemos orderNumber directo, usarlo inmediatamente
+  if (orderFromUrl) {
+    orderNumber.value = orderFromUrl
   }
 
   if (sessionId) {
