@@ -22,6 +22,8 @@
   "devDependencies": {
     "concurrently": "^9.1.0",
     "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "resend": "^6.17.2"
   }
 }
-
