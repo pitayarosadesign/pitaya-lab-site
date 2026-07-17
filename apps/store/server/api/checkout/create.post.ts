@@ -62,7 +62,22 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Configurar la sesión de Stripe Checkout
+    // Generar número de orden ANTES de construir la URL
+    const { data: lastOrder } = await supabaseAdmin
+      .from('orders')
+      .select('order_number')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    let nextNumber = 1001
+    if (lastOrder?.order_number) {
+      const lastNum = parseInt(lastOrder.order_number.replace('PIT-', ''), 10)
+      if (!isNaN(lastNum)) nextNumber = lastNum + 1
+    }
+    const orderNumber = `PIT-${nextNumber}`
+
+    // Configurar la sesión de Stripe Checkout (incluyendo orderNumber en URL)
     const successWithOrder = body.successUrl || `${event.node.req.headers.origin || 'http://localhost:3002'}/checkout/success`
     const successUrlWithOrder = `${successWithOrder}${successWithOrder.includes('?') ? '&' : '?'}session_id={CHECKOUT_SESSION_ID}&order=${orderNumber}`
 
@@ -95,21 +110,6 @@ export default defineEventHandler(async (event) => {
     const session = await stripe.checkout.sessions.create(sessionParams)
 
     // Guardar la sesión en la BD como orden pendiente
-    // Generar número de orden: PIT-1001, PIT-1002, etc.
-    const { data: lastOrder } = await supabaseAdmin
-      .from('orders')
-      .select('order_number')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
-
-    let nextNumber = 1001
-    if (lastOrder?.order_number) {
-      const lastNum = parseInt(lastOrder.order_number.replace('PIT-', ''), 10)
-      if (!isNaN(lastNum)) nextNumber = lastNum + 1
-    }
-    const orderNumber = `PIT-${nextNumber}`
-
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
       .insert({
