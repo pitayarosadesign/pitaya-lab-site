@@ -1,4 +1,4 @@
-que <template>
+<template>
   <header class="fixed top-0 left-0 right-0 z-50">
     <!-- ✅ Barra promocional de envíos -->
     <div class="bg-gradient-to-r from-primary-900 via-primary-800 to-primary-900 text-white text-center text-xs sm:text-sm py-2.5 px-4 leading-relaxed">

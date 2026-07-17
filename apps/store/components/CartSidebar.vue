@@ -1,4 +1,4 @@
-<mplate>
+<template>
   <Teleport to="body">
     <!-- Overlay (z-[60] para estar arriba del navbar z-50) -->
     <div
@@ -211,6 +211,10 @@ watch(() => cart.isOpen, (open) => {
   if (import.meta.client) {
     document.body.style.overflow = open ? 'hidden' : ''
   }
+})
+
+onMounted(() => {
+  isMounted.value = true
 })
 
 // Limpiar al desmontar

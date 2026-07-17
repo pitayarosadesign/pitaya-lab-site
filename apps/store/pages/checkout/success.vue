@@ -84,7 +84,7 @@ onMounted(async () => {
   cart.clearCart()
 
   // Stripe puede pasar session_id como query param o como hash fragment
-  let sessionId = route.query.session_id as string | undefined
+  let sessionId = route.query.session_id
 
   // Si no está en query, revisar el hash de la URL
   if (!sessionId && typeof window !== 'undefined') {

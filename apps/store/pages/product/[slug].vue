@@ -259,6 +259,8 @@ function formatPrice(price) {
 function addToCart() {
   if (!product.value || product.value.stock === 0) return
 
+  const cartStore = useCartStore()
+
   const cartItem = {
     id: product.value.id,
     slug: product.value.slug,
@@ -273,24 +275,11 @@ function addToCart() {
     quantity: 1,
   }
 
-  // Usar el store de carrito (si existe) o emitir evento
-  const nuxtApp = useNuxtApp()
-  if (nuxtApp.$cart) {
-    nuxtApp.$cart.addItem(cartItem)
-  } else {
-    // Fallback: usar localStorage
-    const existing = JSON.parse(localStorage.getItem('pitaya-cart') || '[]')
-    existing.push(cartItem)
-    localStorage.setItem('pitaya-cart', JSON.stringify(existing))
-  }
+  cartStore.addItem(cartItem)
 
   // Feedback visual
-  useNuxtApp().$toast?.success?.(`${product.value.name} agregado al carrito`)
-
-  // Si no hay toast, mostrar alerta simple
-  if (!useNuxtApp().$toast) {
-    alert(`✅ "${product.value.name}" agregado al carrito`)
-  }
+  const nuxtApp = useNuxtApp()
+  nuxtApp.$toast?.success?.(`${product.value.name} agregado al carrito`)
 }
 
 // Cargar producto
