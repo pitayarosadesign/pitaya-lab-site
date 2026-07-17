@@ -1,14 +1,15 @@
-<template>
+<mplate>
   <Teleport to="body">
     <!-- Overlay (z-[60] para estar arriba del navbar z-50) -->
     <div
-      v-if="cart.isOpen"
+      v-if="cart.isOpen && isMounted"
       class="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm transition-opacity"
       @click="cart.closeCart()"
     ></div>
 
     <!-- Sidebar (z-[60]) -->
     <div
+      v-if="isMounted"
       class="fixed top-0 right-0 z-[60] h-full w-full max-w-md bg-white shadow-2xl transform transition-transform duration-300 ease-out"
       :class="cart.isOpen ? 'translate-x-0' : 'translate-x-full'"
     >
@@ -184,6 +185,7 @@
 <script setup>
 const cart = useCartStore()
 const checkoutLoading = ref(false)
+const isMounted = ref(false)
 
 const FREE_SHIPPING_THRESHOLD = 200
 const SHIPPING_COST = 50

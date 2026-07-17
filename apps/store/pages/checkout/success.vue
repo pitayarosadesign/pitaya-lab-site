@@ -83,8 +83,18 @@ onMounted(async () => {
   // Limpiar carrito
   cart.clearCart()
 
-  // Intentar obtener el número de orden desde Stripe session
-  const sessionId = route.query.session_id
+  // Stripe puede pasar session_id como query param o como hash fragment
+  let sessionId = route.query.session_id as string | undefined
+
+  // Si no está en query, revisar el hash de la URL
+  if (!sessionId && typeof window !== 'undefined') {
+    const hash = window.location.hash
+    if (hash) {
+      const params = new URLSearchParams(hash.replace('#', ''))
+      sessionId = params.get('session_id') || ''
+    }
+  }
+
   if (sessionId) {
     try {
       const { data } = await $fetch(`/api/checkout/session?session_id=${sessionId}`)
