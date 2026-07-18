@@ -1,5 +1,5 @@
-<template>
-  <Teleport to="body">
+<teestomplate>
+  <Teleport to=tar al panel de administrador de la tienda.. "body">
     <!-- Overlay (z-[60] para estar arriba del navbar z-50) -->
     <div
       v-if="cart.isOpen && isMounted"
@@ -187,21 +187,42 @@ const cart = useCartStore()
 const checkoutLoading = ref(false)
 const isMounted = ref(false)
 
-const FREE_SHIPPING_THRESHOLD = 200
-const SHIPPING_COST = 50
+const config = useRuntimeConfig()
+
+// Valores por defecto
+const FREE_SHIPPING_THRESHOLD = ref(200)
+const SHIPPING_COST = ref(75)
+
+// Cargar configuración desde Supabase
+async function loadShippingConfig() {
+  if (!import.meta.client) return
+  try {
+    const { data, error } = await supabase
+      .from('site_config')
+      .select('value')
+      .eq('key', 'shipping_bar')
+      .single()
+
+    if (data?.value) {
+      FREE_SHIPPING_THRESHOLD.value = data.value.free_shipping_min || 200
+      SHIPPING_COST.value = data.value.shipping_fee || 75
+    }
+  } catch (e) {
+    console.warn('Usando valores por defecto de envío')
+  }
+}
 
 const remainingForFreeShipping = computed(() => {
-  return Math.max(0, FREE_SHIPPING_THRESHOLD - cart.totalPrice)
+  return Math.max(0, FREE_SHIPPING_THRESHOLD.value - cart.totalPrice)
 })
 
 const freeShippingProgress = computed(() => {
-  return Math.min(100, (cart.totalPrice / FREE_SHIPPING_THRESHOLD) * 100)
+  return Math.min(100, (cart.totalPrice / FREE_SHIPPING_THRESHOLD.value) * 100)
 })
 
 const shippingCost = computed(() => {
-  return cart.totalPrice >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST
+  return cart.totalPrice >= FREE_SHIPPING_THRESHOLD.value ? 0 : SHIPPING_COST.value
 })
-
 function formatPrice(price) {
   return Number(price).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
