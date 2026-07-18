@@ -72,8 +72,8 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
-    '/api/checkout/webhook': { redirect: false },
-    '/api/checkout/webhook/': { redirect: false },
+    '/api/checkout/webhook': { redirect: false, seo: { redirectToCanonical: false } },
+    '/api/checkout/webhook/': { redirect: false, seo: { redirectToCanonical: false } },
   },
 
   // 🖼️ OG Image - Desactiva la generación dinámica (cero warnings)
