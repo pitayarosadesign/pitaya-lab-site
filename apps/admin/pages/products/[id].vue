@@ -168,7 +168,6 @@
 </template>
 
 <script setup>
-const supabase = useSupabase()
 const route = useRoute()
 const product = ref(null)
 const loading = ref(true)
@@ -185,12 +184,7 @@ const form = reactive({
 async function loadProduct() {
   loading.value = true
   try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('id', route.params.id)
-      .single()
-    if (error) throw error
+    const data = await $fetch(`/api/products/${route.params.id}`)
 
     product.value = data
     form.name = data.name
@@ -208,14 +202,7 @@ async function loadProduct() {
     form.amazon_link = data.amazon_link || ''
     form.compare_at_price = data.compare_at_price || ''
     form.cost_price = data.cost_price || ''
-
-    // Cargar imágenes
-    const { data: images } = await supabase
-      .from('product_images')
-      .select('*')
-      .eq('product_id', data.id)
-      .order('sort_order', { ascending: true })
-    form.images = images || []
+    form.images = data.images || []
   } catch (e) {
     console.error('Error:', e)
   } finally {

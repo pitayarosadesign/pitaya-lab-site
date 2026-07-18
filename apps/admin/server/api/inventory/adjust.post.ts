@@ -12,14 +12,18 @@ export default defineEventHandler(async (event) => {
 
   try {
     const movement = {
-      product_id: body.productId,
+      product_id: body.productId || body.product_id,
       type: body.type,
-      quantity: Number(body.quantity),
+      quantity: Number(body.quantity || body.qty),
       reason: body.reason,
       note: body.note || null,
-      from_location: body.fromLocation || null,
-      to_location: body.toLocation || null,
+      from_location: body.fromLocation || body.from_location || null,
+      to_location: body.toLocation || body.to_location || null,
       created_by: 'admin',
+    }
+
+    if (!movement.product_id) {
+      throw new Error('product_id es requerido')
     }
 
     const { data, error } = await supabaseAdmin
