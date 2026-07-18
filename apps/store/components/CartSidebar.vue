@@ -1,5 +1,5 @@
-<teestomplate>
-  <Teleport to=tar al panel de administrador de la tienda.. "body">
+<template>
+  <Teleport to="body">
     <!-- Overlay (z-[60] para estar arriba del navbar z-50) -->
     <div
       v-if="cart.isOpen && isMounted"
@@ -162,7 +162,7 @@
               <span>🚚</span>
               <span>Envío gratis en compras mayores a <strong>$200 MXN</strong></span>
             </p>
-            <p class="text-primary-500 mt-0.5">Menores a $200: solo $50 · 3 a 5 días hábiles</p>
+            <p class="text-primary-500 mt-0.5">Menores a $200: solo $75 · 3 a 5 días hábiles</p>
           </div>
           <button
             @click="handleCheckout"
