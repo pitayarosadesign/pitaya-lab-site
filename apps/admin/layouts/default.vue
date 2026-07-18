@@ -95,6 +95,8 @@ const navItems = [
   { icon: '📦', label: 'Productos', to: '/products' },
   { icon: '🛒', label: 'Órdenes', to: '/orders' },
   { icon: '👥', label: 'Clientes', to: '/customers' },
+  { icon: '📦', label: 'Inventario', to: '/inventory' },
+  { icon: '🏪', label: 'Showroom', to: '/commerce' },
   { icon: '🏷️', label: 'Cupones', to: '/coupons' },
   { icon: '🎨', label: 'Editar Sitio Web', to: '/site' },
   { icon: '📈', label: 'Analíticas', to: '/analytics' },
