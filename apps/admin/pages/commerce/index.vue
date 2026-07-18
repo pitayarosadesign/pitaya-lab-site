@@ -6,7 +6,7 @@
         <p class="text-sm text-gray-500 mt-1">Hoteles, tiendas y puntos de venta físicos</p>
       </div>
       <button
-        @click="showForm = true; editingStore = null; form = getDefaultForm()"
+        @click="showForm = true; editingStore = null; Object.assign(form, getDefaultForm())"
         class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
       >
         + Registrar comercio
@@ -16,7 +16,7 @@
     <!-- Formulario -->
     <div v-if="showForm" class="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
       <h3 class="text-lg font-bold text-gray-900 mb-4">{{ editingStore ? '✏️ Editar comercio' : '🏪 Registrar comercio' }}</h3>
-      <form @submit.prevent="saveStore" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="md:col-span-2">
           <label class="block text-xs font-medium text-gray-600 mb-1">Nombre del comercio *</label>
           <input v-model="form.name" type="text" placeholder="Ej: Hotel Xcaret México" required
@@ -77,7 +77,7 @@
         </div>
         <div class="flex items-center justify-end gap-3 md:col-span-2 pt-2 border-t border-gray-100">
           <button type="button" @click="showForm = false" class="text-sm text-gray-500 hover:text-gray-700 font-medium">Cancelar</button>
-          <button type="submit" :disabled="saving"
+          <button type="button" @click="handleSave" :disabled="saving"
             class="px-6 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors">
             {{ saving ? 'Guardando...' : editingStore ? 'Actualizar comercio' : 'Registrar comercio' }}
           </button>
@@ -176,17 +176,22 @@ function typeIcon(type) {
   return icons[type] || '🏪'
 }
 
+function handleSave() {
+  console.log('handleSave called', form.name)
+  if (!form.name) {
+    alert('El nombre es obligatorio')
+    return
+  }
+  saveStore()
+}
+
 onMounted(async () => {
   await loadStores()
 })
 
 async function loadStores() {
   try {
-    const { data } = await supabase
-      .from('commerce_stores')
-      .select('*')
-      .order('name')
-
+    const data = await $fetch('/api/commerce')
     stores.value = data || []
   } catch (e) {
     console.error('Error cargando comercios:', e)
@@ -203,16 +208,22 @@ async function saveStore() {
     const payload = { ...form, commission: Number(form.commission) }
 
     if (editingStore.value) {
-      await supabase.from('commerce_stores').update(payload).eq('id', editingStore.value.id)
+      await $fetch('/api/commerce', {
+        method: 'PUT',
+        body: { ...payload, id: editingStore.value.id },
+      })
     } else {
-      await supabase.from('commerce_stores').insert(payload)
+      await $fetch('/api/commerce', {
+        method: 'POST',
+        body: payload,
+      })
     }
 
     showForm.value = false
     editingStore.value = null
     await loadStores()
   } catch (e) {
-    alert('Error: ' + e.message)
+    alert('Error: ' + (e.data?.message || e.message))
   } finally {
     saving.value = false
   }
@@ -237,11 +248,14 @@ function editStore(store) {
 
 async function toggleActive(store) {
   const newStatus = !store.is_active
-  const { error } = await supabase
-    .from('commerce_stores')
-    .update({ is_active: newStatus })
-    .eq('id', store.id)
-
-  if (!error) store.is_active = newStatus
+  try {
+    await $fetch('/api/commerce', {
+      method: 'PUT',
+      body: { ...store, is_active: newStatus, id: store.id },
+    })
+    store.is_active = newStatus
+  } catch (e) {
+    alert('Error: ' + (e.data?.message || e.message))
+  }
 }
 </script>
