@@ -79,8 +79,6 @@
 <script setup>
 useSeoMeta({ title: 'Movimientos | PITAYA LAB' })
 
-const supabase = useSupabase()
-
 const loading = ref(true)
 const movements = ref([])
 const locations = ref([])
@@ -130,19 +128,10 @@ function exportCSV() {
 
 onMounted(async () => {
   try {
-    const { data: locs } = await supabase
-      .from('commerce_stores')
-      .select('id, name')
-      .eq('is_active', true)
+    const data = await $fetch('/api/commerce')
+    locations.value = data?.filter(l => l.is_active) || []
 
-    locations.value = locs || []
-
-    const { data: movs } = await supabase
-      .from('inventory_movements')
-      .select('*, product:product_id(name)')
-      .order('created_at', { ascending: false })
-      .limit(100)
-
+    const movs = await $fetch('/api/inventory/movements')
     movements.value = movs || []
   } catch (e) {
     console.error('Error cargando movimientos:', e)

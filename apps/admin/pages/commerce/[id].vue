@@ -133,7 +133,6 @@
 <script setup>
 useSeoMeta({ title: 'Detalle de Comercio | PITAYA LAB' })
 
-const supabase = useSupabase()
 const route = useRoute()
 
 const loading = ref(true)
@@ -175,29 +174,10 @@ function exportCSV() {
 
 onMounted(async () => {
   try {
-    const { data: s } = await supabase
-      .from('commerce_stores')
-      .select('*')
-      .eq('id', route.params.id)
-      .single()
-
-    store.value = s
-
-    const { data: inv } = await supabase
-      .from('inventory_by_location')
-      .select('*, product:product_id(name, sku, stock)')
-      .eq('location_id', s.id)
-
-    inventory.value = inv || []
-
-    const { data: sal } = await supabase
-      .from('commerce_sales')
-      .select('*')
-      .eq('store_id', s.id)
-      .order('created_at', { ascending: false })
-      .limit(20)
-
-    sales.value = sal || []
+    const data = await $fetch(`/api/commerce/detail?id=${route.params.id}`)
+    store.value = data.store
+    inventory.value = data.inventory || []
+    sales.value = data.sales || []
   } catch (e) {
     console.error('Error:', e)
   } finally {

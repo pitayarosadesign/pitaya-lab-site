@@ -202,7 +202,6 @@ async function loadShippingConfig() {
       .select('value')
       .eq('key', 'shipping_bar')
       .single()
-
     if (data?.value) {
       FREE_SHIPPING_THRESHOLD.value = data.value.free_shipping_min || 200
       SHIPPING_COST.value = data.value.shipping_fee || 75

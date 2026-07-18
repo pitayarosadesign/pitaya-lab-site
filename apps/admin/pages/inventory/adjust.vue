@@ -172,9 +172,6 @@
 <script setup>
 useSeoMeta({ title: 'Ajustar Inventario | PITAYA LAB' })
 
-const supabase = useSupabase()
-const route = useRoute()
-
 const saving = ref(false)
 const products = ref([])
 const selectedProduct = ref(null)
@@ -204,12 +201,7 @@ async function loadProductStock() {
     selectedProduct.value = null
     return
   }
-  const { data } = await supabase
-    .from('products')
-    .select('id, name, sku, stock')
-    .eq('id', form.productId)
-    .single()
-
+  const data = await $fetch(`/api/inventory/products?productId=${form.productId}`)
   selectedProduct.value = data
 }
 
@@ -218,22 +210,10 @@ async function submitAdjustment() {
   saving.value = true
 
   try {
-    const movement = {
-      product_id: form.productId,
-      type: form.type,
-      quantity: Number(form.quantity),
-      reason: form.reason,
-      note: form.note,
-      from_location: form.type === 'out' || form.type === 'transfer' ? form.fromLocation : null,
-      to_location: form.type === 'in' || form.type === 'transfer' ? form.toLocation : null,
-      created_by: 'admin',
-    }
-
-    const { error } = await supabase
-      .from('inventory_movements')
-      .insert(movement)
-
-    if (error) throw error
+    const { error } = await $fetch('/api/inventory/adjust', {
+      method: 'POST',
+      body: { ...form },
+    })
 
     alert('✅ Movimiento registrado correctamente')
     navigateTo('/inventory')
@@ -246,24 +226,18 @@ async function submitAdjustment() {
 
 onMounted(async () => {
   try {
-    const { data: prods } = await supabase
-      .from('products')
-      .select('id, name, sku, stock')
-      .order('name')
-
-    products.value = prods || []
-
-    const { data: locs } = await supabase
-      .from('commerce_stores')
-      .select('id, name, is_active')
-      .eq('is_active', true)
-      .order('name')
-
-    locations.value = locs || []
+    const data = await $fetch('/api/inventory/products')
+    products.value = data.products || []
+    locations.value = data.locations || []
 
     if (form.productId) await loadProductStock()
   } catch (e) {
     console.error('Error cargando datos:', e)
+  } finally {
+    loading.value = false
   }
-})
+}
+
+// Agregar loading ref si no existe
+const loading = ref(false)
 </script>
