@@ -95,10 +95,11 @@ const navItems = [
   { icon: '📦', label: 'Productos', to: '/products' },
   { icon: '🛒', label: 'Órdenes', to: '/orders' },
   { icon: '👥', label: 'Clientes', to: '/customers' },
-  { icon: '🎨', label: 'Editar Sitio Web', to: '/site' },
   { icon: '🏷️', label: 'Cupones', to: '/coupons' },
+  { icon: '🎨', label: 'Editar Sitio Web', to: '/site' },
   { icon: '📈', label: 'Analíticas', to: '/analytics' },
   { icon: '📡', label: 'Catálogos', to: '/catalog-feeds' },
+  { icon: '⚙️', label: 'Configuración', to: '/settings' },
 ]
 
 const pageTitle = computed(() => {
