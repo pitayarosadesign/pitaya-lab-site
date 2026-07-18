@@ -172,6 +172,7 @@
 <script setup>
 useSeoMeta({ title: 'Ajustar Inventario | PITAYA LAB' })
 
+const route = useRoute()
 const saving = ref(false)
 const products = ref([])
 const selectedProduct = ref(null)

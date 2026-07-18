@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   )
 
   try {
-    const { data, error } = await supabaseAdmin
+    const { data: store, error } = await supabaseAdmin
       .from('commerce_stores')
       .update({
         name: body.name,
@@ -32,7 +32,17 @@ export default defineEventHandler(async (event) => {
 
     if (error) throw error
 
-    return { success: true, store: data }
+    // Sincronizar nombre en inventory_locations
+    await supabaseAdmin
+      .from('inventory_locations')
+      .update({
+        name: store.name,
+        short_name: store.location_code || store.name.substring(0, 10),
+        is_active: store.is_active,
+      })
+      .eq('store_id', store.id)
+
+    return { success: true, store }
   } catch (e) {
     throw createError({ statusCode: 500, message: e.message })
   }

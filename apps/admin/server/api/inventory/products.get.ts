@@ -30,7 +30,6 @@ export default defineEventHandler(async (event) => {
     const { data: stores } = await supabaseAdmin
       .from('commerce_stores')
       .select('id, name, is_active')
-      .eq('is_active', true)
       .order('name')
 
     return {

@@ -11,7 +11,8 @@ export default defineEventHandler(async (event) => {
   )
 
   try {
-    const { data, error } = await supabaseAdmin
+    // Crear comercio
+    const { data: store, error } = await supabaseAdmin
       .from('commerce_stores')
       .insert({
         name: body.name,
@@ -30,7 +31,21 @@ export default defineEventHandler(async (event) => {
 
     if (error) throw error
 
-    return { success: true, store: data }
+    // Crear ubicación de inventario automáticamente
+    const { error: locError } = await supabaseAdmin
+      .from('inventory_locations')
+      .insert({
+        id: store.id,
+        name: store.name,
+        short_name: store.location_code || store.name.substring(0, 10),
+        type: 'showroom',
+        store_id: store.id,
+        is_active: store.is_active,
+      })
+
+    if (locError) throw locError
+
+    return { success: true, store }
   } catch (e) {
     throw createError({ statusCode: 500, message: e.message })
   }
