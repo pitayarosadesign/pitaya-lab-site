@@ -109,15 +109,14 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event)
     const signature = event.node.req.headers['stripe-signature']
 
-    if (!signature) {
-      throw createError({ statusCode: 400, message: 'Firma webhook faltante' })
-    }
+    // Obtener raw body para verificación correcta de firma
+    const rawBody = await readRawBody(event)
 
-    // Verificar el webhook
+    // Validar firma webhook con el raw body
     let webhookEvent: Stripe.Event
     try {
       webhookEvent = stripe.webhooks.constructEvent(
-        JSON.stringify(body),
+        rawBody || JSON.stringify(body),
         signature as string,
         config.stripeWebhookSecret
       )
@@ -126,8 +125,14 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, message: `Error de firma: ${err.message}` })
     }
 
+    // Usar body parseado para el resto
+    const parsedBody = typeof body === 'string' ? JSON.parse(body) : body
+
     // Manejar el evento
-    switch (webhookEvent.type) {
+    // Usar parsedBody para datos (rawBody solo para firma)
+    const eventData = webhookEvent
+
+    switch (eventData.type) {
       case 'checkout.session.completed': {
         const session = webhookEvent.data.object as Stripe.Checkout.Session
 

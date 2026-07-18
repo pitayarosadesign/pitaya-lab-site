@@ -63,6 +63,7 @@
               <th class="px-4 py-3 text-left font-medium text-gray-500">SKU</th>
               <th class="px-4 py-3 text-left font-medium text-gray-500">Precio</th>
               <th class="px-4 py-3 text-left font-medium text-gray-500">Stock</th>
+              <th class="px-4 py-3 text-center font-medium text-gray-500">⭐</th>
               <th class="px-4 py-3 text-left font-medium text-gray-500">Estado</th>
               <th class="px-4 py-3 text-right font-medium text-gray-500">Acciones</th>
             </tr>
@@ -351,5 +352,62 @@ onMounted(() => {
 
 function formatPrice(price) {
   return Number(price).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+async function duplicateProduct(product) {
+  if (!confirm(`¿Duplicar "${product.name}"? Se creará una copia con el sufijo "(copia)"`)) return
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .insert({
+        name: `${product.name} (copia)`,
+        slug: `${product.slug}-copia-${Date.now()}`,
+        sku: product.sku ? `${product.sku}-COPY` : null,
+        subtitle: product.subtitle,
+        description: product.description,
+        long_description: product.long_description,
+        price: product.price,
+        compare_at_price: product.compare_at_price,
+        cost: product.cost,
+        stock: product.stock || 0,
+        category: product.category,
+        category_slug: product.category_slug,
+        image: product.image,
+        images: product.images,
+        is_active: false,
+        is_featured: false,
+        amazon_link: product.amazon_link,
+        amazon_asin: product.amazon_asin,
+        amazon_price: product.amazon_price,
+        weight_kg: product.weight_kg,
+        length_cm: product.length_cm,
+        width_cm: product.width_cm,
+        height_cm: product.height_cm,
+        requires_shipping: product.requires_shipping,
+        free_shipping: product.free_shipping,
+        gtin: product.gtin,
+        brand: product.brand,
+      })
+
+    if (error) throw error
+    await loadProducts()
+    alert(`✅ "${product.name}" duplicado correctamente`)
+  } catch (e) {
+    alert('Error al duplicar: ' + e.message)
+  }
+}
+
+async function toggleFeatured(product) {
+  try {
+    const { error } = await supabase
+      .from('products')
+      .update({ is_featured: !product.is_featured })
+      .eq('id', product.id)
+
+    if (error) throw error
+    product.is_featured = !product.is_featured
+  } catch (e) {
+    alert('Error al cambiar destacado: ' + e.message)
+  }
 }
 </script>
