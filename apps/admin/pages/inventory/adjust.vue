@@ -237,7 +237,7 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
-}
+})
 
 // Agregar loading ref si no existe
 const loading = ref(false)

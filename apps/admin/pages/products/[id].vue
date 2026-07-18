@@ -343,41 +343,13 @@ function fileToBase64(file) {
 async function duplicateHere() {
   if (!confirm(`¿Duplicar "${product.value.name}"?`)) return
   try {
-    const { error } = await supabase
-      .from('products')
-      .insert({
-        name: `${form.name} (copia)`,
-        slug: `${form.slug}-copia-${Date.now()}`,
-        sku: form.sku ? `${form.sku}-COPY` : null,
-        subtitle: product.value.subtitle,
-        description: form.description,
-        long_description: product.value.long_description,
-        price: parseFloat(form.price),
-        compare_at_price: form.compare_at_price ? parseFloat(form.compare_at_price) : null,
-        cost: product.value.cost,
-        stock: parseInt(form.stock) || 0,
-        category: product.value.category,
-        category_slug: product.value.category_slug,
-        image: product.value.image,
-        images: product.value.images,
-        is_active: false,
-        is_featured: false,
-        amazon_link: form.amazon_link || null,
-        amazon_asin: form.amazon_asin || null,
-        amazon_price: product.value.amazon_price,
-        weight_kg: product.value.weight_kg,
-        length_cm: product.value.length_cm,
-        width_cm: product.value.width_cm,
-        height_cm: product.value.height_cm,
-        requires_shipping: product.value.requires_shipping,
-        free_shipping: form.free_shipping,
-        gtin: form.gtin || null,
-        brand: product.value.brand,
-      })
-    if (error) throw error
+    await $fetch('/api/products/duplicate', {
+      method: 'POST',
+      body: { id: route.params.id },
+    })
     alert('✅ Producto duplicado. Ve a la lista para editarlo.')
   } catch (e) {
-    alert('Error al duplicar: ' + e.message)
+    alert('Error al duplicar: ' + (e.data?.message || e.message))
   }
 }
 
