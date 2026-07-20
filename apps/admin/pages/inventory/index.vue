@@ -190,7 +190,8 @@
           <!-- Nota -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Nota (opcional):</label>
-            <textarea v-model="transferNote" rows="2" placeholder="Ej: Exhibición por temporada..." class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+            <textarea v-model="transferNote" row
+              s="2" placeholder="Ej: Exhibición por temporada..." class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
           </div>
         </div>
         <div class="p-6 border-t border-gray-100 flex items-center justify-end gap-3">
@@ -358,6 +359,24 @@ async function executeTransfer() {
     for (const mov of movements) {
       await $fetch('/api/inventory/adjust', { method: 'POST', body: mov })
     }
+
+    // Generar PDF
+    const locName = transferToLocation.value === 'almacen_central'
+      ? 'Almacén Central'
+      : locations.value.find(l => l.id === transferToLocation.value)?.name || transferToLocation.value
+
+    generateTransferPdf({
+      movements: movements.map(m => ({
+        productName: inventory.value.find(i => i.id === m.product_id)?.name || m.product_id,
+        sku: inventory.value.find(i => i.id === m.product_id)?.sku || '',
+        quantity: m.quantity,
+        note: m.note || undefined,
+      })),
+      toLocationName: locName,
+      reason: transferReason.value,
+      note: transferNote.value || undefined,
+      date: new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' }),
+    })
 
     alert(`✅ ${movements.length} producto(s) transferido(s) correctamente`)
     showTransferModal.value = false

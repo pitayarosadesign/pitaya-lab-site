@@ -47,51 +47,49 @@
           </div>
         </div>
 
-        <NuxtLink :to="`/inventory/adjust?product=&location=${store.id}`"
+        <NuxtLink to="/inventory"
           class="block w-full text-center mt-4 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors">
-          + Transferir inventario aquí
+          Ir a inventario
         </NuxtLink>
       </div>
 
-      <!-- Inventario en este showroom -->
+      <!-- Historial de transferencias y ventas -->
       <div class="lg:col-span-2 space-y-6">
+        <!-- Vales de transferencia -->
         <div class="bg-white rounded-2xl border border-gray-200 p-6">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wider">📦 Inventario en este showroom</h2>
-            <button @click="exportCSV" class="text-xs text-primary-600 hover:text-primary-700 font-medium">📥 Exportar CSV</button>
+            <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wider">📋 Vales de Transferencia</h2>
           </div>
 
-          <div v-if="inventory.length === 0" class="text-center py-8 text-gray-400">
-            <p class="text-sm">No hay productos asignados a este showroom</p>
+          <div v-if="transfers.length === 0" class="text-center py-8 text-gray-400">
+            <p class="text-sm">No hay transferencias registradas a este showroom</p>
           </div>
-          <table v-else class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-gray-100">
-                <th class="text-left pb-3 font-medium text-gray-500">Producto</th>
-                <th class="text-center pb-3 font-medium text-gray-500">SKU</th>
-                <th class="text-center pb-3 font-medium text-gray-500">Stock aquí</th>
-                <th class="text-center pb-3 font-medium text-gray-500">Stock total</th>
-                <th class="text-right pb-3 font-medium text-gray-500">Acción</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in inventory" :key="item.product_id" class="border-b border-gray-50">
-                <td class="py-3 text-gray-900 font-medium">{{ item.product?.name || '—' }}</td>
-                <td class="py-3 text-center text-xs font-mono text-gray-500">{{ item.product?.sku || '—' }}</td>
-                <td class="py-3 text-center">
-                  <span class="font-bold" :class="{'text-green-600': item.stock > 5, 'text-yellow-600': item.stock <= 5 && item.stock > 0, 'text-red-600': item.stock <= 0}">
-                    {{ item.stock }}
-                  </span>
-                </td>
-                <td class="py-3 text-center text-gray-500">{{ item.product?.stock || 0 }}</td>
-                <td class="py-3 text-right">
-                  <NuxtLink :to="`/inventory/adjust?product=${item.product_id}`" class="text-xs text-primary-600 hover:text-primary-700 font-medium">
-                    Ajustar
-                  </NuxtLink>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div v-else class="space-y-3">
+            <div v-for="group in transfers" :key="group.id"
+              class="p-4 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors"
+            >
+              <div class="flex items-start justify-between">
+                <div class="flex items-start gap-3">
+                  <span class="text-xl mt-0.5">{{ reasonIcon(group.reason) }}</span>
+                  <div>
+                    <p class="text-sm font-medium text-gray-900">{{ reasonLabel(group.reason) }}</p>
+                    <p class="text-xs text-gray-500">{{ formatDate(group.date) }} • {{ group.totalQty }} pieza(s) • {{ group.products.length }} producto(s)</p>
+                    <p v-if="group.note" class="text-xs text-gray-400 mt-0.5">{{ group.note }}</p>
+                    <div class="flex flex-wrap gap-1.5 mt-2">
+                      <span v-for="p in group.products" :key="p.name"
+                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-50 text-xs text-gray-600 border border-gray-200"
+                      >
+                        {{ p.name }} × {{ p.quantity }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <button @click="downloadVale(group)" class="text-xs bg-primary-50 hover:bg-primary-100 text-primary-700 px-2.5 py-1 rounded-lg font-medium transition-colors flex-shrink-0">
+                  📄 Vale
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Ventas recientes -->
@@ -137,7 +135,7 @@ const route = useRoute()
 
 const loading = ref(true)
 const store = ref(null)
-const inventory = ref([])
+const transfers = ref([])
 const sales = ref([])
 
 function typeLabel(type) {
@@ -150,33 +148,43 @@ function typeIcon(type) {
   return icons[type] || '🏪'
 }
 
+function reasonIcon(reason) {
+  const icons = { exhibition: '🎯', sale: '🛒', sample: '🎁', transfer: '📦' }
+  return icons[reason] || '📋'
+}
+
+function reasonLabel(reason) {
+  const labels = { exhibition: 'Exhibición / Muestrario', sale: 'Venta en showroom', sample: 'Cortesía / Muestra', transfer: 'Transferencia general' }
+  return labels[reason] || reason
+}
+
 function formatDate(date) {
-  return new Date(date).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })
+  return new Date(date).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 function formatPrice(price) {
   return Number(price || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })
 }
 
-function exportCSV() {
-  let csv = 'Producto,SKU,Stock aquí,Stock total\n'
-  for (const item of inventory.value) {
-    csv += `"${item.product?.name || ''}","${item.product?.sku || ''}",${item.stock},${item.product?.stock || 0}\n`
-  }
-  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `inventario-${store.value?.location_code || store.value?.id}-${new Date().toISOString().split('T')[0]}.csv`
-  a.click()
-  URL.revokeObjectURL(url)
+function downloadVale(group) {
+  generateTransferPdf({
+    movements: group.products.map(p => ({
+      productName: p.name,
+      sku: p.sku || '',
+      quantity: p.quantity,
+    })),
+    toLocationName: store.value?.name || 'Showroom',
+    reason: group.reason,
+    note: group.note || undefined,
+    date: new Date(group.date).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' }),
+  })
 }
 
 onMounted(async () => {
   try {
     const data = await $fetch(`/api/commerce/detail?id=${route.params.id}`)
     store.value = data.store
-    inventory.value = data.inventory || []
+    transfers.value = data.transfers || []
     sales.value = data.sales || []
   } catch (e) {
     console.error('Error:', e)
