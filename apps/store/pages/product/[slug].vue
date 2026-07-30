@@ -403,6 +403,67 @@ useSeoMeta({
   ogImage: activeImage,
 })
 
+// 🏷️ JSON-LD Product Schema para Google Rich Results
+const productSchema = computed(() => {
+  if (!product.value) return null
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: `${product.value.name}${product.value.subtitle ? ' – ' + product.value.subtitle : ''}`,
+    description: product.value.description || product.value.name,
+    sku: product.value.sku || undefined,
+    gtin: product.value.gtin || undefined,
+    mpn: product.value.sku || undefined,
+    brand: {
+      '@type': 'Brand',
+      name: product.value.brand || 'PITAYA LAB',
+    },
+    image: product.value.image || undefined,
+    offers: {
+      '@type': 'Offer',
+      url: `https://pitayalab.com/product/${route.params.slug}`,
+      priceCurrency: 'MXN',
+      price: product.value.price || 0,
+      availability: product.value.stock > 0
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock',
+      hasMerchantReturnPolicy: {
+        '@type': 'MerchantReturnPolicy',
+        applicableCountry: 'MX',
+        returnPolicyCategory: 'https://schema.org/MerchantReturnUnspecified',
+      },
+      shippingDetails: {
+        '@type': 'OfferShippingDetails',
+        shippingDestination: {
+          '@type': 'DefinedRegion',
+          addressCountry: 'MX',
+        },
+        shippingRate: {
+          '@type': 'MonetaryAmount',
+          value: product.value.freeShipping ? '0' : '75',
+          currency: 'MXN',
+        },
+      },
+    },
+    ...(product.value.variants?.length > 0 ? {
+      additionalProperty: product.value.variants.map(v => ({
+        '@type': 'PropertyValue',
+        name: 'Aroma',
+        value: v.name,
+      })),
+    } : {}),
+  }
+})
+
+useHead({
+  script: [
+    {
+      type: 'application/ld+json',
+      children: computed(() => JSON.stringify(productSchema.value, null, 2)),
+    },
+  ],
+})
+
 onMounted(() => {
   loadProduct()
 })

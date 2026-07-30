@@ -19,7 +19,7 @@ import FooterSection from '~/components/FooterSection.vue'
 
 useHead({
   meta: [
-    { name: 'p:domain_verify', content: 'd1f4d6f02a0cc071ee113b862fd17940' }
+    // p:domain_verify manejado en plugins/pinterest-verify.ts
   ]
 })
 </script>

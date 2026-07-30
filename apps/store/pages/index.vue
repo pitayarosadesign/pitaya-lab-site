@@ -344,6 +344,53 @@ async function loadProducts() {
 const scentsWithImages = computed(() => SCENTS.value.filter(s => s.image))
 const scentsWithoutImages = computed(() => SCENTS.value.filter(s => !s.image))
 
+// 🏷️ JSON-LD Schema para SEO - Organization
+const schemaOrg = computed(() => ({
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'PITAYA LAB',
+  url: 'https://pitayalab.com',
+  logo: 'https://pitayalab.com/images/brand/logo-pitayalab.png',
+  description: 'Velas de soya perfumadas, aceites aromáticos y brumas ecológicas.',
+  sameAs: [
+    'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329',
+  ],
+}))
+
+// 🏷️ JSON-LD Store schema con productos
+const siteSchema = computed(() => ({
+  '@context': 'https://schema.org',
+  '@type': 'Store',
+  name: 'PITAYA LAB',
+  description: 'Productos botánicos biodegradables que transforman tu hogar con exquisitas fragancias.',
+  url: 'https://pitayalab.com',
+  image: 'https://pitayalab.com/images/brand/logo-pitayalab.png',
+  email: 'contacto@pitayalab.com.mx',
+  areaServed: { '@type': 'Country', name: 'MX' },
+  makesOffer: featuredProducts.value.slice(0, 4).map(p => ({
+    '@type': 'Offer',
+    name: p.name,
+    description: p.description,
+    price: p.price,
+    priceCurrency: 'MXN',
+    url: `https://pitayalab.com/product/${p.slug}`,
+    availability: 'https://schema.org/InStock',
+  })),
+}))
+
+useHead({
+  script: [
+    {
+      type: 'application/ld+json',
+      children: computed(() => JSON.stringify(schemaOrg.value, null, 2)),
+    },
+    {
+      type: 'application/ld+json',
+      children: computed(() => JSON.stringify(siteSchema.value, null, 2)),
+    },
+  ],
+})
+
 onMounted(async () => {
   await Promise.all([loadConfig(), loadProducts()])
 })

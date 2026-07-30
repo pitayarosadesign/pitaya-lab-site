@@ -17,7 +17,7 @@ export default defineNuxtConfig({
       meta: [
         { name: 'description', content: 'Descubre PITAYA LAB: velas de soya perfumadas, aceites aromáticos para difusores y brumas aromáticas ecológicas. Productos botánicos biodegradables que transforman tu hogar con fragancias inspiradas en la naturaleza y hoteles de lujo.' },
         { name: 'keywords', content: 'velas de soya, aceites aromáticos, brumas aromáticas, aromatizantes naturales, Pitaya Lab, productos biodegradables, fragancias para hogar, Xcaret, Vidanta, Solara, Maderas del Edén' },
-        { name: 'p:domain_verify', content: 'd1f4d6f02a0cc071ee113b862fd17940' },
+        // p:domain_verify manejado en plugins/pinterest-verify.ts
         { property: 'og:title', content: 'PITAYA LAB | Velas de Soya, Aceites Aromáticos y Brumas Ecológicas' },
         { property: 'og:description', content: 'Productos botánicos biodegradables que transforman tu hogar con exquisitas fragancias. Velas de soya, aceites aromáticos y brumas.' },
         { property: 'og:type', content: 'website' },
@@ -74,6 +74,10 @@ export default defineNuxtConfig({
   routeRules: {
     '/api/checkout/webhook': { redirect: false, seo: { redirectToCanonical: false } },
     '/api/checkout/webhook/': { redirect: false, seo: { redirectToCanonical: false } },
+    // Alias para feeds
+    '/sitemap.xml': { redirect: '/api/seo/sitemap.xml' },
+    '/merchant-feed.xml': { redirect: '/api/merchant/feed.xml' },
+    '/meta-catalog.json': { redirect: '/api/meta/catalog.json' },
   },
 
   // 🖼️ OG Image - Desactiva la generación dinámica (cero warnings)
@@ -85,5 +89,26 @@ export default defineNuxtConfig({
     prerender: {
       routes: ['/', '/about', '/philosophy', '/catalog']
     }
+  },
+
+  robots: [
+    {
+      UserAgent: '*',
+      Allow: '/',
+      Disallow: ['/checkout/', '/api/'],
+    },
+    {
+      UserAgent: 'Googlebot',
+      Allow: '/',
+    },
+  ],
+
+  sitemap: {
+    hostname: 'https://pitayalab.com',
+    gzip: true,
+    defaults: {
+      changefreq: 'weekly',
+      priority: 0.5,
+    },
   }
 })

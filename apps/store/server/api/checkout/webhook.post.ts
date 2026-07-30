@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const stripe = new Stripe(config.stripeSecretKey, {
-    apiVersion: '2025-03-31.preview',
+    apiVersion: '2023-10-16',
   })
 
   const resend = new Resend(config.resendApiKey || '')
