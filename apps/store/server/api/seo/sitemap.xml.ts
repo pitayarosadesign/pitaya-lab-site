@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
     auth: { persistSession: false, autoRefreshToken: false }
   })
 
-  const BASE_URL = 'https://pitayalab.com'
+  const BASE_URL = 'https://www.pitayalab.com.mx'
 
   // Páginas estáticas
   const staticPages = [

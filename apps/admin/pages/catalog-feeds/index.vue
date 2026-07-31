@@ -18,7 +18,7 @@
         <div class="bg-gray-50 rounded-xl p-4 space-y-2">
           <p class="text-sm font-medium text-gray-700">URL del Feed</p>
           <code class="block bg-white border border-gray-200 rounded-lg px-4 py-3 text-sm font-mono text-primary-600 break-all select-all">
-            https://pitayalab.com/merchant-feed.xml
+            https://www.pitayalab.com.mx/merchant-feed.xml
           </code>
           <p class="text-xs text-gray-400">Usa esta URL en Google Merchant Center → Productos → Feeds</p>
         </div>
@@ -49,7 +49,7 @@
         <div class="bg-gray-50 rounded-xl p-4 space-y-2">
           <p class="text-sm font-medium text-gray-700">URL del Feed</p>
           <code class="block bg-white border border-gray-200 rounded-lg px-4 py-3 text-sm font-mono text-primary-600 break-all select-all">
-            https://pitayalab.com/meta-catalog.json
+            https://www.pitayalab.com.mx/meta-catalog.json
           </code>
           <p class="text-xs text-gray-400">Usa esta URL en Meta Commerce Manager → Catálogo → Fuente de datos</p>
         </div>

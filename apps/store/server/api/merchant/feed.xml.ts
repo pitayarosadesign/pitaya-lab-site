@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
 
     if (error) throw error
 
-    const BASE_URL = 'https://pitayalab.com'
+    const BASE_URL = 'https://www.pitayalab.com.mx'
 
     // Generar XML del feed
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`
@@ -51,6 +51,7 @@ export default defineEventHandler(async (event) => {
       const imageLink = primaryImage?.url
         ? (primaryImage.url.startsWith('http') ? primaryImage.url : `${BASE_URL}${primaryImage.url}`)
         : `${BASE_URL}/images/brand/logo-pitayalab.png`
+
 
       const productUrl = `${BASE_URL}/product/${product.slug}`
 

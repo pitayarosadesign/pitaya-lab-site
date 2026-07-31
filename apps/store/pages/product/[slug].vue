@@ -421,7 +421,7 @@ const productSchema = computed(() => {
     image: product.value.image || undefined,
     offers: {
       '@type': 'Offer',
-      url: `https://pitayalab.com/product/${route.params.slug}`,
+      url: `https://www.pitayalab.com.mx/product/${route.params.slug}`,
       priceCurrency: 'MXN',
       price: product.value.price || 0,
       availability: product.value.stock > 0

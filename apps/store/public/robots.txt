@@ -3,4 +3,4 @@ Allow: /
 Disallow: /checkout/
 Disallow: /api/
 
-Sitemap: https://pitayalab.com/sitemap.xml
+Sitemap: https://www.pitayalab.com.mx/sitemap.xml

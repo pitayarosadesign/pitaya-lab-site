@@ -349,8 +349,8 @@ const schemaOrg = computed(() => ({
   '@context': 'https://schema.org',
   '@type': 'Organization',
   name: 'PITAYA LAB',
-  url: 'https://pitayalab.com',
-  logo: 'https://pitayalab.com/images/brand/logo-pitayalab.png',
+  url: 'https://www.pitayalab.com.mx',
+  logo: 'https://www.pitayalab.com.mx/images/brand/logo-pitayalab.png',
   description: 'Velas de soya perfumadas, aceites aromáticos y brumas ecológicas.',
   sameAs: [
     'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329',
@@ -363,8 +363,8 @@ const siteSchema = computed(() => ({
   '@type': 'Store',
   name: 'PITAYA LAB',
   description: 'Productos botánicos biodegradables que transforman tu hogar con exquisitas fragancias.',
-  url: 'https://pitayalab.com',
-  image: 'https://pitayalab.com/images/brand/logo-pitayalab.png',
+  url: 'https://www.pitayalab.com.mx',
+  image: 'https://www.pitayalab.com.mx/images/brand/logo-pitayalab.png',
   email: 'contacto@pitayalab.com.mx',
   areaServed: { '@type': 'Country', name: 'MX' },
   makesOffer: featuredProducts.value.slice(0, 4).map(p => ({
@@ -373,7 +373,7 @@ const siteSchema = computed(() => ({
     description: p.description,
     price: p.price,
     priceCurrency: 'MXN',
-    url: `https://pitayalab.com/product/${p.slug}`,
+    url: `https://www.pitayalab.com.mx/product/${p.slug}`,
     availability: 'https://schema.org/InStock',
   })),
 }))

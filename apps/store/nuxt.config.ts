@@ -21,7 +21,7 @@ export default defineNuxtConfig({
         { property: 'og:title', content: 'PITAYA LAB | Velas de Soya, Aceites Aromáticos y Brumas Ecológicas' },
         { property: 'og:description', content: 'Productos botánicos biodegradables que transforman tu hogar con exquisitas fragancias. Velas de soya, aceites aromáticos y brumas.' },
         { property: 'og:type', content: 'website' },
-        { property: 'og:url', content: 'https://pitayalab.com' },
+        { property: 'og:url', content: 'https://www.pitayalab.com.mx' },
         { name: 'robots', content: 'index, follow' }
       ],
       link: [
@@ -104,7 +104,7 @@ export default defineNuxtConfig({
   ],
 
   sitemap: {
-    hostname: 'https://pitayalab.com',
+    hostname: 'https://www.pitayalab.com.mx',
     gzip: true,
     defaults: {
       changefreq: 'weekly',

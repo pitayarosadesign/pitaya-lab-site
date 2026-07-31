@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
 
     if (error) throw error
 
-    const BASE_URL = 'https://pitayalab.com'
+    const BASE_URL = 'https://www.pitayalab.com.mx'
     const NOW = new Date().toISOString()
 
     const feed = {
