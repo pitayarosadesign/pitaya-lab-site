@@ -18,9 +18,9 @@
         <div class="bg-gray-50 rounded-xl p-4 space-y-2">
           <p class="text-sm font-medium text-gray-700">URL del Feed</p>
           <code class="block bg-white border border-gray-200 rounded-lg px-4 py-3 text-sm font-mono text-primary-600 break-all select-all">
-            https://www.pitayalab.com.mx/merchant-feed.xml
+            https://www.pitayalab.com.mx/api/merchant/feed.xml
           </code>
-          <p class="text-xs text-gray-400">Usa esta URL en Google Merchant Center → Productos → Feeds</p>
+          <p class="text-xs text-gray-400">Usa esta URL (API directo, sin redirect) en Google Merchant Center → Productos → Feeds</p>
         </div>
         <div class="flex items-center gap-2 text-sm text-gray-500">
           <span class="w-2 h-2 rounded-full bg-green-500"></span>
@@ -49,9 +49,9 @@
         <div class="bg-gray-50 rounded-xl p-4 space-y-2">
           <p class="text-sm font-medium text-gray-700">URL del Feed</p>
           <code class="block bg-white border border-gray-200 rounded-lg px-4 py-3 text-sm font-mono text-primary-600 break-all select-all">
-            https://www.pitayalab.com.mx/meta-catalog.json
+            https://www.pitayalab.com.mx/api/meta/catalog.json
           </code>
-          <p class="text-xs text-gray-400">Usa esta URL en Meta Commerce Manager → Catálogo → Fuente de datos</p>
+          <p class="text-xs text-gray-400">Usa esta URL (API directo, sin redirect) en Meta Commerce Manager → Catálogo → Fuente de datos</p>
         </div>
         <a
           href="https://business.facebook.com/commerce"
@@ -141,15 +141,25 @@ onMounted(async () => {
   try {
     const { data } = await supabase
       .from('products')
-      .select('id, name, sku, price, is_active, slug')
+      .select('id, name, sku, price, is_active, slug, product_images(url, is_primary)')
       .eq('is_active', true)
       .order('sort_order', { ascending: true })
 
     if (data) {
-      products.value = data.map(p => ({
-        ...p,
-        image: null, // Se podría enriquecer con JOIN a product_images
-      }))
+      products.value = data.map(p => {
+        // Buscar imagen primaria, si no, la primera
+        const images = p.product_images || []
+        const primary = images.find(img => img.is_primary) || images[0]
+        return {
+          id: p.id,
+          name: p.name,
+          sku: p.sku,
+          price: p.price,
+          is_active: p.is_active,
+          slug: p.slug,
+          image: primary?.url || null,
+        }
+      })
     }
   } catch (e) {
     console.error('Error cargando productos:', e)
