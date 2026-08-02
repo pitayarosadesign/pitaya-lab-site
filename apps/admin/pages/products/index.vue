@@ -7,6 +7,9 @@
         <span class="text-sm text-gray-400">({{ products.length }} total — {{ inactiveCount }} inactivos)</span>
       </div>
       <div class="flex items-center gap-3">
+        <button @click="exportCSV" :disabled="exporting" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-primary-200 text-primary-700 hover:bg-primary-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          {{ exporting ? '⏳ Generando...' : '⬇️ Exportar CSV' }}
+        </button>
         <button @click="showImportModal = true" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-colors">
           📥 Importar CSV
         </button>
@@ -194,6 +197,9 @@ const importing = ref(false)
 const importResult = ref(null)
 const templateCsvUrl = ref('')
 
+// Exportación CSV
+const exporting = ref(false)
+
 // Productos filtrados
 const filteredProducts = computed(() => {
   let result = products.value
@@ -266,6 +272,28 @@ function confirmDelete() {
   if (selectedIds.value.length === 0) return
   if (confirm(`⚠️ ¿Eliminar permanentemente ${selectedIds.value.length} producto(s)? Esta acción no se puede deshacer.`)) {
     batchAction('delete')
+  }
+}
+
+// Exportación CSV con toda la información
+async function exportCSV() {
+  exporting.value = true
+  try {
+    const response = await $fetch.raw('/api/products/export')
+    const csv = response.data ?? response._data
+
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `productos-pitayalab-${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    console.error('Error exportando CSV:', e)
+    alert('Error al exportar CSV: ' + (e.data?.message || e.message))
+  } finally {
+    exporting.value = false
   }
 }
 

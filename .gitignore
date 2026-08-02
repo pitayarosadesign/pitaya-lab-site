@@ -21,3 +21,8 @@ apps/admin/.output
 # System files
 Users/
 packages/
+
+# Archivos temporales de plantillas (no versionar)
+Publicar-*.xlsx
+*.csv
+/tmp/
