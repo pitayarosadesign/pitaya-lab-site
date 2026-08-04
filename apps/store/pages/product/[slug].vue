@@ -157,19 +157,6 @@
                 {{ product.stock === 0 ? 'Agotado' : 'Agregar al carrito' }}
               </button>
 
-              <!-- Comprar en Amazon -->
-              <a
-                v-if="product.amazonLink"
-                :href="product.amazonLink"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3.5 px-6 rounded-2xl transition-all hover:shadow-lg hover:shadow-amber-200"
-              >
-                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M13.483 0a1.374 1.374 0 0 0-.961.438L7.116 6.226l-3.854 4.126a1.375 1.375 0 0 0 0 1.994l2.414 2.585a1.375 1.375 0 0 0 1.994 0l3.779-3.788-3.787 3.787-2.414-2.585a1.374 1.374 0 0 1 0-1.994l3.705-3.964 3.675-3.675a1.375 1.375 0 0 0-.044-1.92A1.374 1.374 0 0 0 13.483 0zm-1.587 2.585-3.673 3.675 3.673 3.675h7.252v-1.53h-5.733l-2.358-2.585 2.358-2.585h5.733v-1.53h-7.252z"/>
-                </svg>
-                Comprar en Amazon México
-              </a>
             </div>
 
             <!-- Características -->

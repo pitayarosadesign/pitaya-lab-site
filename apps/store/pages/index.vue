@@ -205,7 +205,67 @@
       </div>
     </section>
 
-    <!-- CTA Final -->
+    <!-- ⭐ Sección de Reseñas -->
+    <section class="py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-14">
+          <span class="text-amber-600 font-semibold text-sm uppercase tracking-wider">Reseñas</span>
+          <h2 class="text-3xl md:text-4xl font-serif font-bold text-earth-900 mt-2 mb-4">
+            Lo que dicen nuestros clientes
+          </h2>
+          <p class="text-earth-600 max-w-2xl mx-auto">
+            Opiniones reales de quienes ya disfrutan PITAYA LAB
+          </p>
+        </div>
+
+        <!-- Grid de reseñas -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div
+            v-for="review in reviews"
+            :key="review.id"
+            class="bg-white rounded-2xl border border-earth-100 shadow-sm hover:shadow-lg transition-all overflow-hidden flex flex-col"
+          >
+            <!-- Foto de la reseña -->
+            <div v-if="review.image" class="aspect-[4/3] overflow-hidden bg-earth-50">
+              <img
+                :src="review.image"
+                :alt="`Reseña de ${review.author}`"
+                class="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </div>
+
+            <div class="p-6 flex flex-col flex-grow">
+              <!-- Estrellas -->
+              <div class="flex items-center gap-1 mb-3">
+                <svg v-for="n in 5" :key="n" class="w-4 h-4" :class="n <= review.rating ? 'text-amber-400' : 'text-earth-200'" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                </svg>
+                <span class="text-xs text-earth-400 ml-1">{{ review.rating }}.0</span>
+              </div>
+
+              <!-- Texto de la reseña -->
+              <p class="text-earth-600 text-sm leading-relaxed flex-grow mb-4">
+                "{{ review.text }}"
+              </p>
+
+              <!-- Autor -->
+              <div class="flex items-center gap-3 pt-4 border-t border-earth-100">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary-100 to-amber-100 flex items-center justify-center text-primary-700 font-bold text-sm flex-shrink-0">
+                  {{ review.author.charAt(0) }}
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-earth-800">{{ review.author }}</p>
+                  <p class="text-xs text-earth-400">{{ review.product }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Final (Amazon como respaldo) -->
     <section class="py-20 bg-gradient-to-r from-primary-900 to-earth-900">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 class="text-3xl md:text-4xl font-serif font-bold text-white mb-4">
@@ -258,6 +318,34 @@ const brandValues = ref(staticBrandValues)
 
 const AMAZON_LINK = ref('https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329?')
 
+// ⭐ Reseñas de clientes (gestionadas desde el panel admin)
+const reviews = ref([
+  {
+    id: 1,
+    author: 'María F.',
+    rating: 5,
+    product: 'Bruma Aromática Solara',
+    text: 'El aroma es increíble, dura muchísimo y el empaque es precioso. Llegó muy bien protegido y rápido. Definitivamente volveré a comprar.',
+    image: null,
+  },
+  {
+    id: 2,
+    author: 'Carlos R.',
+    rating: 5,
+    product: 'Vela de Soya Sandalo',
+    text: 'La vela huele espectacular, se siente la calidad de la cera de soya. La flama es estable y dura muchas horas. Muy recomendada.',
+    image: null,
+  },
+  {
+    id: 3,
+    author: 'Ana G.',
+    rating: 5,
+    product: 'Aceite Aromático Xcaret',
+    text: 'Me encanta este aceite, el aroma es fresco y relajante. Unas gotitas en el difusor y toda la casa huele increíble. Excelente producto.',
+    image: null,
+  },
+])
+
 // Cargar configuración dinámica
 async function loadConfig() {
   if (!supabase) return
@@ -275,6 +363,9 @@ async function loadConfig() {
         else if (item.key === 'cta_section') {
           Object.assign(siteConfig.cta_section, item.value)
           if (item.value?.button_link) AMAZON_LINK.value = item.value.button_link
+        }
+        else if (item.key === 'reviews' && item.value?.items?.length) {
+          reviews.value = item.value.items.map((r, i) => ({ ...r, id: i + 1 }))
         }
       })
     }

@@ -156,6 +156,69 @@
       </div>
     </div>
 
+    <!-- ⭐ Sección de Reseñas -->
+    <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900">⭐ Reseñas de Clientes</h2>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" v-model="config.reviews.enabled" class="sr-only peer">
+          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+          <span class="ms-3 text-sm font-medium text-gray-600">{{ config.reviews.enabled ? 'Activo' : 'Inactivo' }}</span>
+        </label>
+      </div>
+      <p class="text-sm text-gray-400">Aparecen en la página principal, arriba de la sección final de Amazon.</p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Título de la sección</label>
+          <input v-model="config.reviews.title" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Subtítulo</label>
+          <input v-model="config.reviews.subtitle" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+        </div>
+      </div>
+
+      <!-- Lista de reseñas -->
+      <div v-for="(review, index) in config.reviews.items" :key="index" class="p-4 bg-gray-50 rounded-lg space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-700">Reseña {{ index + 1 }}</span>
+          <button @click="config.reviews.items.splice(index, 1)" class="text-red-400 hover:text-red-600 text-xs">Eliminar</button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <input v-model="review.author" type="text" placeholder="Nombre del cliente" class="px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+          <input v-model="review.product" type="text" placeholder="Producto (ej. Bruma Solara)" class="px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-gray-600">Calificación:</span>
+          <select v-model="review.rating" class="px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm">
+            <option :value="5">⭐⭐⭐⭐⭐ 5</option>
+            <option :value="4">⭐⭐⭐⭐ 4</option>
+            <option :value="3">⭐⭐⭐ 3</option>
+            <option :value="2">⭐⭐ 2</option>
+            <option :value="1">⭐ 1</option>
+          </select>
+        </div>
+        <textarea v-model="review.text" rows="3" placeholder="Texto de la reseña" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Foto de la reseña (opcional)</label>
+          <div class="flex items-center gap-3">
+            <div v-if="review.image" class="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0">
+              <img :src="review.image" class="w-full h-full object-cover" />
+            </div>
+            <div class="flex-1">
+              <input type="file" accept="image/png,image/jpeg,image/webp" class="hidden" :ref="el => setFileInputRef(el, index)" @change="onReviewImageSelect($event, index)" />
+              <button type="button" @click="triggerReviewFileInput(index)" class="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+                📷 {{ review.image ? 'Cambiar foto' : 'Subir foto' }}
+              </button>
+              <button v-if="review.image" type="button" @click="review.image = null" class="ml-2 text-xs text-red-400 hover:text-red-600">Quitar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button @click="addReview" class="text-sm text-primary-600 hover:text-primary-700 font-medium">+ Agregar reseña</button>
+    </div>
+
     <!-- 📦 Sección de Confianza -->
     <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
       <div class="flex items-center justify-between">
@@ -245,7 +308,80 @@ const config = reactive({
       { icon: 'clock', title: '3 a 5 días hábiles', description: 'Entregamos a todo México con mensajerías de prestigio' },
     ],
   },
+  reviews: {
+    enabled: true,
+    title: 'Lo que dicen nuestros clientes',
+    subtitle: 'Opiniones reales de quienes ya disfrutan PITAYA LAB',
+    items: [
+      {
+        author: 'María F.',
+        rating: 5,
+        product: 'Bruma Aromática Solara',
+        text: 'El aroma es increíble, dura muchísimo y el empaque es precioso. Llegó muy bien protegido y rápido. Definitivamente volveré a comprar.',
+        image: null,
+      },
+      {
+        author: 'Carlos R.',
+        rating: 5,
+        product: 'Vela de Soya Sandalo',
+        text: 'La vela huele espectacular, se siente la calidad de la cera de soya. La flama es estable y dura muchas horas. Muy recomendada.',
+        image: null,
+      },
+      {
+        author: 'Ana G.',
+        rating: 5,
+        product: 'Aceite Aromático Xcaret',
+        text: 'Me encanta este aceite, el aroma es fresco y relajante. Unas gotitas en el difusor y toda la casa huele increíble. Excelente producto.',
+        image: null,
+      },
+    ],
+  },
 })
+
+// Referencias a inputs de archivo para reseñas
+const reviewFileInputs = ref({})
+
+function setFileInputRef(el, index) {
+  if (el) reviewFileInputs.value[index] = el
+}
+
+function triggerReviewFileInput(index) {
+  reviewFileInputs.value[index]?.click()
+}
+
+async function onReviewImageSelect(event, index) {
+  const file = event.target.files?.[0]
+  if (!file) return
+
+  try {
+    // Convertir a base64
+    const base64 = await fileToBase64(file)
+    // Guardar la imagen como data URL (se guarda en site_config)
+    config.reviews.items[index].image = base64
+  } catch (e) {
+    console.error('Error procesando imagen:', e)
+    alert('Error al procesar la imagen: ' + e.message)
+  }
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = (error) => reject(error)
+  })
+}
+
+function addReview() {
+  config.reviews.items.push({
+    author: '',
+    rating: 5,
+    product: '',
+    text: '',
+    image: null,
+  })
+}
 
 // Computed para manejar couriers como texto separado por comas
 const couriersText = computed({
@@ -267,6 +403,7 @@ async function loadConfig() {
         else if (item.key === 'cta_section') config.cta_section = item.value
         else if (item.key === 'shipping_bar') Object.assign(config.shipping_bar, item.value)
         else if (item.key === 'shipping_trust') Object.assign(config.shipping_trust, item.value)
+        else if (item.key === 'reviews') Object.assign(config.reviews, item.value)
       })
     }
   } catch (e) {
@@ -288,6 +425,7 @@ async function handleSave() {
       { key: 'cta_section', value: config.cta_section },
       { key: 'shipping_bar', value: config.shipping_bar },
       { key: 'shipping_trust', value: config.shipping_trust },
+      { key: 'reviews', value: config.reviews },
     ]
 
     for (const section of sections) {

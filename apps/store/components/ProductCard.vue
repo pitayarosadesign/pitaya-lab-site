@@ -88,21 +88,6 @@
           </svg>
         </button>
 
-        <!-- Botón Amazon (solo icono) -->
-        <a
-          v-if="amazonLink"
-          :href="amazonLink"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="w-12 h-12 flex items-center justify-center rounded-xl border-2 border-amber-300 hover:border-amber-500 bg-amber-50 hover:bg-amber-100 transition-all flex-shrink-0 active:scale-95"
-          :title="'Comprar en Amazon'"
-        >
-          <img
-            src="/images/amazon-tile.svg"
-            alt="Amazon"
-            class="w-6 h-6"
-          />
-        </a>
       </div>
 
       <!-- Toast de confirmación -->
