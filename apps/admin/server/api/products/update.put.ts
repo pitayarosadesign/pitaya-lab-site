@@ -23,12 +23,21 @@ export default defineEventHandler(async (event) => {
 
     // 2. Si hay imágenes nuevas para subir
     if (images && images.length > 0) {
+      // Primero, si alguna imagen es principal, limpiar is_primary de todas las existentes
+      const hasPrimary = images.some(img => img.is_primary)
+      if (hasPrimary) {
+          await supabaseAdmin
+            .from('product_images')
+          .update({ is_primary: false })
+          .eq('product_id', id)
+        }
+
       for (let i = 0; i < images.length; i++) {
         const img = images[i]
 
         if (img._new && img.data) {
           const ext = (img.name || 'image.png').split('.').pop()
-          const filePath = `${id}/${Date.now()}.${ext}`
+          const filePath = `${id}/${Date.now()}-${i}.${ext}`
           const base64Data = img.data.replace(/^data:image\/\w+;base64,/, '')
           const buffer = Buffer.from(base64Data, 'base64')
 
@@ -50,20 +59,33 @@ export default defineEventHandler(async (event) => {
             product_id: id,
             url: publicUrl.publicUrl,
             alt_text: product.name || '',
-            sort_order: 999,
+            sort_order: i,
             is_primary: img.is_primary || false,
           })
-        }
       }
     }
+  }
 
-    // 3. Actualizar is_primary de imágenes existentes
+    // 3. Actualizar is_primary y sort_order de imágenes existentes
     if (images) {
-      for (const img of images) {
+      // Si alguna imagen es principal, limpiar is_primary de todas las existentes
+      const hasPrimary = images.some(img => img.is_primary)
+      if (hasPrimary) {
+        await supabaseAdmin
+          .from('product_images')
+          .update({ is_primary: false })
+          .eq('product_id', id)
+      }
+
+      for (let i = 0; i < images.length; i++) {
+        const img = images[i]
         if (img.id && !img._new) {
           await supabaseAdmin
             .from('product_images')
-            .update({ is_primary: img.is_primary })
+            .update({
+              is_primary: img.is_primary || false,
+              sort_order: i,
+})
             .eq('id', img.id)
         }
       }
@@ -74,3 +96,4 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, message: e.message })
   }
 })
+

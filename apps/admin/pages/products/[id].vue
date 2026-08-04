@@ -129,15 +129,30 @@
         
         <!-- Imágenes existentes -->
         <div v-if="form.images.length > 0" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-3">
-          <div v-for="(img, index) in form.images" :key="img.id || index" class="relative group aspect-square rounded-lg overflow-hidden border border-gray-200" :class="{ 'ring-2 ring-primary-500': img.is_primary }">
-            <img :src="img.url || img.preview" :alt="'Imagen ' + (index + 1)" class="w-full h-full object-cover" />
+          <div
+            v-for="(img, index) in form.images"
+            :key="img.id || index"
+            class="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 cursor-grab active:cursor-grabbing transition-all"
+            :class="{ 'ring-2 ring-primary-500': img.is_primary, 'opacity-50': dragIndex === index }"
+            draggable="true"
+            @dragstart="onDragStart(index)"
+            @dragover.prevent="onDragOver(index)"
+            @dragend="onDragEnd"
+            @drop.prevent="onDrop(index)"
+          >
+            <img :src="img.url || img.preview" :alt="'Imagen ' + (index + 1)" class="w-full h-full object-cover pointer-events-none" />
             <div v-if="img.is_primary" class="absolute top-1 left-1 bg-primary-600 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">Principal</div>
             <button type="button" @click="removeImage(index)" class="absolute top-1 right-1 bg-white/90 text-red-500 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
             <button v-if="!img.is_primary" type="button" @click="setPrimary(index)" class="absolute bottom-1 left-1 right-1 bg-black/60 text-white text-[10px] py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Hacer principal</button>
+            <!-- Indicador de arrastre -->
+            <div class="absolute top-1 left-1/2 -translate-x-1/2 bg-black/50 text-white text-[10px] px-2 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              ⠿ Arrastrar
+            </div>
           </div>
         </div>
+        <p v-if="form.images.length > 1" class="text-xs text-gray-400">💡 Arrastra las imágenes para reordenarlas. La primera será la principal en la tienda.</p>
 
         <!-- Subir nueva -->
         <div class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:border-primary-300 hover:bg-primary-50/30 transition-all cursor-pointer" @click="triggerUpload" @dragover.prevent @drop.prevent="handleDrop">
@@ -258,6 +273,43 @@ async function setPrimary(index) {
   // Quitar primary de todas
   form.images.forEach(i => i.is_primary = false)
   form.images[index].is_primary = true
+}
+
+// Drag & drop para reordenar imágenes
+const dragIndex = ref(null)
+
+function onDragStart(index) {
+  dragIndex.value = index
+}
+
+function onDragOver(index) {
+  // Prevenir default para permitir drop
+}
+
+function onDragEnd() {
+  dragIndex.value = null
+}
+
+function onDrop(targetIndex) {
+  if (dragIndex.value === null || dragIndex.value === targetIndex) {
+    dragIndex.value = null
+    return
+  }
+
+  const from = dragIndex.value
+  const to = targetIndex
+
+  // Mover la imagen
+  const [moved] = form.images.splice(from, 1)
+  form.images.splice(to, 0, moved)
+
+  // Si la imagen movida era la principal, mantenerla como principal
+  // Si no, la primera imagen se convierte en principal si no hay ninguna
+  if (!form.images.some(i => i.is_primary)) {
+    form.images[0].is_primary = true
+  }
+
+  dragIndex.value = null
 }
 
 async function handleSave() {
