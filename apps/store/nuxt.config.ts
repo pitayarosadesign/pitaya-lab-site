@@ -57,6 +57,12 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
   ],
 
+  // Configuración de auto-import de componentes
+  // pathPrefix:false → los componentes en subcarpetas (incl. b2b/) se usan sin prefijo
+  components: [
+    { path: '~/components', pathPrefix: false },
+  ],
+
   vite: {
     plugins: [
       tailwindcss()

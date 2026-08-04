@@ -27,7 +27,8 @@
               <option value="velas">Velas</option>
               <option value="aceites">Aceites</option>
               <option value="brumas">Brumas</option>
-            </select>
+              <option value="recuerdos">Recuerdos / Envases para Eventos</option>
+    </select>
           </div>
         </div>
         <div>

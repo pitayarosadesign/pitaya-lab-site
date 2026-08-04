@@ -31,6 +31,7 @@
           <option value="velas">Velas</option>
           <option value="aceites">Aceites</option>
           <option value="brumas">Brumas</option>
+          <option value="recuerdos">Recuerdos / Envases</option>
         </select>
         <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
           <button @click="filterStatus = ''" class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors" :class="filterStatus === '' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'">Todos</button>

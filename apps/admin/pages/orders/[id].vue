@@ -91,6 +91,39 @@ ue <template>
           <p v-if="order.customer_phone" class="text-sm text-gray-500">{{ order.customer_phone }}</p>
         </div>
 
+        <!-- Info B2B / Evento -->
+        <div v-if="isB2B" class="bg-white rounded-2xl border border-gray-200 p-6">
+          <h3 class="text-sm font-bold text-gray-900 mb-3">
+            {{ order.order_type === 'event' ? '💍 Pedido de Recuerdos' : '📦 Pedido de Mayoreo B2B' }}
+          </h3>
+          <div class="space-y-3 text-sm">
+            <div>
+              <p class="text-xs text-gray-500 uppercase font-medium">Tipo de pedido</p>
+              <p class="text-gray-900 font-medium mt-0.5">{{ orderTypeLabel(order.order_type) }}</p>
+            </div>
+            <div v-if="order.order_type === 'event' && order.event_date">
+              <p class="text-xs text-gray-500 uppercase font-medium">Fecha del evento</p>
+              <p class="text-gray-900 font-medium mt-0.5">{{ formatDate(order.event_date).split(',')[0] }}</p>
+            </div>
+            <div v-if="order.order_type === 'event' && order.custom_design_url">
+              <p class="text-xs text-gray-500 uppercase font-medium">Diseño / etiqueta</p>
+              <p class="text-gray-900 font-medium mt-0.5">{{ order.custom_design_url }}</p>
+            </div>
+            <div v-if="order.order_type === 'event' && order.lead_time_days">
+              <p class="text-xs text-gray-500 uppercase font-medium">Tiempo de fabricación</p>
+              <p class="text-gray-900 font-medium mt-0.5">Hasta {{ order.lead_time_days }} días hábiles</p>
+            </div>
+            <div v-if="order.b2b_discount_percent > 0">
+              <p class="text-xs text-gray-500 uppercase font-medium">Descuento B2B aplicado</p>
+              <p class="text-green-700 font-bold mt-0.5">−{{ order.b2b_discount_percent }}%</p>
+            </div>
+            <div v-if="order.admin_notes">
+              <p class="text-xs text-gray-500 uppercase font-medium">Notas</p>
+              <p class="text-gray-700 mt-0.5">{{ order.admin_notes }}</p>
+            </div>
+          </div>
+        </div>
+
         <!-- Dirección de envío -->
         <div class="bg-white rounded-2xl border border-gray-200 p-6">
           <h3 class="text-sm font-bold text-gray-900 mb-3">🚚 Dirección de envío</h3>
@@ -221,6 +254,10 @@ const shippingAddress = computed(() => {
   return order.value.shipping_address
 })
 
+const isB2B = computed(() =>
+  order.value?.order_type === 'wholesale' || order.value?.order_type === 'event'
+)
+
 onMounted(async () => {
   try {
     const { data } = await supabase
@@ -340,5 +377,10 @@ function paymentLabel(status) {
 
 function paymentBadge(status) {
   return status === 'paid' ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'
+}
+
+function orderTypeLabel(type) {
+  const labels = { retail: 'Retail', wholesale: 'Mayoreo B2B', event: 'Recuerdos/Evento' }
+  return labels[type] || 'Retail'
 }
 </script>

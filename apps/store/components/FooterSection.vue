@@ -34,6 +34,9 @@
               <NuxtLink to="/catalog" class="text-sm text-earth-400 hover:text-amber-400 transition-colors">Catálogo</NuxtLink>
             </li>
             <li>
+              <NuxtLink to="/b2b" class="text-sm text-earth-400 hover:text-amber-400 transition-colors">Mayoreo & Corporativo</NuxtLink>
+            </li>
+            <li>
               <NuxtLink to="/faq" class="text-sm text-earth-400 hover:text-amber-400 transition-colors">Preguntas Frecuentes</NuxtLink>
             </li>
           </ul>

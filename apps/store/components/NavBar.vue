@@ -144,6 +144,7 @@ const navLinks = [
   { path: '/about', label: 'Sobre Nosotros' },
   { path: '/philosophy', label: 'Nuestra Filosofía' },
   { path: '/catalog', label: 'Catálogo' },
+  { path: '/b2b', label: 'Mayoreo & Corporativo' },
 ]
 
 watch(mobileMenuOpen, (val) => {

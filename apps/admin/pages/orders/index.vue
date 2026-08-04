@@ -28,6 +28,15 @@
           <option value="failed">Fallido</option>
           <option value="refunded">Reembolsado</option>
         </select>
+        <select
+          v-model="filterType"
+          class="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400"
+        >
+          <option value="">Todos los tipos</option>
+          <option value="retail">Retail</option>
+          <option value="wholesale">Mayoreo B2B</option>
+          <option value="event">Recuerdos/Evento</option>
+        </select>
       </div>
     </div>
 
@@ -44,6 +53,7 @@
           <tr class="bg-gray-50 border-b border-gray-200">
             <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Pedido</th>
             <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Cliente</th>
+            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tipo</th>
             <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha</th>
             <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
             <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
@@ -65,6 +75,17 @@
             <td class="px-6 py-4">
               <p class="text-sm font-medium text-gray-900">{{ order.customer_name || '—' }}</p>
               <p class="text-xs text-gray-500">{{ order.customer_email }}</p>
+            </td>
+            <td class="px-6 py-4">
+              <span
+                class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium"
+                :class="orderTypeBadge(order.order_type)"
+              >
+                {{ orderTypeEmoji(order.order_type) }} {{ orderTypeLabel(order.order_type) }}
+              </span>
+              <p v-if="order.event_date" class="text-[11px] text-gray-400 mt-1">
+                📅 {{ formatDate(order.event_date).split(',')[0] }}
+              </p>
             </td>
             <td class="px-6 py-4 text-sm text-gray-600">
               {{ formatDate(order.created_at) }}
@@ -117,11 +138,13 @@ const loading = ref(true)
 const orders = ref([])
 const filterStatus = ref('')
 const filterPayment = ref('')
+const filterType = ref('')
 
 const filteredOrders = computed(() => {
   return orders.value.filter(o => {
     if (filterStatus.value && o.status !== filterStatus.value) return false
     if (filterPayment.value && o.payment_status !== filterPayment.value) return false
+    if (filterType.value && (o.order_type || 'retail') !== filterType.value) return false
     return true
   })
 })
@@ -186,5 +209,24 @@ function paymentBadge(status) {
     refunded: 'bg-orange-50 text-orange-700 border border-orange-200',
   }
   return colors[status] || 'bg-gray-50 text-gray-600 border border-gray-200'
+}
+
+function orderTypeLabel(type) {
+  const labels = { retail: 'Retail', wholesale: 'Mayoreo', event: 'Recuerdos/Evento' }
+  return labels[type] || 'Retail'
+}
+
+function orderTypeBadge(type) {
+  const colors = {
+    retail: 'bg-gray-50 text-gray-600 border border-gray-200',
+    wholesale: 'bg-indigo-50 text-indigo-700 border border-indigo-200',
+    event: 'bg-amber-50 text-amber-700 border border-amber-200',
+  }
+  return colors[type] || colors.retail
+}
+
+function orderTypeEmoji(type) {
+  const icons = { retail: '🛍️', wholesale: '📦', event: '💍' }
+  return icons[type] || '🛍️'
 }
 </script>
