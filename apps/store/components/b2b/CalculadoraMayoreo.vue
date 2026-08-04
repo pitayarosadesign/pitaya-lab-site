@@ -26,9 +26,9 @@
 
             <!-- Precio retail y cantidad -->
             <div class="flex items-center gap-2 mb-3">
-              <div class="text-2xl font-bold text-earth-900">${{ formatMXN(prod.qty > 0 ? subTotalFor(prod) / Math.max(prod.qty, 1) : prod.retailPrice) }}</div>
+              <div class="text-2xl font-bold text-earth-900">{{ formatMXN(prod.qty > 0 ? subTotalFor(prod) / Math.max(prod.qty, 1) : prod.retailPrice) }}</div>
             </div>
-            <div class="text-xs text-earth-400 mb-4">Retail ${{ formatMXN(prod.retailPrice) }}</div>
+            <div class="text-xs text-earth-400 mb-4">Retail {{ formatMXN(prod.retailPrice) }}</div>
 
             <!-- Control de cantidad -->
             <div class="flex items-center justify-center gap-2">
@@ -99,15 +99,15 @@
             <div>
               <div class="flex items-center justify-between gap-8 mb-1">
                 <span class="text-earth-500">Subtotal (retail)</span>
-                <span class="text-earth-700 line-through">${{ formatMXN(retailSubtotal) }}</span>
+                <span class="text-earth-700 line-through">{{ formatMXN(retailSubtotal) }}</span>
               </div>
               <div class="flex items-center justify-between gap-8 mb-1">
                 <span class="text-earth-500">Descuento</span>
-                <span class="text-green-600">−${{ formatMXN(retailSubtotal - wholesaleTotal) }}</span>
+                <span class="text-green-600">−{{ formatMXN(retailSubtotal - wholesaleTotal) }}</span>
               </div>
               <div class="flex items-center justify-between gap-8">
                 <span class="font-semibold text-earth-800 text-lg">Total mayoreo</span>
-                <span class="text-3xl font-bold text-earth-900">${{ formatMXN(wholesaleTotal) }}</span>
+                <span class="text-3xl font-bold text-earth-900">{{ formatMXN(wholesaleTotal) }}</span>
               </div>
               <p class="text-xs text-earth-400 mt-1">Precios por mayoreo, IVA no incluido. Envío se cotiza por separado.</p>
             </div>

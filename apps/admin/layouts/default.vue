@@ -94,6 +94,7 @@ const sidebarOpen = ref(false)
 const navItems = [
   { icon: '📊', label: 'Dashboard', to: '/dashboard' },
   { icon: '📦', label: 'Productos', to: '/products' },
+  { icon: '🧴', label: 'Envases Recuerdos', to: '/recuerdo-envases' },
   { icon: '🛒', label: 'Órdenes', to: '/orders' },
   { icon: '👥', label: 'Clientes', to: '/customers' },
   { icon: '📦', label: 'Inventario', to: '/inventory' },

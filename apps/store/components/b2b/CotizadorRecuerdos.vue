@@ -177,7 +177,7 @@
             </div>
             <div class="p-4 rounded-2xl border border-earth-100 bg-earth-50 flex flex-col justify-center">
               <p class="text-sm text-earth-500 mb-1">Precio unitario estimado</p>
-              <p class="text-3xl font-bold text-primary-700">${{ formatMXN(precioUnitario) }}</p>
+              <p class="text-3xl font-bold text-primary-700">{{ formatMXN(precioUnitario) }}</p>
               <p class="text-xs text-earth-400">{{ pricingTier.label }} · {{ pricingTier.min }} a {{ pricingTier.max ? pricingTier.max + ' pzas' : 'pzas+' }}</p>
             </div>
           </div>
@@ -190,7 +190,7 @@
                 <p class="text-xs text-earth-400 mt-1">Caja de regalo individual + bolsa de manta + dije decorativo por recuerdo</p>
               </div>
               <div class="flex items-center gap-3">
-                <span class="text-sm font-semibold text-primary-700">+${{ formatMXN(addonPremium) }}</span>
+                <span class="text-sm font-semibold text-primary-700">+{{ formatMXN(addonPremium) }}</span>
                 <input
                   v-model="form.premiumKit"
                   type="checkbox"
@@ -219,11 +219,11 @@
             </div>
             <div v-if="form.premiumKit" class="flex items-center justify-between text-sm">
               <span class="text-earth-500">Precio unitario (premium)</span>
-              <span class="text-earth-800 font-medium">${{ formatMXN(precioUnitario + addonPremium) }}</span>
+              <span class="text-earth-800 font-medium">{{ formatMXN(precioUnitario + addonPremium) }}</span>
             </div>
             <div class="flex items-center justify-between">
               <span class="font-semibold text-earth-800 text-lg">Total estimado</span>
-              <span class="text-3xl font-bold text-earth-900">${{ formatMXN(totalCotizacion) }}</span>
+              <span class="text-3xl font-bold text-earth-900">{{ formatMXN(totalCotizacion) }}</span>
             </div>
             <p class="text-xs text-earth-400 text-right">Precio estimado sin iva · Incluye etiqueta 5x5</p>
           </div>
@@ -299,24 +299,18 @@ async function loadConfig() {
 onMounted(loadConfig)
 
 // Envases disponibles (nueva línea de recuerdos)
-// ⚠️ IMPORTANTE SOBRE STOCK Y PRECIO:
-// - "stock": disponibilidad que PITAYA LAB ofrece al público (piezas máx. resueltas internamente).
-//   Ajusta este número a tu inventario controlado (p. ej. expones 90 aunque tu proveedor tenga 97).
-// - "precioBase": PRECIO AL PÚBLICO "TODO EN UNO" (envase + fragancia + etiqueta personalizada).
-//   NUNCA revela el costo del envase por separado ni al proveedor.
-// - El NOMBRE COMERCIAL no revela el proveedor (evita "Jasmar de Velasco").
-// - "proveedor_ref" va SOLO como referencia interna (para ti); JAMÁS se muestra al cliente en el sitio.
-const envases = [
+// Se cargan desde Supabase (tabla recuerdo_envases) gestionada en el panel admin.
+// Fallback estático en caso de que no haya conexión o la tabla esté vacía.
+const envases = ref([
   {
     id: 'perfumero-cuadrado-dorado',
     nombre: 'Perfumero Premium',
     descripcion: 'Vidrio cuadrado con atomizador y tapa dorada',
     capacidad: '30 ml',
-    stock: 90, // ← existencias de PITAYA LAB que expones
-    precioBase: 85, // ← precio al público "todo en uno" (30 ml)
+    stock: 90,
+    precioBase: 85,
     image: null,
     emoji: '✨',
-    proveedor_ref: 'https://envasesvelasco.com/products/envase-vidrio-perfumero-cuadrado-jasmar-con-atomizador-y-tapa-de-aluminio',
   },
   {
     id: 'perfumero-cuadrado-dorado-60',
@@ -324,7 +318,7 @@ const envases = [
     descripcion: 'Vidrio cuadrado con atomizador, tapa dorada',
     capacidad: '60 ml',
     stock: 149,
-    precioBase: 115, // ← precio al público "todo en uno" (60 ml)
+    precioBase: 115,
     image: null,
     emoji: '🧴',
   },
@@ -334,7 +328,7 @@ const envases = [
     descripcion: 'Vidrio ámbar con atomizador · clásico y elegante',
     capacidad: '30 ml',
     stock: 120,
-    precioBase: 85, // ← precio al público "todo en uno" (30 ml)
+    precioBase: 85,
     image: null,
     emoji: '🫙',
   },
@@ -344,11 +338,40 @@ const envases = [
     descripcion: 'Vidrio transparente, minimalista',
     capacidad: '50 ml',
     stock: 80,
-    precioBase: 100, // ← precio al público "todo en uno" (50 ml)
+    precioBase: 100,
     image: null,
     emoji: '🧪',
   },
-]
+])
+
+// Cargar envases desde Supabase (gestionados en el panel admin)
+async function loadEnvases() {
+  const supabase = useNuxtApp()?.$supabase
+  if (!supabase) return
+  try {
+    const { data } = await supabase
+      .from('recuerdo_envases')
+      .select('*')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
+
+    if (data?.length) {
+      envases.value = data.map(e => ({
+        id: e.slug,
+        nombre: e.nombre,
+        descripcion: e.descripcion || '',
+        capacidad: e.capacidad || '',
+        stock: e.stock || 0,
+        precioBase: Number(e.precio_base) || 85,
+        image: e.image_url || null,
+        emoji: '🧴',
+      }))
+    }
+  } catch (e) {
+    console.warn('Usando envases por defecto:', e.message)
+  }
+}
+onMounted(loadEnvases)
 
 // Fragancias insignia
 const fragancias = [
@@ -415,7 +438,7 @@ function canAdvance(step) {
 }
 
 // Envase seleccionado
-const envaseSeleccionado = computed(() => envases.find(e => e.id === form.envase) || null)
+const envaseSeleccionado = computed(() => envases.value.find(e => e.id === form.envase) || null)
 
 // Descuento por volumen (porcentaje según cantidad)
 function descuentoPorVolumen(cantidad) {
@@ -474,7 +497,7 @@ function selectTemplate(plantilla) {
 
 // Construir mensaje de WhatsApp
 function buildMessage() {
-  const envase = envases.find(e => e.id === form.envase)?.nombre
+  const envase = envases.value.find(e => e.id === form.envase)?.nombre
   const fragancia = fragancias.find(s => s.id === form.fragancia)?.nombre
   const disenio = form.mododeDiseño === 'template'
     ? plantillas.value.find(p => p.id === form.plantilla)?.name
@@ -500,7 +523,7 @@ function apartarPedido() {
   emit('order', {
     type: 'event',
     cantidad: form.cantidad,
-    envase: envases.find(e => e.id === form.envase),
+    envase: envases.value.find(e => e.id === form.envase),
     fragancia: fragancias.find(s => s.id === form.fragancia),
     disenio: form.mododeDiseño === 'template'
       ? plantillas.value.find(p => p.id === form.plantilla)

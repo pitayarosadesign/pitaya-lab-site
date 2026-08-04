@@ -32,10 +32,10 @@
               <div class="flex justify-between"><span class="text-earth-500">Envase</span><span class="text-earth-800 font-medium">{{ order.envase?.nombre }}</span></div>
               <div class="flex justify-between"><span class="text-earth-500">Fragancia</span><span class="text-earth-800 font-medium">{{ order.fragancia?.nombre }}</span></div>
               <div class="flex justify-between"><span class="text-earth-500">Etiqueta</span><span class="text-earth-800 font-medium">{{ order.disenio?.name }}</span></div>
-              <div class="flex justify-between"><span class="text-earth-500">Cantidad</span><span class="text-earth-800 font-medium">{{ order.cantidad }} pzas a ${{ formatMXN(order.precioUnitario) }}</span></div>
-              <div v-if="order.premiumKit" class="flex justify-between"><span class="text-earth-500">Kit Premium</span><span class="text-earth-800 font-medium">+${{ formatMXN(order.addonPremium) }}/pza</span></div>
+              <div class="flex justify-between"><span class="text-earth-500">Cantidad</span><span class="text-earth-800 font-medium">{{ order.cantidad }} pzas a {{ formatMXN(order.precioUnitario) }}</span></div>
+              <div v-if="order.premiumKit" class="flex justify-between"><span class="text-earth-500">Kit Premium</span><span class="text-earth-800 font-medium">+{{ formatMXN(order.addonPremium) }}/pza</span></div>
               <div v-if="order.eventDate" class="flex justify-between"><span class="text-earth-500">Fecha del evento</span><span class="text-earth-800 font-medium">{{ order.eventDate }}</span></div>
-              <div class="flex justify-between pt-2 border-t border-earth-200"><span class="font-semibold text-earth-800">Total</span><span class="text-xl font-bold text-primary-700">${{ formatMXN(order.total) }}</span></div>
+              <div class="flex justify-between pt-2 border-t border-earth-200"><span class="font-semibold text-earth-800">Total</span><span class="text-xl font-bold text-primary-700">{{ formatMXN(order.total) }}</span></div>
             </div>
           </template>
 
@@ -44,13 +44,13 @@
             <div class="space-y-2 text-sm">
               <div v-for="item in order.items" :key="item.key" class="flex justify-between">
                 <span class="text-earth-500">{{ item.qty }} × {{ item.label }}</span>
-                <span class="text-earth-800 font-medium">${{ formatMXN(item.qty * item.retailPrice) }}</span>
+                <span class="text-earth-800 font-medium">{{ formatMXN(item.qty * item.retailPrice) }}</span>
               </div>
               <div class="flex justify-between pt-2 border-t border-earth-200">
                 <span class="text-earth-500">Total piezas</span>
                 <span class="text-earth-800 font-medium">{{ order.totalPieces }} pzas · −{{ order.discountPercent }}%</span>
               </div>
-              <div class="flex justify-between"><span class="font-semibold text-earth-800">Total mayoreo</span><span class="text-xl font-bold text-primary-700">${{ formatMXN(order.wholesaleTotal) }}</span></div>
+              <div class="flex justify-between"><span class="font-semibold text-earth-800">Total mayoreo</span><span class="text-xl font-bold text-primary-700">{{ formatMXN(order.wholesaleTotal) }}</span></div>
             </div>
           </template>
         </div>
