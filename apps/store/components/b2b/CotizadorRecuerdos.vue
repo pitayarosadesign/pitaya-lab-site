@@ -1,4 +1,4 @@
-<template>
+\<template>
   <div>
     <div class="bg-white rounded-3xl border border-earth-100 shadow-lg overflow-hidden">
       <!-- Header -->
@@ -168,6 +168,12 @@
                 />
               </div>
               <p class="text-xs text-earth-400 mt-2">Mínimo de 30 piezas para pedidos personalizados</p>
+              <p v-if="envaseSeleccionado && form.cantidad > stockDisponible" class="text-xs font-semibold text-red-500 mt-1">
+                ⚠️ Solo tenemos {{ stockDisponible }} piezas disponibles de este envase
+              </p>
+              <p v-else-if="envaseSeleccionado && stockDisponible <= 20" class="text-xs font-semibold text-amber-600 mt-1">
+                🔥 Solo quedan {{ stockDisponible }} piezas de este envase
+              </p>
             </div>
             <div class="p-4 rounded-2xl border border-earth-100 bg-earth-50 flex flex-col justify-center">
               <p class="text-sm text-earth-500 mb-1">Precio unitario estimado</p>
@@ -293,30 +299,54 @@ async function loadConfig() {
 onMounted(loadConfig)
 
 // Envases disponibles (nueva línea de recuerdos)
+// ⚠️ IMPORTANTE SOBRE STOCK Y PRECIO:
+// - "stock": disponibilidad que PITAYA LAB ofrece al público (piezas máx. resueltas internamente).
+//   Ajusta este número a tu inventario controlado (p. ej. expones 90 aunque tu proveedor tenga 97).
+// - "precioBase": PRECIO AL PÚBLICO "TODO EN UNO" (envase + fragancia + etiqueta personalizada).
+//   NUNCA revela el costo del envase por separado ni al proveedor.
+// - El NOMBRE COMERCIAL no revela el proveedor (evita "Jasmar de Velasco").
+// - "proveedor_ref" va SOLO como referencia interna (para ti); JAMÁS se muestra al cliente en el sitio.
 const envases = [
   {
+    id: 'perfumero-cuadrado-dorado',
+    nombre: 'Perfumero Premium',
+    descripcion: 'Vidrio cuadrado con atomizador y tapa dorada',
+    capacidad: '30 ml',
+    stock: 90, // ← existencias de PITAYA LAB que expones
+    precioBase: 85, // ← precio al público "todo en uno" (30 ml)
+    image: null,
+    emoji: '✨',
+    proveedor_ref: 'https://envasesvelasco.com/products/envase-vidrio-perfumero-cuadrado-jasmar-con-atomizador-y-tapa-de-aluminio',
+  },
+  {
+    id: 'perfumero-cuadrado-dorado-60',
+    nombre: 'Perfumero Grain de Riz',
+    descripcion: 'Vidrio cuadrado con atomizador, tapa dorada',
+    capacidad: '60 ml',
+    stock: 149,
+    precioBase: 115, // ← precio al público "todo en uno" (60 ml)
+    image: null,
+    emoji: '🧴',
+  },
+  {
     id: 'frasco-ambar',
-    nombre: 'Frasco Ámbar',
-    descripcion: 'Atomizador negro/dorado · clásico y elegante',
-    capacidad: '30–50 ml',
+    nombre: 'Frasco Ámbar Esencial',
+    descripcion: 'Vidrio ámbar con atomizador · clásico y elegante',
+    capacidad: '30 ml',
+    stock: 120,
+    precioBase: 85, // ← precio al público "todo en uno" (30 ml)
     image: null,
     emoji: '🫙',
   },
   {
-    id: 'botella-apothecary',
-    nombre: 'Botella Apothecary',
-    descripcion: 'Estilo de botica antigua, tapa de corcho',
-    capacidad: '30–50 ml',
-    image: null,
-    emoji: '⚗️',
-  },
-  {
-    id: 'frasco-cilindrico',
-    nombre: 'Frasco Cilíndrico',
+    id: 'perfumero-cilindrico',
+    nombre: 'Perfumero Cilíndrico',
     descripcion: 'Vidrio transparente, minimalista',
-    capacidad: '30–50 ml',
+    capacidad: '50 ml',
+    stock: 80,
+    precioBase: 100, // ← precio al público "todo en uno" (50 ml)
     image: null,
-    emoji: '🧴',
+    emoji: '🧪',
   },
 ]
 
@@ -384,22 +414,41 @@ function canAdvance(step) {
   return form.cantidad >= config.min_pieces
 }
 
-// Precio unitario según volumen
+// Envase seleccionado
+const envaseSeleccionado = computed(() => envases.find(e => e.id === form.envase) || null)
+
+// Descuento por volumen (porcentaje según cantidad)
+function descuentoPorVolumen(cantidad) {
+  if (cantidad >= 101) return 0.25 // 25% dto
+  if (cantidad >= 51) return 0.15 // 15% dto
+  if (cantidad >= 30) return 0.05 // 5% dto
+  return 0
+}
+
+// Precio unitario "todo en uno" según envase + volumen
 const precioUnitario = computed(() => {
-  if (form.cantidad <= 0) return config.pricing_by_volume[0].price_from
-  const { priceFrom, priceTo } = getRecuerdoPricing(form.cantidad, config.pricing_by_volume)
-  // Usamos el precio medio del rango como referencia (precio base de factoría)
-  return Math.round((priceFrom + priceTo) / 2)
+  const base = envaseSeleccionado.value?.precioBase || 85
+  if (form.cantidad <= 0) return base
+  const dto = descuentoPorVolumen(form.cantidad)
+  return Math.round(base * (1 - dto))
 })
 
 // Precio unitario + addon premium (rango medio)
 const addonPremium = computed(() => Math.round((config.premium_kit_addon_from + config.premium_kit_addon_to) / 2))
 
-const pricingTier = computed(() => getRecuerdoPricing(form.cantidad || 30, config.pricing_by_volume).tier)
+const pricingTier = computed(() => {
+  const c = form.cantidad || 30
+  if (c >= 101) return { label: 'Precio preferencial', min: 101, max: null }
+  if (c >= 51) return { label: 'Descuento por volumen', min: 51, max: 100 }
+  return { label: 'Eventos íntimos', min: 30, max: 50 }
+})
 
 const totalCotizacion = computed(() =>
   form.cantidad * (precioUnitario.value + (form.premiumKit ? addonPremium.value : 0))
 )
+
+// Stock disponible del envase seleccionado
+const stockDisponible = computed(() => envaseSeleccionado.value?.stock || 0)
 
 const leadTimeDays = computed(() => config.lead_time_days || 15)
 
@@ -442,6 +491,10 @@ function cotizarPorWhatsApp() {
 function apartarPedido() {
   if (form.cantidad < config.min_pieces) {
     alert(`El mínimo para recuerdos personalizados es de ${config.min_pieces} piezas.`)
+    return
+  }
+  if (form.cantidad > stockDisponible.value) {
+    alert(`Solo tenemos ${stockDisponible.value} piezas disponibles de este envase. Ajusta la cantidad o elige otro envase.`)
     return
   }
   emit('order', {
