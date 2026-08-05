@@ -179,10 +179,24 @@
         </div>
       </div>
 
-      <!-- Lista de reseñas -->
-      <div v-for="(review, index) in config.reviews.items" :key="index" class="p-4 bg-gray-50 rounded-lg space-y-3">
+      <!-- Lista de reseñas (arrastra para reordenar) -->
+      <p v-if="config.reviews.items.length > 1" class="text-xs text-gray-400">💡 Arrastra las reseñas para reordenarlas.</p>
+      <div
+        v-for="(review, index) in config.reviews.items"
+        :key="index"
+        class="p-4 bg-gray-50 rounded-lg space-y-3 cursor-grab active:cursor-grabbing transition-all"
+        :class="{ 'opacity-50 ring-2 ring-primary-300': reviewDragIndex === index }"
+        draggable="true"
+        @dragstart="onReviewDragStart(index)"
+        @dragover.prevent
+        @dragend="onReviewDragEnd"
+        @drop.prevent="onReviewDrop(index)"
+      >
         <div class="flex items-center justify-between">
-          <span class="text-sm font-medium text-gray-700">Reseña {{ index + 1 }}</span>
+          <div class="flex items-center gap-2">
+            <span class="text-gray-300 text-sm">⠿</span>
+            <span class="text-sm font-medium text-gray-700">Reseña {{ index + 1 }}</span>
+          </div>
           <button @click="config.reviews.items.splice(index, 1)" class="text-red-400 hover:text-red-600 text-xs">Eliminar</button>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -381,6 +395,32 @@ function addReview() {
     text: '',
     image: null,
   })
+}
+
+// Drag & drop para reordenar reseñas
+const reviewDragIndex = ref(null)
+
+function onReviewDragStart(index) {
+  reviewDragIndex.value = index
+}
+
+function onReviewDragEnd() {
+  reviewDragIndex.value = null
+}
+
+function onReviewDrop(targetIndex) {
+  if (reviewDragIndex.value === null || reviewDragIndex.value === targetIndex) {
+    reviewDragIndex.value = null
+    return
+  }
+
+  const from = reviewDragIndex.value
+  const to = targetIndex
+
+  const [moved] = config.reviews.items.splice(from, 1)
+  config.reviews.items.splice(to, 0, moved)
+
+  reviewDragIndex.value = null
 }
 
 // Computed para manejar couriers como texto separado por comas

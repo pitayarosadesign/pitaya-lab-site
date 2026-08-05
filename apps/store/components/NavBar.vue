@@ -1,18 +1,22 @@
 <template>
+  
   <header class="fixed top-0 left-0 right-0 z-50">
-    <!-- ✅ Barra promocional de envíos -->
-    <div class="bg-gradient-to-r from-primary-900 via-primary-800 to-primary-900 text-white text-center text-xs sm:text-sm py-2.5 px-4 leading-relaxed">
+    <!-- ✅ Barra promocional de envíos (configurable desde el admin) -->
+    <div
+      v-if="shippingBar.enabled"
+      class="bg-gradient-to-r from-primary-900 via-primary-800 to-primary-900 text-white text-center text-xs sm:text-sm py-2.5 px-4 leading-relaxed"
+    >
       <p class="flex items-center justify-center gap-1.5 flex-wrap">
         <span class="hidden sm:inline">🚚</span>
         <span class="font-semibold">Envío gratis</span>
         <span>en compras mayores a</span>
-        <span class="font-bold text-amber-300">$200 MXN</span>
-        <span class="hidden sm:inline">• Paquete Express, Estafeta y FedEx</span>
+        <span class="font-bold text-amber-300">${{ formatPrice(shippingBar.free_shipping_min) }} MXN</span>
+        <span class="hidden sm:inline">• {{ shippingBar.couriers.join(', ') }}</span>
         <span class="hidden sm:inline">|</span>
         <span>Menores: solo</span>
-        <span class="font-bold text-amber-300">$50</span>
+        <span class="font-bold text-amber-300">${{ formatPrice(shippingBar.shipping_fee) }}</span>
         <span class="hidden xs:inline">|</span>
-        <span class="text-primary-200">3 a 5 días hábiles</span>
+        <span class="text-primary-200">{{ shippingBar.delivery_days }}</span>
       </p>
     </div>
     <div class="bg-white/90 backdrop-blur-md border-b border-earth-100">
@@ -127,6 +131,42 @@ const navLinks = [
   { path: '/catalog', label: 'Catálogo' },
   { path: '/b2b', label: 'Mayoreo & Corporativo' },
 ]
+
+// 🚚 Barra de envíos (configurable desde el admin)
+const shippingBar = reactive({
+  enabled: true,
+  free_shipping_min: 200,
+  shipping_fee: 50,
+  couriers: ['Paquete Express', 'Estafeta', 'FedEx'],
+  delivery_days: '3 a 5 días hábiles',
+})
+
+function formatPrice(price) {
+  return Number(price).toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+}
+
+// Cargar configuración de envíos desde Supabase
+async function loadShippingBar() {
+  if (!import.meta.client) return
+  try {
+    const supabase = useNuxtApp().$supabase
+    if (!supabase) return
+    const { data, error } = await supabase
+      .from('site_config')
+      .select('value')
+      .eq('key', 'shipping_bar')
+      .single()
+    if (data?.value) {
+      Object.assign(shippingBar, data.value)
+    }
+  } catch (e) {
+    console.warn('Usando valores por defecto de la barra de envíos')
+  }
+}
+
+onMounted(() => {
+  loadShippingBar()
+})
 
 watch(mobileMenuOpen, (val) => {
   if (val) {
