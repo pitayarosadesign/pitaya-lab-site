@@ -94,6 +94,12 @@ export default defineNuxtConfig({
   nitro: {
     prerender: {
       routes: ['/', '/about', '/philosophy', '/catalog']
+    },
+    storage: {
+      cache: {
+        driver: 'fs',
+        base: './.cache/images'
+      }
     }
   },
 
@@ -118,3 +124,4 @@ export default defineNuxtConfig({
     },
   }
 })
+
