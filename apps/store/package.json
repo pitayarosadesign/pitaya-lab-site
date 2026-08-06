@@ -24,7 +24,6 @@
     "@takumi-rs/core": "^1.8.6",
     "nuxt-og-image": "^6.6.0",
     "pinia": "^4.0.2",
-    "sharp": "^0.34.5",
     "stripe": "^22.3.1",
     "tailwindcss": "^4.3.1",
     "vue-router": "^4.6.4",

@@ -329,7 +329,6 @@
 
 <script setup>
 import { products as staticProducts, SCENTS as staticSCENTS, brandValues as staticBrandValues } from '~/products/data'
-import { optimizeImageUrl } from '~/utils/image'
 
 useSeoMeta({
   title: 'PITAYA LAB | Velas de Soya, Aceites Aromáticos y Brumas Ecológicas',
@@ -443,7 +442,7 @@ async function loadProducts() {
           subtitle: p.subtitle || '',
           description: p.description || '',
           price: p.price || 0,
-          image: optimizeImageUrl(primaryImg?.url, 400, 400) || null,
+          image: primaryImg?.url || null,
           amazonLink: p.amazon_link || AMAZON_LINK.value,
           category: p.product_categories?.name || '',
         }

@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js'
-import { optimizeDetailUrl, optimizeThumbUrl } from '~/utils/image'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -46,10 +45,10 @@ export default defineEventHandler(async (event) => {
         compareAtPrice: product.compare_at_price,
         category: product.product_categories?.name || '',
         categorySlug: product.product_categories?.slug || '',
-        image: optimizeDetailUrl(primaryImage?.url) || null,
+        image: primaryImage?.url || null,
         images: images.map(img => ({
           id: img.id,
-          url: optimizeDetailUrl(img.url),
+          url: img.url,
           altText: img.alt_text,
           isPrimary: img.is_primary,
         })),
@@ -58,7 +57,7 @@ export default defineEventHandler(async (event) => {
           name: v.name,
           sku: v.sku,
           description: v.description,
-          imageUrl: optimizeThumbUrl(v.image_url),
+          imageUrl: v.image_url,
           colorHex: v.color_hex,
           price: v.price,
           compareAtPrice: v.compare_at_price,
