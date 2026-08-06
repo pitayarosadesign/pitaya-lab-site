@@ -145,6 +145,7 @@ const navLinks = ref([
   { path: '/', label: 'Inicio' },
   { path: '/about', label: 'Sobre Nosotros' },
   { path: '/philosophy', label: 'Nuestra Filosofía' },
+  { path: '/colecciones', label: 'Colecciones' },
   { path: '/catalog', label: 'Catálogo' },
   { path: '/b2b', label: 'Mayoreo & Corporativo' },
 ])
