@@ -2,7 +2,9 @@ import { createClient } from '@supabase/supabase-js'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
-  const body = await readBody(event)
+  // Aumentar el límite del body para permitir subir imágenes/videos grandes
+  // (el poster del hero puede ser una imagen de alta resolución)
+  const body = await readBody(event, { sizeLimit: '32mb' })
 
   const { file } = body
 
