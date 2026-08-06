@@ -40,6 +40,7 @@
             </div>
             <div class="flex-1 space-y-2">
               <p class="text-xs text-gray-400">Sube un video (MP4/WebM/MOV) o pega la URL de un video ya alojado.</p>
+              <p class="text-[11px] text-primary-600 font-medium">📐 Recomendado: video <strong>1920×1080 px</strong> (16:9) ≈ 50.8 × 28.6 cm · formato MP4 · peso ideal &lt; 20 MB</p>
               <div class="flex flex-wrap gap-2">
                 <input type="file" accept="video/mp4,video/webm,video/quicktime" class="hidden" ref="heroVideoInput" @change="onHeroMediaSelect('video')" />
                 <button type="button" @click="triggerMediaUpload('video')" class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs text-gray-600 hover:bg-gray-100 transition-colors">📤 Subir video</button>
@@ -55,6 +56,7 @@
             </div>
             <div class="flex-1 space-y-2">
               <p class="text-xs text-gray-400">Imagen de portada (poster) mientras carga el video o en móviles / fallback.</p>
+              <p class="text-[11px] text-primary-600 font-medium">📐 Recomendado: imagen <strong>1920×1080 px</strong> (16:9) ≈ 50.8 × 28.6 cm · JPG/WebP · &lt; 1 MB ideal</p>
               <div class="flex flex-wrap gap-2">
                 <input type="file" accept="image/png,image/jpeg,image/webp" class="hidden" ref="heroPosterInput" @change="onHeroMediaSelect('poster')" />
                 <button type="button" @click="triggerMediaUpload('poster')" class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs text-gray-600 hover:bg-gray-100 transition-colors">📷 Subir poster</button>
@@ -72,6 +74,7 @@
           </div>
           <div class="flex-1 space-y-2">
             <p class="text-xs text-gray-400">Sube una imagen de fondo (PNG/JPG/WebP) o pega la URL de una imagen ya alojada.</p>
+            <p class="text-[11px] text-primary-600 font-medium">📐 Recomendado: imagen <strong>1920×1080 px</strong> (16:9) ≈ 50.8 × 28.6 cm · JPG/WebP · &lt; 1 MB ideal</p>
             <div class="flex flex-wrap gap-2">
               <input type="file" accept="image/png,image/jpeg,image/webp" class="hidden" ref="heroImageInput" @change="onHeroMediaSelect('image')" />
               <button type="button" @click="triggerMediaUpload('image')" class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs text-gray-600 hover:bg-gray-100 transition-colors">📷 Subir imagen</button>
@@ -129,6 +132,7 @@
             <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-xl">🏷️</div>
           </div>
           <div class="flex-1 space-y-2">
+            <p class="text-[11px] text-primary-600 font-medium">📐 Recomendado: <strong>500×500 px</strong> ≈ 13.2 × 13.2 cm · PNG con fondo transparente</p>
             <div class="flex flex-wrap gap-2">
               <input type="file" accept="image/png,image/jpeg,image/webp" class="hidden" ref="logoInput" @change="onLogoSelect" />
               <button type="button" @click="logoInput?.click()" class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs text-gray-600 hover:bg-gray-100 transition-colors">📷 Subir logo</button>
@@ -351,6 +355,7 @@
         <textarea v-model="review.text" rows="3" placeholder="Texto de la reseña" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Foto de la reseña (opcional)</label>
+          <p class="text-[11px] text-primary-600 font-medium mb-2">📐 Recomendado: <strong>400×400 px</strong> ≈ 10.6 × 10.6 cm · cuadrado</p>
           <div class="flex items-center gap-3">
             <div v-if="review.image" class="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0">
               <img :src="review.image" class="w-full h-full object-cover" />
