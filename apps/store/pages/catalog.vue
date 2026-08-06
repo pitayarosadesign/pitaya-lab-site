@@ -259,12 +259,10 @@ useSeoMeta({
 
 const AMAZON_LINK = 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329?'
 
-const categories = [
+// Categorías cargadas dinámicamente desde la base de datos
+const categories = ref([
   { id: 'all', label: 'Todos' },
-  { id: 'velas', label: 'Velas' },
-  { id: 'aceites', label: 'Aceites' },
-  { id: 'brumas', label: 'Brumas' },
-]
+])
 
 const activeCategory = ref('all')
 const selectedProduct = ref(null)
@@ -289,6 +287,34 @@ const filteredProducts = computed(() => {
   if (activeCategory.value === 'all') return products.value
   return products.value.filter(p => p.categorySlug === activeCategory.value)
 })
+
+// Cargar categorías desde Supabase
+async function loadCategories() {
+  try {
+    const supabase = useNuxtApp().$supabase
+    if (!supabase) return
+    const { data, error } = await supabase
+      .from('product_categories')
+      .select('id, name, slug')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
+    if (error) throw error
+    if (Array.isArray(data) && data.length) {
+      categories.value = [
+        { id: 'all', label: 'Todos' },
+        ...data.map(c => ({ id: c.slug, label: c.name })),
+      ]
+    }
+  } catch (e) {
+    console.warn('No se pudieron cargar las categorías, usando por defecto:', e.message)
+    categories.value = [
+      { id: 'all', label: 'Todos' },
+      { id: 'velas', label: 'Velas' },
+      { id: 'aceites', label: 'Aceites' },
+      { id: 'brumas', label: 'Brumas' },
+    ]
+  }
+}
 
 // Cargar productos desde Supabase
 async function loadProducts() {
@@ -324,6 +350,7 @@ function goToAmazon(product) {
 }
 
 onMounted(() => {
+  loadCategories()
   loadProducts()
 })
 </script>

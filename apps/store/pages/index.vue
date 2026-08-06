@@ -1,12 +1,17 @@
 <template>
   <div>
-    <!-- Hero Section (con video e imágenes de marca) -->
+    <!-- Hero Section (con video/imagen y textos de marca) -->
     <HeroSection
       :title="siteConfig.hero.title || 'Fragancias que\nconectan\ncon la naturaleza'"
       :subtitle="siteConfig.hero.subtitle || 'En PITAYA LAB creamos productos botánicos biodegradables para cuidar de ti y del planeta. Velas de soya perfumadas, aceites aromáticos y brumas que transforman tu hogar en una experiencia sensorial única.'"
+      :badge="siteConfig.hero.badge || '100% Natural · Biodegradable · Hecho en México'"
       :cta_text="siteConfig.hero.cta_text || 'Explorar catálogo'"
-      :cta_link="siteConfig.hero.cta_link || AMAZON_LINK"
-      :cta_secondary="'Tienda Amazon'"
+      :cta_link="siteConfig.hero.cta_link || '/catalog'"
+      :cta_secondary_text="siteConfig.hero.cta_secondary_text || 'Tienda Amazon'"
+      :cta_secondary_link="siteConfig.hero.cta_secondary_link || AMAZON_LINK"
+      :media_type="siteConfig.hero.media_type"
+      :media_url="siteConfig.hero.media_url"
+      :poster="siteConfig.hero.poster_url"
     />
 
     <!-- Sección de productos destacados -->
@@ -336,7 +341,7 @@ const supabase = useNuxtApp().$supabase
 
 // Estado dinámico
 const siteConfig = reactive({
-  hero: { title: '', subtitle: '', cta_text: '', cta_link: '' },
+  hero: { title: '', subtitle: '', badge: '', cta_text: '', cta_link: '', cta_secondary_text: '', cta_secondary_link: '', media_type: '', media_url: '', poster_url: '' },
   products_section: { title: '', subtitle: '', description: '' },
   brand_values: [],
   scents_section: { title: '', subtitle: '', description: '' },

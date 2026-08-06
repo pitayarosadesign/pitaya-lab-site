@@ -14,15 +14,88 @@
     <!-- Hero Section -->
     <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
       <h2 class="text-lg font-semibold text-gray-900">🏠 Hero (Portada)</h2>
-      <p class="text-sm text-gray-400">Texto principal que se ve al entrar al sitio.</p>
+      <p class="text-sm text-gray-400">Texto, imagen y video que se ven al entrar al sitio.</p>
+
+      <!-- Media (video / imagen) -->
+      <div class="p-4 bg-gray-50 rounded-lg border border-gray-100">
+        <div class="flex items-center justify-between mb-3">
+          <label class="text-sm font-medium text-gray-700">🎬 Fondo del Hero</label>
+          <div class="flex items-center gap-3 text-sm">
+            <label class="inline-flex items-center gap-1.5 cursor-pointer">
+              <input type="radio" value="video" v-model="config.hero.media_type" class="text-primary-600 focus:ring-primary-500" />
+              <span class="text-gray-700">Video</span>
+            </label>
+            <label class="inline-flex items-center gap-1.5 cursor-pointer">
+              <input type="radio" value="image" v-model="config.hero.media_type" class="text-primary-600 focus:ring-primary-500" />
+              <span class="text-gray-700">Imagen</span>
+            </label>
+          </div>
+        </div>
+
+        <div v-if="config.hero.media_type === 'video'" class="space-y-3">
+          <div class="flex items-center gap-3">
+            <div class="w-28 h-16 rounded-lg overflow-hidden bg-earth-100 border border-gray-200 flex-shrink-0">
+              <video v-if="config.hero.media_url" :src="config.hero.media_url" muted loop playsinline class="w-full h-full object-cover" />
+              <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-lg">🎬</div>
+            </div>
+            <div class="flex-1 space-y-2">
+              <p class="text-xs text-gray-400">Sube un video (MP4/WebM/MOV) o pega la URL de un video ya alojado.</p>
+              <div class="flex flex-wrap gap-2">
+                <input type="file" accept="video/mp4,video/webm,video/quicktime" class="hidden" ref="heroVideoInput" @change="onHeroMediaSelect('video')" />
+                <button type="button" @click="triggerMediaUpload('video')" class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs text-gray-600 hover:bg-gray-100 transition-colors">📤 Subir video</button>
+                <button v-if="config.hero.media_url" type="button" @click="config.hero.media_url = ''" class="px-3 py-1.5 rounded-lg text-xs text-red-400 hover:text-red-600">Quitar video</button>
+              </div>
+              <input v-model="config.hero.media_url" type="url" placeholder="...o pega URL del video" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-xs" />
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="w-28 h-16 rounded-lg overflow-hidden bg-earth-100 border border-gray-200 flex-shrink-0">
+              <img v-if="config.hero.poster_url" :src="config.hero.poster_url" class="w-full h-full object-cover" />
+              <div v-else class="w-full h-full flex items-center justify-center text-gray-300">🖼️</div>
+            </div>
+            <div class="flex-1 space-y-2">
+              <p class="text-xs text-gray-400">Imagen de portada (poster) mientras carga el video o en móviles / fallback.</p>
+              <div class="flex flex-wrap gap-2">
+                <input type="file" accept="image/png,image/jpeg,image/webp" class="hidden" ref="heroPosterInput" @change="onHeroMediaSelect('poster')" />
+                <button type="button" @click="triggerMediaUpload('poster')" class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs text-gray-600 hover:bg-gray-100 transition-colors">📷 Subir poster</button>
+                <button v-if="config.hero.poster_url" type="button" @click="config.hero.poster_url = ''" class="px-3 py-1.5 rounded-lg text-xs text-red-400 hover:text-red-600">Quitar poster</button>
+              </div>
+              <input v-model="config.hero.poster_url" type="url" placeholder="...o pega URL del poster" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-xs" />
+            </div>
+          </div>
+        </div>
+
+        <div v-else class="flex items-center gap-3">
+          <div class="w-28 h-16 rounded-lg overflow-hidden bg-earth-100 border border-gray-200 flex-shrink-0">
+            <img v-if="config.hero.media_url" :src="config.hero.media_url" class="w-full h-full object-cover" />
+            <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-lg">🖼️</div>
+          </div>
+          <div class="flex-1 space-y-2">
+            <p class="text-xs text-gray-400">Sube una imagen de fondo (PNG/JPG/WebP) o pega la URL de una imagen ya alojada.</p>
+            <div class="flex flex-wrap gap-2">
+              <input type="file" accept="image/png,image/jpeg,image/webp" class="hidden" ref="heroImageInput" @change="onHeroMediaSelect('image')" />
+              <button type="button" @click="triggerMediaUpload('image')" class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs text-gray-600 hover:bg-gray-100 transition-colors">📷 Subir imagen</button>
+              <button v-if="config.hero.media_url" type="button" @click="config.hero.media_url = ''" class="px-3 py-1.5 rounded-lg text-xs text-red-400 hover:text-red-600">Quitar imagen</button>
+            </div>
+            <input v-model="config.hero.media_url" type="url" placeholder="...o pega URL de la imagen" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-xs" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Textos -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-gray-700 mb-1">Título principal</label>
-          <input v-model="config.hero.title" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+          <textarea v-model="config.hero.title" rows="2" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+          <p class="text-xs text-gray-400 mt-1">Tip: usa «\n» para saltos de línea y resaltar palabras.</p>
         </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-gray-700 mb-1">Subtítulo</label>
-          <input v-model="config.hero.subtitle" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+          <textarea v-model="config.hero.subtitle" rows="3" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Etiqueta (badge)</label>
+          <input v-model="config.hero.badge" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Texto del botón</label>
@@ -32,6 +105,68 @@
           <label class="block text-sm font-medium text-gray-700 mb-1">Link del botón</label>
           <input v-model="config.hero.cta_link" type="url" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
         </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Texto botón secundario (Amazon)</label>
+          <input v-model="config.hero.cta_secondary_text" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Link botón secundario</label>
+          <input v-model="config.hero.cta_secondary_link" type="url" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+        </div>
+      </div>
+    </div>
+
+    <!-- 🏷️ Marca & Navegación -->
+    <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+      <h2 class="text-lg font-semibold text-gray-900">🏷️ Marca & Navegación</h2>
+      <p class="text-sm text-gray-400">Logo, nombre, eslogan y menú del sitio (navbar y footer).</p>
+
+      <div class="p-4 bg-gray-50 rounded-lg border border-gray-100">
+        <label class="text-sm font-medium text-gray-700 block mb-2">🖼️ Logo</label>
+        <div class="flex items-center gap-4">
+          <div class="w-16 h-16 rounded-lg overflow-hidden bg-earth-100 border border-gray-200 flex-shrink-0">
+            <img v-if="config.brand.logo_url" :src="config.brand.logo_url" class="w-full h-full object-cover" />
+            <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-xl">🏷️</div>
+          </div>
+          <div class="flex-1 space-y-2">
+            <div class="flex flex-wrap gap-2">
+              <input type="file" accept="image/png,image/jpeg,image/webp" class="hidden" ref="logoInput" @change="onLogoSelect" />
+              <button type="button" @click="logoInput?.click()" class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs text-gray-600 hover:bg-gray-100 transition-colors">📷 Subir logo</button>
+              <button v-if="config.brand.logo_url" type="button" @click="config.brand.logo_url = ''" class="px-3 py-1.5 rounded-lg text-xs text-red-400 hover:text-red-600">Quitar logo</button>
+            </div>
+            <input v-model="config.brand.logo_url" type="url" placeholder="...o pega la URL del logo" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-xs" />
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nombre de la marca</label>
+          <input v-model="config.brand.name" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Eslogan / tagline</label>
+          <input v-model="config.brand.tagline" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Favicon URL</label>
+          <input v-model="config.brand.favicon_url" type="url" placeholder="/favicon.png" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+        </div>
+      </div>
+
+      <!-- Menú de navegación -->
+      <div class="pt-2 border-t border-gray-100">
+        <div class="flex items-center justify-between mb-2">
+          <label class="text-sm font-medium text-gray-700">🧭 Menú de navegación</label>
+          <button @click="addNavLink" class="text-sm text-primary-600 hover:text-primary-700 font-medium">+ Agregar enlace</button>
+        </div>
+        <div v-for="(link, index) in config.nav_links" :key="index" class="p-3 bg-gray-50 rounded-lg mb-2 flex items-center gap-3">
+          <span class="text-gray-300 text-sm">⠿</span>
+          <input v-model="link.label" type="text" placeholder="Etiqueta (ej. Inicio)" class="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+          <input v-model="link.path" type="text" placeholder="/ruta" class="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+          <button @click="config.nav_links.splice(index, 1)" class="text-red-400 hover:text-red-600 text-sm">✕</button>
+        </div>
+        <p class="text-xs text-gray-400 mt-1">Estos enlaces aparecen en el menú superior y en el menú móvil.</p>
       </div>
     </div>
 
@@ -299,8 +434,32 @@ const supabaseAdmin = useSupabaseAdmin()
 const saving = ref(false)
 
 const config = reactive({
-  hero: { title: '', subtitle: '', cta_text: '', cta_link: '' },
+  hero: {
+    title: '',
+    subtitle: '',
+    badge: '100% Natural · Biodegradable · Hecho en México',
+    cta_text: '',
+    cta_link: '',
+    cta_secondary_text: 'Tienda Amazon',
+    cta_secondary_link: 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329',
+    media_type: 'video',
+    media_url: '',
+    poster_url: '',
+  },
   products_section: { title: '', subtitle: '', description: '' },
+  brand: {
+    name: 'PITAYA LAB',
+    tagline: 'Fragancias que conectan',
+    logo_url: '/images/brand/logo-pitayalab.png',
+    favicon_url: '/favicon.png',
+  },
+  nav_links: [
+    { label: 'Inicio', path: '/' },
+    { label: 'Sobre Nosotros', path: '/about' },
+    { label: 'Nuestra Filosofía', path: '/philosophy' },
+    { label: 'Catálogo', path: '/catalog' },
+    { label: 'Mayoreo & Corporativo', path: '/b2b' },
+  ],
   brand_values: [],
   scents_section: { title: '', subtitle: '', description: '' },
   cta_section: { title: '', description: '', button_text: '', button_link: '' },
@@ -387,6 +546,95 @@ function fileToBase64(file) {
   })
 }
 
+// ===== Hero: subida de media (video / poster / imagen) =====
+const heroVideoInput = ref(null)
+const heroPosterInput = ref(null)
+const heroImageInput = ref(null)
+
+function triggerMediaUpload(type) {
+  if (type === 'video') heroVideoInput.value?.click()
+  else if (type === 'poster') heroPosterInput.value?.click()
+  else if (type === 'image') heroImageInput.value?.click()
+}
+
+async function onHeroMediaSelect(type) {
+  const file =
+    type === 'video' ? heroVideoInput.value?.files?.[0]
+    : type === 'poster' ? heroPosterInput.value?.files?.[0]
+    : heroImageInput.value?.files?.[0]
+
+  if (!file) return
+
+  // Limitar tamaño (video hasta ~50MB, imágenes hasta ~10MB)
+  const maxSize = type === 'video' ? 50 * 1024 * 1024 : 10 * 1024 * 1024
+  if (file.size > maxSize) {
+    alert(`⚠️ El archivo es demasiado grande. Máximo ${type === 'video' ? '50 MB' : '10 MB'}.`)
+    return
+  }
+
+  try {
+    const base64 = await fileToBase64(file)
+    const loadingMsg = type === 'video' ? 'Subiendo video...' : 'Subiendo imagen...'
+    alert(`⏳ ${loadingMsg}`)
+
+    const res = await $fetch('/api/site/upload-media', {
+      method: 'POST',
+      body: {
+        file: { name: file.name, type: file.type, data: base64 },
+      },
+    })
+
+    if (res?.url) {
+      if (type === 'video') config.hero.media_url = res.url
+      else if (type === 'poster') config.hero.poster_url = res.url
+      else if (type === 'image') config.hero.media_url = res.url
+      alert('✅ Archivo subido correctamente. Recuerda guardar los cambios.')
+    }
+  } catch (e) {
+    console.error('Error subiendo media:', e)
+    alert('Error al subir el archivo: ' + (e.data?.message || e.message))
+  }
+
+  // Limpiar el input para poder volver a seleccionar el mismo archivo
+  if (type === 'video') heroVideoInput.value.value = ''
+  else if (type === 'poster') heroPosterInput.value.value = ''
+  else if (type === 'image') heroImageInput.value.value = ''
+}
+
+// ===== Marca: subida de logo =====
+const logoInput = ref(null)
+
+async function onLogoSelect() {
+  const file = logoInput.value?.files?.[0]
+  if (!file) return
+
+  const maxSize = 10 * 1024 * 1024
+  if (file.size > maxSize) {
+    alert('⚠️ El archivo es demasiado grande. Máximo 10 MB.')
+    return
+  }
+
+  try {
+    const base64 = await fileToBase64(file)
+    const res = await $fetch('/api/site/upload-media', {
+      method: 'POST',
+      body: { file: { name: file.name, type: file.type, data: base64 } },
+    })
+    if (res?.url) {
+      config.brand.logo_url = res.url
+      alert('✅ Logo subido correctamente. Recuerda guardar los cambios.')
+    }
+  } catch (e) {
+    console.error('Error subiendo logo:', e)
+    alert('Error al subir el logo: ' + (e.data?.message || e.message))
+  }
+  logoInput.value.value = ''
+}
+
+function addNavLink() {
+  config.nav_links.push({ label: '', path: '/' })
+}
+
 function addReview() {
   config.reviews.items.push({
     author: '',
@@ -436,8 +684,10 @@ async function loadConfig() {
     
     if (data) {
       data.forEach(item => {
-        if (item.key === 'hero') config.hero = item.value
+        if (item.key === 'hero') Object.assign(config.hero, item.value)
         else if (item.key === 'products_section') config.products_section = item.value
+        else if (item.key === 'brand') Object.assign(config.brand, item.value)
+        else if (item.key === 'nav_links' && Array.isArray(item.value)) config.nav_links = item.value
         else if (item.key === 'brand_values') config.brand_values = item.value
         else if (item.key === 'scents_section') config.scents_section = item.value
         else if (item.key === 'cta_section') config.cta_section = item.value
@@ -460,6 +710,8 @@ async function handleSave() {
     const sections = [
       { key: 'hero', value: config.hero },
       { key: 'products_section', value: config.products_section },
+      { key: 'brand', value: config.brand },
+      { key: 'nav_links', value: config.nav_links },
       { key: 'brand_values', value: config.brand_values },
       { key: 'scents_section', value: config.scents_section },
       { key: 'cta_section', value: config.cta_section },

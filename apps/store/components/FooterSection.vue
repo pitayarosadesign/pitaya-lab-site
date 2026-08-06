@@ -6,13 +6,13 @@
         <div>
           <div class="flex items-center gap-3 mb-4">
             <img
-              src="/images/brand/logo-pitayalab.png"
-              alt="PITAYA LAB"
+              :src="brand.logo_url"
+              :alt="brand.name"
               class="h-10 w-10 rounded-full object-cover shadow-md"
             />
             <div>
-              <h3 class="text-lg font-serif font-bold text-white">PITAYA LAB</h3>
-              <p class="text-xs text-earth-400">Fragancias que conectan</p>
+              <h3 class="text-lg font-serif font-bold text-white">{{ brand.name }}</h3>
+              <p class="text-xs text-earth-400">{{ brand.tagline }}</p>
             </div>
           </div>
           <p class="text-sm text-earth-400 leading-relaxed">
@@ -24,20 +24,8 @@
         <div>
           <h4 class="text-white font-semibold mb-4">Explorar</h4>
           <ul class="space-y-2">
-            <li>
-              <NuxtLink to="/about" class="text-sm text-earth-400 hover:text-amber-400 transition-colors">Sobre Nosotros</NuxtLink>
-            </li>
-            <li>
-              <NuxtLink to="/philosophy" class="text-sm text-earth-400 hover:text-amber-400 transition-colors">Nuestra Filosofía</NuxtLink>
-            </li>
-            <li>
-              <NuxtLink to="/catalog" class="text-sm text-earth-400 hover:text-amber-400 transition-colors">Catálogo</NuxtLink>
-            </li>
-            <li>
-              <NuxtLink to="/b2b" class="text-sm text-earth-400 hover:text-amber-400 transition-colors">Mayoreo & Corporativo</NuxtLink>
-            </li>
-            <li>
-              <NuxtLink to="/faq" class="text-sm text-earth-400 hover:text-amber-400 transition-colors">Preguntas Frecuentes</NuxtLink>
+            <li v-for="link in navLinks" :key="link.path">
+              <NuxtLink :to="link.path" class="text-sm text-earth-400 hover:text-amber-400 transition-colors">{{ link.label }}</NuxtLink>
             </li>
           </ul>
           <div class="mt-6 pt-6 border-t border-earth-800">
@@ -82,7 +70,7 @@
             </li>
           </ul>
           <p class="mt-6 text-xs text-earth-500">
-            © {{ new Date().getFullYear() }} PITAYA LAB. Todos los derechos reservados.
+            © {{ new Date().getFullYear() }} {{ brand.name }}. Todos los derechos reservados.
           </p>
         </div>
       </div>
@@ -92,4 +80,38 @@
 
 <script setup>
 const AMAZON_LINK = 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329?'
+
+// 🏷️ Marca configurable desde el admin
+const brand = reactive({
+  name: 'PITAYA LAB',
+  tagline: 'Fragancias que conectan',
+  logo_url: '/images/brand/logo-pitayalab.png',
+})
+
+const navLinks = ref([
+  { path: '/about', label: 'Sobre Nosotros' },
+  { path: '/philosophy', label: 'Nuestra Filosofía' },
+  { path: '/catalog', label: 'Catálogo' },
+  { path: '/b2b', label: 'Mayoreo & Corporativo' },
+  { path: '/faq', label: 'Preguntas Frecuentes' },
+])
+
+onMounted(async () => {
+  if (!import.meta.client) return
+  try {
+    const supabase = useNuxtApp().$supabase
+    if (!supabase) return
+    const { data, error } = await supabase.from('site_config').select('key, value')
+    const rows = Array.isArray(data) ? data : []
+    const brandRow = rows.find(r => r.key === 'brand')
+    const navRow = rows.find(r => r.key === 'nav_links')
+    if (brandRow?.value) Object.assign(brand, brandRow.value)
+    if (navRow?.value && Array.isArray(navRow.value) && navRow.value.length) {
+      // El footer excluye "Inicio" pero usa el resto de los links configurados
+      navLinks.value = navRow.value.filter(l => l.path !== '/')
+    }
+  } catch (e) {
+    console.warn('Usando valores por defecto de marca en footer')
+  }
+})
 </script>

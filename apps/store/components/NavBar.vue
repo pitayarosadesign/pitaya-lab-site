@@ -25,13 +25,13 @@
         <!-- Logo -->
         <NuxtLink to="/" class="flex items-center gap-3 group">
           <img
-            src="/images/brand/logo-pitayalab.png"
-            alt="PITAYA LAB"
+            :src="brand.logo_url"
+            :alt="brand.name"
             class="h-10 w-10 rounded-full object-cover shadow-md group-hover:shadow-lg transition-all"
           />
           <div class="hidden sm:block">
-            <h1 class="text-xl font-serif font-bold text-earth-800 leading-tight">PITAYA LAB</h1>
-            <p class="text-xs text-earth-500 -mt-1">Fragancias que conectan</p>
+            <h1 class="text-xl font-serif font-bold text-earth-800 leading-tight">{{ brand.name }}</h1>
+            <p class="text-xs text-earth-500 -mt-1">{{ brand.tagline }}</p>
           </div>
         </NuxtLink>
 
@@ -124,14 +124,6 @@ const AMAZON_LINK = 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7E
 
 const mobileMenuOpen = ref(false)
 
-const navLinks = [
-  { path: '/', label: 'Inicio' },
-  { path: '/about', label: 'Sobre Nosotros' },
-  { path: '/philosophy', label: 'Nuestra Filosofía' },
-  { path: '/catalog', label: 'Catálogo' },
-  { path: '/b2b', label: 'Mayoreo & Corporativo' },
-]
-
 // 🚚 Barra de envíos (configurable desde el admin)
 const shippingBar = reactive({
   enabled: true,
@@ -140,6 +132,22 @@ const shippingBar = reactive({
   couriers: ['Paquete Express', 'Estafeta', 'FedEx'],
   delivery_days: '3 a 5 días hábiles',
 })
+
+// 🏷️ Marca (logo, nombre, eslogan) configurable desde el admin
+const brand = reactive({
+  name: 'PITAYA LAB',
+  tagline: 'Fragancias que conectan',
+  logo_url: '/images/brand/logo-pitayalab.png',
+})
+
+// 🧭 Enlaces del menú (configurables desde el admin)
+const navLinks = ref([
+  { path: '/', label: 'Inicio' },
+  { path: '/about', label: 'Sobre Nosotros' },
+  { path: '/philosophy', label: 'Nuestra Filosofía' },
+  { path: '/catalog', label: 'Catálogo' },
+  { path: '/b2b', label: 'Mayoreo & Corporativo' },
+])
 
 function formatPrice(price) {
   return Number(price).toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
@@ -164,8 +172,29 @@ async function loadShippingBar() {
   }
 }
 
+// Cargar marca y enlaces de navegación desde Supabase
+async function loadBrandAndNav() {
+  if (!import.meta.client) return
+  try {
+    const supabase = useNuxtApp().$supabase
+    if (!supabase) return
+    const { data, error } = await supabase.from('site_config').select('key, value')
+
+    const rows = Array.isArray(data) ? data : []
+    const brandRow = rows.find(r => r.key === 'brand')
+    const navRow = rows.find(r => r.key === 'nav_links')
+
+    if (brandRow?.value) Object.assign(brand, brandRow.value)
+    if (navRow?.value && Array.isArray(navRow.value) && navRow.value.length) {
+      navLinks.value = navRow.value
+    }
+  } catch (e) {
+    console.warn('Usando valores por defecto de marca y navegación')
+  }
+}
+
 onMounted(() => {
-  loadShippingBar()
+  Promise.all([loadShippingBar(), loadBrandAndNav()])
 })
 
 watch(mobileMenuOpen, (val) => {

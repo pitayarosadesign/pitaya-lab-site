@@ -22,13 +22,20 @@
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Categoría *</label>
-            <select v-model="form.category" required class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
-              <option value="">Seleccionar</option>
-              <option value="velas">Velas</option>
-              <option value="aceites">Aceites</option>
-              <option value="brumas">Brumas</option>
-              <option value="recuerdos">Recuerdos / Envases para Eventos</option>
-    </select>
+            <div class="flex items-center gap-2">
+              <select v-model="form.category" required class="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
+                <option value="">Seleccionar</option>
+                <option v-for="cat in categories" :key="cat.id" :value="cat.slug">{{ cat.name }}</option>
+              </select>
+              <button
+                type="button"
+                @click="openCategoryModal"
+                class="flex-shrink-0 px-3 py-2.5 rounded-lg border border-dashed border-primary-300 text-primary-600 hover:bg-primary-50 text-sm font-medium transition-colors"
+                title="Agregar nueva categoría"
+              >
+                + Nueva
+              </button>
+            </div>
           </div>
         </div>
         <div>
@@ -231,12 +238,103 @@
         <button type="submit" class="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors">Guardar Producto</button>
       </div>
     </form>
+
+    <!-- Modal: Nueva categoría -->
+    <div v-if="showCategoryModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black/40" @click="showCategoryModal = false"></div>
+      <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-gray-900">➕ Nueva Categoría</h3>
+          <button @click="showCategoryModal = false" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+          <input v-model="newCategory.name" type="text" placeholder="Ej: Kits de Regalo" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Slug (URL) *</label>
+          <input v-model="newCategory.slug" type="text" placeholder="kits-de-regalo" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all font-mono text-sm" />
+          <p class="text-xs text-gray-400 mt-1">Se genera automáticamente desde el nombre</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+          <textarea v-model="newCategory.description" rows="2" placeholder="Descripción breve de la categoría" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button @click="showCategoryModal = false" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-800">Cancelar</button>
+          <button
+            @click="createCategory"
+            :disabled="creatingCategory"
+            class="px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            {{ creatingCategory ? 'Creando...' : 'Crear categoría' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 const supabase = useSupabase()
 const fileInput = ref(null)
+
+// Categorías cargadas dinámicamente desde la base de datos
+const categories = ref([])
+
+// Modal de nueva categoría
+const showCategoryModal = ref(false)
+const creatingCategory = ref(false)
+const newCategory = reactive({ name: '', slug: '', description: '' })
+
+async function loadCategories() {
+  try {
+    const data = await $fetch('/api/categories/list')
+    categories.value = data.categories || []
+  } catch (e) {
+    console.warn('No se pudieron cargar las categorías:', e.message)
+    categories.value = []
+  }
+}
+
+function openCategoryModal() {
+  newCategory.name = ''
+  newCategory.slug = ''
+  newCategory.description = ''
+  showCategoryModal.value = true
+}
+
+async function createCategory() {
+  if (!newCategory.name) {
+    alert('El nombre de la categoría es obligatorio')
+    return
+  }
+  creatingCategory.value = true
+  try {
+    const res = await $fetch('/api/categories/create', {
+      method: 'POST',
+      body: {
+        name: newCategory.name,
+        slug: newCategory.slug || newCategory.name.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim(),
+        description: newCategory.description,
+      },
+    })
+    if (res?.category) {
+      categories.value.push(res.category)
+      form.category = res.category.slug
+      showCategoryModal.value = false
+      alert('✅ Categoría creada correctamente')
+    }
+  } catch (e) {
+    alert('Error al crear la categoría: ' + (e.data?.message || e.message))
+  } finally {
+    creatingCategory.value = false
+  }
+}
 
 const form = reactive({
   name: '',
@@ -304,12 +402,9 @@ function removeVariant(index) { form.variants.splice(index, 1) }
 
 async function handleSave() {
   try {
-    // Obtener category_id
-    const { data: catData } = await supabase
-      .from('product_categories')
-      .select('id')
-      .eq('slug', form.category)
-      .single()
+    // Resolver category_id desde las categorías cargadas
+    const selectedCat = categories.value.find(c => c.slug === form.category)
+    const categoryId = selectedCat?.id || null
 
     // Preparar imágenes como base64 para el API
     const images = []
@@ -332,7 +427,7 @@ async function handleSave() {
           subtitle: form.subtitle || null,
           description: form.description,
           long_description: form.long_description,
-          category_id: catData?.id || null,
+          category_id: categoryId,
           price: parseFloat(form.price),
           compare_at_price: form.compare_at_price ? parseFloat(form.compare_at_price) : null,
           cost_price: form.cost_price ? parseFloat(form.cost_price) : null,
@@ -380,6 +475,10 @@ function fileToBase64(file) {
     reader.onerror = (error) => reject(error)
   })
 }
+
+onMounted(() => {
+  loadCategories()
+})
 
 onUnmounted(() => {
   form.images.forEach(img => { if (img.preview) URL.revokeObjectURL(img.preview) })

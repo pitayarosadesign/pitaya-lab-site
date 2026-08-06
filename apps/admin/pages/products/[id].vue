@@ -36,6 +36,23 @@
             <input v-model="form.sku" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all font-mono" />
           </div>
           <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+            <div class="flex items-center gap-2">
+              <select v-model="form.category" class="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all">
+                <option value="">Sin categoría</option>
+                <option v-for="cat in categories" :key="cat.id" :value="cat.slug">{{ cat.name }}</option>
+              </select>
+              <button
+                type="button"
+                @click="openCategoryModal"
+                class="flex-shrink-0 px-3 py-2.5 rounded-lg border border-dashed border-primary-300 text-primary-600 hover:bg-primary-50 text-sm font-medium transition-colors"
+                title="Agregar nueva categoría"
+              >
+                + Nueva
+              </button>
+            </div>
+          </div>
+          <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Slug</label>
             <input v-model="form.slug" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all font-mono text-sm" />
           </div>
@@ -179,6 +196,44 @@
       <p class="text-gray-400">Producto no encontrado</p>
       <NuxtLink to="/products" class="text-primary-600 hover:text-primary-700 text-sm mt-2 inline-block">← Volver a productos</NuxtLink>
     </div>
+
+    <!-- Modal: Nueva categoría -->
+    <div v-if="showCategoryModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black/40" @click="showCategoryModal = false"></div>
+      <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-gray-900">➕ Nueva Categoría</h3>
+          <button @click="showCategoryModal = false" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+          <input v-model="newCategory.name" type="text" placeholder="Ej: Kits de Regalo" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Slug (URL) *</label>
+          <input v-model="newCategory.slug" type="text" placeholder="kits-de-regalo" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all font-mono text-sm" />
+          <p class="text-xs text-gray-400 mt-1">Se genera automáticamente desde el nombre</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+          <textarea v-model="newCategory.description" rows="2" placeholder="Descripción breve de la categoría" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button @click="showCategoryModal = false" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-800">Cancelar</button>
+          <button
+            @click="createCategory"
+            :disabled="creatingCategory"
+            class="px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            {{ creatingCategory ? 'Creando...' : 'Crear categoría' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -194,7 +249,61 @@ const form = reactive({
   gtin: '', amazon_asin: '', images: [],
   is_active: true, is_featured: false, google_category: '', free_shipping: false,
   amazon_link: '', compare_at_price: '', cost_price: '',
+  category: '',
 })
+
+// Categorías cargadas dinámicamente desde la base de datos
+const categories = ref([])
+
+// Modal de nueva categoría
+const showCategoryModal = ref(false)
+const creatingCategory = ref(false)
+const newCategory = reactive({ name: '', slug: '', description: '' })
+
+async function loadCategories() {
+  try {
+    const data = await $fetch('/api/categories/list')
+    categories.value = data.categories || []
+  } catch (e) {
+    console.warn('No se pudieron cargar las categorías:', e.message)
+    categories.value = []
+  }
+}
+
+function openCategoryModal() {
+  newCategory.name = ''
+  newCategory.slug = ''
+  newCategory.description = ''
+  showCategoryModal.value = true
+}
+
+async function createCategory() {
+  if (!newCategory.name) {
+    alert('El nombre de la categoría es obligatorio')
+    return
+  }
+  creatingCategory.value = true
+  try {
+    const res = await $fetch('/api/categories/create', {
+      method: 'POST',
+      body: {
+        name: newCategory.name,
+        slug: newCategory.slug || newCategory.name.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim(),
+        description: newCategory.description,
+      },
+    })
+    if (res?.category) {
+      categories.value.push(res.category)
+      form.category = res.category.slug
+      showCategoryModal.value = false
+      alert('✅ Categoría creada correctamente')
+    }
+  } catch (e) {
+    alert('Error al crear la categoría: ' + (e.data?.message || e.message))
+  } finally {
+    creatingCategory.value = false
+  }
+}
 
 async function loadProduct() {
   loading.value = true
@@ -218,6 +327,12 @@ async function loadProduct() {
     form.compare_at_price = data.compare_at_price || ''
     form.cost_price = data.cost_price || ''
     form.images = data.images || []
+
+    // Resolver el slug de la categoría a partir del category_id
+    if (data.category_id) {
+      const cat = categories.value.find(c => c.id === data.category_id)
+      form.category = cat?.slug || ''
+    }
   } catch (e) {
     console.error('Error:', e)
   } finally {
@@ -336,6 +451,10 @@ async function handleSave() {
       }
     }
 
+    // Resolver category_id a partir del slug seleccionado
+    const selectedCat = categories.value.find(c => c.slug === form.category)
+    const categoryId = selectedCat?.id || null
+
     await $fetch('/api/products/update', {
       method: 'PUT',
       body: {
@@ -356,6 +475,7 @@ async function handleSave() {
           amazon_link: form.amazon_link || null,
           compare_at_price: form.compare_at_price ? parseFloat(form.compare_at_price) : null,
           cost_price: form.cost_price ? parseFloat(form.cost_price) : null,
+          category_id: categoryId,
         },
         images,
       },
@@ -392,7 +512,8 @@ async function duplicateHere() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await loadCategories()
   loadProduct()
 })
 </script>
