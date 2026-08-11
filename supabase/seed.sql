@@ -1,4 +1,5 @@
 -- ============================================
+
 -- PITAYA LAB - Seed Data
 -- ============================================
 -- Puebla la base de datos con los productos actuales
@@ -122,18 +123,6 @@ BEGIN
 END $$;
 
 -- SECCIONES DE LA PÁGINA DE INICIO (Home)
-INSERT INTO site_sections (page_slug, section_key, type, title, content, sort_order) VALUES
-('home', 'hero', 'hero', 'Hero Principal',
- '{"title": "Fragancias que", "highlight_word": "conectan", "badge": "100% Natural · Biodegradable · Hecho en México", "cta_primary_text": "Explorar catálogo", "cta_primary_link": "/catalog", "cta_secondary_text": "Tienda Amazon", "cta_secondary_link": "https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329", "cta_secondary_visible": true, "media_type": "video", "media_url": "/images/brand/hero-video.mp4", "poster_url": "/images/brand/hero-bruma.png"}', 1),
+-- Nota: La tabla site_sections fue eliminada (migración 008).
+-- El contenido de la portada ahora se gestiona vía site_config (claves hero, products_section, etc.)
 
-('home', 'featured_products', 'products-grid', 'Productos Destacados',
- '{"title": "Nuestros Productos", "subtitle": "Velas de soya perfumadas, aceites aromáticos y brumas que transforman tu hogar en una experiencia sensorial única.", "layout": "grid-4", "show_view_all": true, "view_all_text": "Ver catálogo completo", "view_all_link": "/catalog"}', 2),
-
-('home', 'brand_values', 'values-grid', 'Valores de Marca',
- '{"title": "¿Por qué elegir PITAYA LAB?", "values": [{"icon": "leaf", "title": "Botánico y Biodegradable", "description": "Todos nuestros productos están hechos con ingredientes de origen vegetal que se degradan naturalmente, sin dejar residuos dañinos en el planeta."}, {"icon": "shield", "title": "Sin Químicos Agresivos", "description": "Libres de parabenos, ftalatos, sulfatos y cualquier químico agresivo. Solo fragancias puras que respetan tu salud y el medio ambiente."}, {"icon": "heart", "title": "Hecho en México", "description": "Producimos localmente con ingredientes de la más alta calidad, apoyando la economía local y reduciendo nuestra huella de carbono."}, {"icon": "sparkles", "title": "Experiencias Sensoriales", "description": "Cada fragancia está diseñada para transportarte a un lugar especial. Del lujo de un resort a la serenidad de un jardín zen."}]}', 3),
-
-('home', 'scents_showcase', 'scents-grid', 'Galería de Aromas',
- '{"title": "El arte de la fragancia", "subtitle": "Cada aroma ha sido cuidadosamente seleccionado para ofrecerte una experiencia única. Pasa el cursor sobre cada imagen para descubrir su esencia", "display": "grid-with-images"}', 4),
-
-('home', 'cta_banner', 'cta-banner', 'CTA Final',
- '{"title": "¿Listo para transformar tu hogar?", "subtitle": "Descubre nuestra colección completa en Amazon y encuentra la fragancia perfecta para cada momento.", "button_text": "Comprar en Amazon México", "button_url": "https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329"}', 5);

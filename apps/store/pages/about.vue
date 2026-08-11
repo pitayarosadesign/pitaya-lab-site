@@ -4,13 +4,12 @@
     <section class="relative py-24 bg-gradient-to-b from-primary-50 to-white overflow-hidden">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="max-w-3xl mx-auto text-center">
-          <span class="text-primary-600 font-semibold text-sm uppercase tracking-wider">Conócenos</span>
+          <span class="text-primary-600 font-semibold text-sm uppercase tracking-wider">{{ pageContent.header.badge || 'Conócenos' }}</span>
           <h1 class="text-4xl md:text-5xl font-serif font-bold text-earth-900 mt-3 mb-6">
-            Sobre <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-amber-500">PITAYA LAB</span>
+            {{ pageContent.header.title }} <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-amber-500">{{ pageContent.header.highlight }}</span>
           </h1>
           <p class="text-lg text-earth-600 leading-relaxed">
-            Somos una marca mexicana comprometida con la creación de productos botánicos biodegradables 
-            que transforman los espacios en experiencias sensoriales únicas.
+            {{ pageContent.header.description }}
           </p>
         </div>
       </div>
@@ -21,28 +20,11 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div>
-            <span class="text-amber-600 font-semibold text-sm uppercase tracking-wider">Nuestra Historia</span>
+            <span class="text-amber-600 font-semibold text-sm uppercase tracking-wider">{{ pageContent.story.badge }}</span>
             <h2 class="text-3xl md:text-4xl font-serif font-bold text-earth-900 mt-2 mb-6">
-              Fragancias que nacen del corazón de México
+              {{ pageContent.story.title }}
             </h2>
-            <div class="space-y-4 text-earth-600 leading-relaxed">
-              <p>
-                <strong class="text-earth-800">PITAYA LAB</strong> nace de la pasión por la naturaleza y el deseo de crear 
-                productos que cuiden tanto de las personas como del planeta.
-              </p>
-              <p>
-                Inspirados por la riqueza natural de México y las experiencias sensoriales de los mejores 
-                destinos del país, creamos fragancias que evocan recuerdos y emociones.
-              </p>
-              <p>
-                Nuestro nombre proviene de la Pitaya, una fruta mexicana vibrante y llena de vitalidad. 
-                Como ella, buscamos aportar color, frescura y energía natural a cada hogar.
-              </p>
-              <p>
-                Cada producto es elaborado con ingredientes botánicos cuidadosamente seleccionados, 
-                libres de químicos agresivos, en envases pensados para ser reutilizados o reciclados.
-              </p>
-            </div>
+            <div class="space-y-4 text-earth-600 leading-relaxed" v-html="storyParagraphsHtml"></div>
           </div>
           <div class="relative">
             <!-- Contenedor con proporción 60-40 -->
@@ -50,8 +32,8 @@
               <!-- Imagen principal: 60% (ocupa casi todo el contenedor) -->
               <div class="absolute inset-0 w-[85%] h-[85%] rounded-3xl overflow-hidden shadow-2xl">
                 <img
-                  src="/images/brand/Nuestra Historia-imagen conceptual.jpg"
-                  alt="PITAYA LAB - Nuestra historia"
+                  :src="pageContent.story.image_url"
+                  :alt="pageContent.story.image_alt"
                   class="w-full h-full object-cover"
                   loading="lazy"
                 />
@@ -59,8 +41,8 @@
               <!-- Imagen secundaria: 40% (superpuesta abajo a la derecha) -->
               <div class="absolute bottom-0 right-0 w-[55%] h-[55%] rounded-3xl overflow-hidden shadow-2xl border-4 border-white z-10">
                 <img
-                  src="/images/brand/hero-bruma.png"
-                  alt="Bruma aromática en ambiente zen con bambú y jazmín"
+                  :src="pageContent.story.secondary_image_url"
+                  :alt="pageContent.story.secondary_image_alt"
                   class="w-full h-full object-cover"
                   loading="lazy"
                 />
@@ -80,6 +62,7 @@
             ¿Qué nos hace diferentes?
           </h2>
         </div>
+        <!-- Los valores provienen de site_config (clave brand_values) con fallback estático -->
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div
@@ -113,7 +96,61 @@
 </template>
 
 <script setup>
-import { brandValues } from '~/products/data'
+import { brandValues as staticBrandValues } from '~/products/data'
+
+const supabase = useNuxtApp().$supabase
+
+// Contenido de la página, editable desde el panel admin vía site_config
+const pageContent = reactive({
+  header: { badge: 'Conócenos', title: 'Sobre', highlight: 'PITAYA LAB', description: 'Somos una marca mexicana comprometida con la creación de productos botánicos biodegradables que transforman los espacios en experiencias sensoriales únicas.' },
+  story: {
+    badge: 'Nuestra Historia',
+    title: 'Fragancias que nacen del corazón de México',
+    image_url: '/images/brand/Nuestra Historia-imagen conceptual.jpg',
+    image_alt: 'PITAYA LAB - Nuestra historia',
+    secondary_image_url: '/images/brand/hero-bruma.png',
+    secondary_image_alt: 'Bruma aromática en ambiente zen con bambú y jazmín',
+    paragraphs: [
+      '<strong class="text-earth-800">PITAYA LAB</strong> nace de la pasión por la naturaleza y el deseo de crear productos que cuiden tanto de las personas como del planeta.',
+      'Inspirados por la riqueza natural de México y las experiencias sensoriales de los mejores destinos del país, creamos fragancias que evocan recuerdos y emociones.',
+      'Nuestro nombre proviene de la Pitaya, una fruta mexicana vibrante y llena de vitalidad. Como ella, buscamos aportar color, frescura y energía natural a cada hogar.',
+      'Cada producto es elaborado con ingredientes botánicos cuidadosamente seleccionados, libres de químicos agresivos, en envases pensados para ser reutilizados o reciclados.',
+    ],
+  },
+})
+
+const brandValues = ref(staticBrandValues)
+
+// Unir párrafos con HTML (para v-html)
+const storyParagraphsHtml = computed(() =>
+  pageContent.story.paragraphs.map(p => `<p>${p}</p>`).join('')
+)
+
+// Cargar contenido editable desde Supabase
+async function loadConfig() {
+  if (!supabase) return
+  try {
+    const { data, error } = await supabase
+      .from('site_config')
+      .select('key, value')
+      .in('key', ['about_page', 'brand_values'])
+    if (error) throw error
+    if (Array.isArray(data)) {
+      const rows = data
+      const about = rows.find(r => r.key === 'about_page')
+      if (about?.value) {
+        if (about.value.header) Object.assign(pageContent.header, about.value.header)
+        if (about.value.story) Object.assign(pageContent.story, about.value.story)
+      }
+      const bv = rows.find(r => r.key === 'brand_values')
+      if (bv?.value && Array.isArray(bv.value)) brandValues.value = bv.value
+    }
+  } catch (e) {
+    console.warn('Usando datos estáticos para About (fallback):', e.message)
+  }
+}
+
+onMounted(loadConfig)
 
 useSeoMeta({
   title: 'Sobre Nosotros | PITAYA LAB',
