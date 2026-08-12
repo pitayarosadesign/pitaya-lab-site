@@ -13,6 +13,11 @@
     <!-- Navegación por páginas (estilo Shopify) -->
     <EditorPageTabs active="home" />
 
+    <!-- Editor de secciones dinámicas -->
+    <div class="bg-white rounded-xl border border-gray-200 p-6">
+      <SectionsEditor />
+    </div>
+
     <div class="flex items-center justify-between">
       <div>
         <h2 class="text-lg font-semibold text-gray-900">🏠 Página de Portada</h2>
