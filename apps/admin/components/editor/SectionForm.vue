@@ -699,19 +699,85 @@ function triggerMediaUpload(inputKey) {
 }
 
 async function uploadToStorage(file) {
+  // Comprimir/redimensionar la imagen en el cliente antes de enviarla, para
+  // no exceder el límite de body de Vercel (~4.5 MB) que causa el error 413.
+  // El endpoint recibe el archivo en base64 (≈33% más pesado que el binario),
+  // así que una imagen de 1920x1080 pesada puede superar ese límite fácilmente.
+  const processed = await compressImageIfNeeded(file)
+
   // Leer como Data URL (base64)
   const base64 = await new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => resolve(reader.result)
     reader.onerror = reject
-    reader.readAsDataURL(file)
+    reader.readAsDataURL(processed)
   })
 
   const res = await $fetch('/api/site/upload-media', {
     method: 'POST',
-    body: { file: { name: file.name, data: base64 } },
+    body: { file: { name: processed.name, data: base64 } },
   })
   return res?.success && res?.url ? res.url : null
+}
+
+// Redimensiona y comprime una imagen si es demasiado grande, para mantener la
+// subida por debajo del límite de Vercel. Devuelve el archivo original si no
+// necesita compresión (videos u otros, o imágenes ya ligeras).
+async function compressImageIfNeeded(file) {
+  const isImage = file && typeof file.type === 'string' && file.type.startsWith('image/')
+  const maxBytes = 2.5 * 1024 * 1024 // 2.5 MB de umbral por archivo
+  if (!isImage || file.size <= maxBytes) return file
+
+  try {
+    const url = URL.createObjectURL(file)
+    const img = await new Promise((resolve, reject) => {
+      const i = new Image()
+      i.onload = () => resolve(i)
+      i.onerror = () => reject(new Error('No se pudo leer la imagen'))
+      i.src = url
+    })
+
+    // Redimensionar solo imágenes muy grandes (p. ej. >2400px) para no
+    // degradar las de 1920x1080 que ya son la medida recomendada.
+    const MAX_W = 2400
+    const scale = Math.min(1, MAX_W / img.naturalWidth)
+    const w = Math.round(img.naturalWidth * scale)
+    const h = Math.round(img.naturalHeight * scale)
+
+    const canvas = document.createElement('canvas')
+    canvas.width = w
+    canvas.height = h
+    const ctx = canvas.getContext('2d')
+    if (ctx) ctx.drawImage(img, 0, 0, w, h)
+
+    // Comprimir a JPEG con calidad adaptativa: reduce la calidad en pasos hasta
+    // que el resultado entre al presupuesto, mínimo 0.55 para no perder calidad.
+    const dataUrl = await new Promise((resolve) => {
+      const tryCompress = (q) => {
+        const out = canvas.toDataURL('image/jpeg', q)
+        const approxBytes = Math.ceil((out.length - 'data:image/jpeg;base64,'.length) * 3 / 4)
+        if (approxBytes <= maxBytes || q <= 0.55) {
+          resolve(out)
+        } else {
+          tryCompress(q - 0.1)
+        }
+      }
+      tryCompress(0.85)
+    })
+
+    URL.revokeObjectURL(url)
+
+    // Crear un File nuevo a partir del dataURL comprimido
+    const byteString = atob(dataUrl.split(',')[1])
+    const ab = new ArrayBuffer(byteString.length)
+    const u8 = new Uint8Array(ab)
+    for (let i = 0; i < byteString.length; i++) u8[i] = byteString.charCodeAt(i)
+    const base = file.name.replace(/\.[^.]+$/, '')
+    return new File([ab], `${base}.jpg`, { type: 'image/jpeg' })
+  } catch (e) {
+    console.warn('No se pudo comprimir la imagen, se envía original:', e.message)
+    return file
+  }
 }
 
 async function onMediaUpload(field, event) {
