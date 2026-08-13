@@ -619,6 +619,13 @@ const props = defineProps({
 
 defineEmits(['save'])
 
+// Referencia local a la prop. En `<script setup>` las props solo están
+// disponibles vía `props.section`, no como variable global. Este computed
+// expone `section` para que las funciones del script (subir media, agregar
+// slides, reordenar, etc.) puedan usarla sin problema. `computed` se
+// auto-importa en Nuxt (igual que `ref`).
+const section = computed(() => props.section)
+
 const supabase = useSupabase()
 const collections = ref([])
 
