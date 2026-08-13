@@ -45,6 +45,7 @@ const config = reactive({
     description: 'Descubre nuestra colección completa de velas de soya, aceites aromáticos y brumas. Cada producto elaborado con ingredientes botánicos para cuidar de ti y del planeta.',
   },
   scent_guide: {
+    enabled: true,
     badge: 'Guía de Aromas',
     title: 'Encuentra tu aroma ideal',
     description: 'Cada aroma de PITAYA LAB está diseñado para una experiencia única. Elige según tu mood y el momento.',

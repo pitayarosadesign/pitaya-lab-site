@@ -159,7 +159,7 @@
     </Teleport>
 
     <!-- 🎯 Guía de Aromas por Mood -->
-    <section class="py-16 bg-gradient-to-b from-white to-primary-50/30">
+    <section v-if="catalogConfig.scent_guide.enabled" class="py-16 bg-gradient-to-b from-white to-primary-50/30">
       <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-10">
           <span class="text-primary-600 font-semibold text-sm uppercase tracking-wider">{{ catalogConfig.scent_guide.badge }}</span>
@@ -265,6 +265,7 @@ const catalogConfig = reactive({
     description: 'Descubre nuestra colección completa de velas de soya, aceites aromáticos y brumas. Cada producto elaborado con ingredientes botánicos para cuidar de ti y del planeta.',
   },
   scent_guide: {
+    enabled: true,
     badge: 'Guía de Aromas',
     title: 'Encuentra tu aroma ideal',
     description: 'Cada aroma de PITAYA LAB está diseñado para una experiencia única. Elige según tu mood y el momento.',

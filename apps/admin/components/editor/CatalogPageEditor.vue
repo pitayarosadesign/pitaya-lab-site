@@ -36,12 +36,27 @@
     <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
       <div class="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
         <span class="text-2xl">🌿</span>
-        <div>
+        <div class="flex-1">
           <h3 class="text-lg font-bold text-gray-900">Guía de Aromas</h3>
           <p class="text-sm text-gray-500">La tabla de aromas al final del catálogo</p>
         </div>
+        <!-- Toggle para mostrar/ocultar la sección -->
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+          <span class="text-sm font-medium text-gray-600">Mostrar</span>
+          <button
+            type="button"
+            @click="model.scent_guide.enabled = !model.scent_guide.enabled"
+            class="relative w-11 h-6 rounded-full transition-colors"
+            :class="model.scent_guide.enabled ? 'bg-primary-600' : 'bg-gray-300'"
+          >
+            <span
+              class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
+              :class="model.scent_guide.enabled ? 'translate-x-5' : ''"
+            />
+          </button>
+        </label>
       </div>
-      <div class="p-6 space-y-4">
+      <div v-if="model.scent_guide.enabled" class="p-6 space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Badge</label>

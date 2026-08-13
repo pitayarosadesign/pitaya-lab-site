@@ -135,15 +135,10 @@
                 <span class="w-2 h-2 rounded-full bg-green-500"></span>
                 En stock ({{ currentStock }} disponibles)
               </span>
-              <!-- Sobre pedido (sin stock pero permitido) -->
-              <span v-else-if="product.allowBackorder" class="flex items-center gap-1.5 text-amber-600">
+              <!-- Sobre pedido (sin stock) -->
+              <span v-else class="flex items-center gap-1.5 text-amber-600">
                 <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-                Preparación sobre pedido (3-5 días hábiles)
-              </span>
-              <!-- Agotado -->
-              <span v-else class="flex items-center gap-1.5 text-red-500">
-                <span class="w-2 h-2 rounded-full bg-red-400"></span>
-                Agotado temporalmente
+                Preparación sobre pedido: se elabora artesanalmente en taller (3-4 días), puede tardar más según demanda
               </span>
               <span v-if="product.freeShipping" class="flex items-center gap-1.5 text-primary-600">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -288,18 +283,17 @@ const currentStock = computed(() => {
   return product.value.stock
 })
 
-// ¿Se puede comprar? (en stock o sobre pedido permitido)
+// ¿Se puede comprar? Siempre se puede agregar al carrito.
+// Si no hay stock, se trata como pedido sobre pedido (preparación en taller).
 const isPurchasable = computed(() => {
-  if (!product.value) return false
-  return currentStock.value > 0 || product.value.allowBackorder === true
+  return !!product.value
 })
 
 // Texto del botón según estado
 const buttonLabel = computed(() => {
   if (!product.value) return 'Agregar al carrito'
   if (currentStock.value > 0) return 'Agregar al carrito'
-  if (product.value.allowBackorder) return 'Agregar al carrito (sobre pedido)'
-  return 'Agotado'
+  return 'Agregar al carrito (sobre pedido)'
 })
 
 // Productos relacionados (misma categoría)
