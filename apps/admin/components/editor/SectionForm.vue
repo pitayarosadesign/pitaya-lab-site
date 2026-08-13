@@ -13,6 +13,65 @@
 
     <!-- Formularios por tipo -->
     <div v-if="section.type === 'hero'">
+      <!-- Vista previa en vivo del hero -->
+      <div class="mb-4 rounded-xl overflow-hidden border border-gray-200 bg-gray-900 relative" style="aspect-ratio: 16/9;">
+        <!-- Video -->
+        <video
+          v-if="heroPreviewType === 'video' && section.content.media_url"
+          :src="section.content.media_url"
+          :poster="section.content.poster_url || undefined"
+          autoplay
+          muted
+          loop
+          playsinline
+          class="w-full h-full object-cover"
+        ></video>
+        <!-- Imagen -->
+        <img
+          v-else-if="heroPreviewType === 'image' && section.content.media_url"
+          :src="section.content.media_url"
+          alt="Vista previa del hero"
+          class="w-full h-full object-cover"
+          @error="$event.target.style.opacity = 0.15"
+        />
+        <!-- Carrusel -->
+        <div v-else-if="heroPreviewType === 'carousel' && section.content.slides && section.content.slides.length" class="w-full h-full">
+          <img
+            v-for="(slide, i) in section.content.slides"
+            :key="i"
+            :src="slide.image"
+            :alt="'Slide ' + (i + 1)"
+            class="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
+            :class="i === heroPreviewSlide ? 'opacity-100' : 'opacity-0'"
+            @error="$event.target.style.opacity = 0.15"
+          />
+        </div>
+        <!-- Placeholder si no hay media -->
+        <div v-else class="w-full h-full flex items-center justify-center text-gray-500 text-sm">
+          <span>🖼️ Vista previa — configura el fondo para verlo aquí</span>
+        </div>
+
+        <!-- Overlay con el título para simular el hero -->
+        <div class="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-transparent flex items-center">
+          <div class="px-6 md:px-10 max-w-lg">
+            <p v-if="section.content.badge" class="text-white/90 text-xs md:text-sm mb-2 inline-block bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
+              {{ section.content.badge }}
+            </p>
+            <h3 class="text-white font-serif font-bold text-xl md:text-3xl leading-tight whitespace-pre-line">
+              {{ section.content.title || 'Título del hero' }}
+            </h3>
+            <p v-if="section.content.subtitle" class="text-white/80 text-xs md:text-sm mt-2 line-clamp-2">
+              {{ section.content.subtitle }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Etiqueta del tipo de fondo -->
+        <span class="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded-full uppercase tracking-wide">
+          {{ heroPreviewType }}
+        </span>
+      </div>
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-gray-700 mb-1">Título principal</label>
@@ -635,6 +694,57 @@ const section = computed(() => props.section)
 
 const supabase = useSupabase()
 const collections = ref([])
+
+// ---------- Vista previa en vivo del hero ----------
+// Determina el tipo de media a previsualizar, con la misma lógica de inferencia
+// que usa el store (HeroSection.vue): si media_type dice 'video' pero la URL
+// apunta a una imagen, se muestra la imagen.
+const heroPreviewType = computed(() => {
+  const type = section.content?.media_type || (section.content?.media_url ? inferMediaType(section.content.media_url) : 'video')
+  if (type === 'video' && section.content?.media_url && inferMediaType(section.content.media_url) === 'image') {
+    return 'image'
+  }
+  return type
+})
+
+// Slide actual del carrusel en la vista previa
+const heroPreviewSlide = ref(0)
+
+// Autoplay del carrusel en la vista previa
+let heroPreviewTimer = null
+function startHeroPreviewCarousel() {
+  stopHeroPreviewCarousel()
+  const slides = section.content?.slides || []
+  if (heroPreviewType.value === 'carousel' && slides.length > 1) {
+    heroPreviewTimer = setInterval(() => {
+      heroPreviewSlide.value = (heroPreviewSlide.value + 1) % slides.length
+    }, 4000)
+  }
+}
+function stopHeroPreviewCarousel() {
+  if (heroPreviewTimer) {
+    clearInterval(heroPreviewTimer)
+    heroPreviewTimer = null
+  }
+}
+
+// Reinicia el carrusel cuando cambia el tipo o las slides
+watch(
+  () => [heroPreviewType.value, section.content?.slides?.length],
+  () => {
+    heroPreviewSlide.value = 0
+    startHeroPreviewCarousel()
+  },
+  { immediate: true }
+)
+
+onBeforeUnmount(stopHeroPreviewCarousel)
+
+// Infiere el tipo de media según la extensión de la URL
+function inferMediaType(url) {
+  const ext = (url || '').split('?')[0].split('.').pop()?.toLowerCase()
+  return ['mp4', 'webm', 'mov'].includes(ext) ? 'video' : 'image'
+}
 
 async function loadCollections() {
   try {

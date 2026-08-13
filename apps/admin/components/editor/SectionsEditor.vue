@@ -151,9 +151,6 @@ const props = defineProps({
   page: { type: String, default: 'home' },
 })
 
-const supabase = useSupabase()
-const supabaseAdmin = useSupabaseAdmin()
-
 const sections = ref([])
 const loading = ref(true)
 const expandedSection = ref(null)
@@ -206,22 +203,8 @@ function typeIcon(type) {
 async function loadSections() {
   loading.value = true
   try {
-    const client = supabaseAdmin || supabase
-    const { data, error } = await client
-      .from('page_sections')
-      .select('*')
-      .eq('page', props.page)
-      .order('sort_order', { ascending: true })
-
-    if (error) throw error
-    // Normalizar contenido: asegurar que los heroes tengan el array 'slides'
-    // (las secciones creadas antes de la función de carrusel no lo tienen).
-    sections.value = (data || []).map(s => {
-      if (s.type === 'hero' && s.content && !Array.isArray(s.content.slides)) {
-        s.content.slides = []
-      }
-      return s
-    })
+    const res = await $fetch(`/api/sections/list?page=${props.page}`)
+    sections.value = res?.sections || []
   } catch (e) {
     console.error('Error cargando secciones:', e)
     alert('Error al cargar secciones: ' + e.message)
@@ -243,17 +226,15 @@ async function addSection(type) {
   }
 
   try {
-    const client = supabaseAdmin || supabase
-    const { data, error } = await client
-      .from('page_sections')
-      .insert(newSection)
-      .select()
-      .single()
-
-    if (error) throw error
-    sections.value.push(data)
-    expandedSection.value = data.id
-    showAddModal.value = false
+    const res = await $fetch('/api/sections/create', {
+      method: 'POST',
+      body: newSection,
+    })
+    if (res?.section) {
+      sections.value.push(res.section)
+      expandedSection.value = res.section.id
+      showAddModal.value = false
+    }
   } catch (e) {
     console.error('Error agregando sección:', e)
     alert('Error al agregar sección: ' + e.message)
@@ -404,18 +385,15 @@ function getDefaultContent(type) {
 
 async function saveSection(section) {
   try {
-    const client = supabaseAdmin || supabase
-    const { error } = await client
-      .from('page_sections')
-      .update({
+    await $fetch('/api/sections/update', {
+      method: 'PUT',
+      body: {
+        id: section.id,
         title: section.title,
         content: section.content,
         settings: section.settings,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', section.id)
-
-    if (error) throw error
+      },
+    })
     alert('✅ Sección guardada correctamente')
   } catch (e) {
     console.error('Error guardando sección:', e)
@@ -425,13 +403,13 @@ async function saveSection(section) {
 
 async function toggleSection(section) {
   try {
-    const client = supabaseAdmin || supabase
-    const { error } = await client
-      .from('page_sections')
-      .update({ is_active: section.is_active })
-      .eq('id', section.id)
-
-    if (error) throw error
+    await $fetch('/api/sections/update', {
+      method: 'PUT',
+      body: {
+        id: section.id,
+        is_active: section.is_active,
+      },
+    })
   } catch (e) {
     console.error('Error actualizando sección:', e)
     section.is_active = !section.is_active
@@ -443,13 +421,7 @@ async function deleteSection(section) {
   if (!confirm(`¿Eliminar la sección "${section.title || section.type}"?`)) return
 
   try {
-    const client = supabaseAdmin || supabase
-    const { error } = await client
-      .from('page_sections')
-      .delete()
-      .eq('id', section.id)
-
-    if (error) throw error
+    await $fetch(`/api/sections/delete?id=${section.id}`, { method: 'DELETE' })
     sections.value = sections.value.filter(s => s.id !== section.id)
     if (expandedSection.value === section.id) expandedSection.value = null
   } catch (e) {
@@ -470,15 +442,13 @@ async function duplicateSection(section) {
   }
 
   try {
-    const client = supabaseAdmin || supabase
-    const { data, error } = await client
-      .from('page_sections')
-      .insert(newSection)
-      .select()
-      .single()
-
-    if (error) throw error
-    sections.value.push(data)
+    const res = await $fetch('/api/sections/duplicate', {
+      method: 'POST',
+      body: newSection,
+    })
+    if (res?.section) {
+      sections.value.push(res.section)
+    }
   } catch (e) {
     console.error('Error duplicando sección:', e)
     alert('Error al duplicar sección: ' + e.message)
@@ -509,14 +479,10 @@ function onDrop(targetIndex) {
 
 async function updateSortOrders() {
   try {
-    const client = supabaseAdmin || supabase
-    for (let i = 0; i < sections.value.length; i++) {
-      const { error } = await client
-        .from('page_sections')
-        .update({ sort_order: i + 1 })
-        .eq('id', sections.value[i].id)
-      if (error) throw error
-    }
+    await $fetch('/api/sections/reorder', {
+      method: 'POST',
+      body: { sections: sections.value },
+    })
   } catch (e) {
     console.error('Error actualizando orden:', e)
   }
