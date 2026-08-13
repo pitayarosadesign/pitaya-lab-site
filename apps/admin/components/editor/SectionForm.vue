@@ -79,6 +79,7 @@
                 class="px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs text-gray-600 hover:bg-gray-100 transition-colors"
                 :disabled="uploadingField === 'media_url'"
               >{{ uploadingField === 'media_url' ? 'Subiendo...' : '📷 Subir imagen' }}</button>
+              <span class="text-xs text-gray-400">Dimensiones recomendadas: <strong>1920×1080 px</strong> (apaisada)</span>
             </div>
           </div>
         </template>
@@ -101,6 +102,7 @@
                 class="px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs text-gray-600 hover:bg-gray-100 transition-colors"
                 :disabled="uploadingField === 'media_url'"
               >{{ uploadingField === 'media_url' ? 'Subiendo...' : '🎬 Subir video' }}</button>
+              <span class="text-xs text-gray-400">Dimensiones recomendadas: <strong>1920×1080 px</strong>, formato MP4</span>
             </div>
           </div>
           <div class="md:col-span-2">
@@ -119,6 +121,7 @@
                 class="px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs text-gray-600 hover:bg-gray-100 transition-colors"
                 :disabled="uploadingField === 'poster_url'"
               >{{ uploadingField === 'poster_url' ? 'Subiendo...' : '📷 Subir imagen' }}</button>
+              <span class="text-xs text-gray-400">Dimensiones recomendadas: <strong>1920×1080 px</strong> (apaisada)</span>
             </div>
           </div>
         </template>
@@ -177,6 +180,7 @@
                 class="flex-1 min-w-[220px] px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm"
               />
             </div>
+            <p class="text-xs text-gray-400 -mt-1">Dimensiones recomendadas: <strong>1920×1080 px</strong> (apaisada)</p>
             <input
               v-model="slide.link"
               type="text"
@@ -402,6 +406,7 @@
                 :disabled="uploadingList === `review-${index}`"
               >{{ uploadingList === `review-${index}` ? 'Subiendo...' : '📷 Foto del cliente' }}</button>
               <button v-if="review.image" type="button" @click="review.image = null" class="px-3 py-1.5 rounded-lg text-xs text-red-400 hover:text-red-600">Quitar foto</button>
+              <p class="text-xs text-gray-400">Dimensiones recomendadas: <strong>400×400 px</strong> (cuadrada)</p>
             </div>
           </div>
           <div class="flex items-center gap-2">
@@ -499,6 +504,7 @@
                 >{{ uploadingField === 'image_url' ? 'Subiendo...' : '📷 Subir imagen' }}</button>
                 <button v-if="section.content.image_url" type="button" @click="section.content.image_url = ''" class="px-3 py-2 rounded-lg text-xs text-red-400 hover:text-red-600">Quitar</button>
               </div>
+              <p class="text-xs text-gray-400 -mt-1.5">Dimensiones recomendadas: <strong>800×1200 px</strong> (vertical 2:3)</p>
               <input v-model="section.content.image_url" type="url" placeholder="https://... o /images/..." class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
             </div>
           </div>
@@ -565,6 +571,7 @@
             >{{ uploadingList === `gallery-${index}` ? 'Subiendo...' : '📷 Subir imagen' }}</button>
             <input v-model="image.url" type="url" placeholder="URL de la imagen" class="flex-1 min-w-[220px] px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
           </div>
+          <p class="text-xs text-gray-400 -mt-1">Dimensiones recomendadas: <strong>800×800 px</strong> (cuadrada)</p>
           <input v-model="image.caption" type="text" placeholder="Texto (opcional)" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
         </div>
         <button @click="section.content.images.push({ url: '', caption: '' })" class="text-sm text-primary-600 hover:text-primary-700 font-medium">
@@ -643,10 +650,21 @@ async function loadCollections() {
   }
 }
 
+// Asegura que `section.content` exista como objeto. Algunas secciones pueden venir
+// de la BD con `content` null/undefined (creadas o cargadas antes de popularlo).
+// Sin esta protección, `section.content[field] = url` en `onMediaUpload` lanza:
+//   "Cannot set properties of undefined (setting 'media_url')"
+function ensureContent() {
+  if (!section.content || typeof section.content !== 'object') {
+    section.content = {}
+  }
+}
+
 // Asegura que el array de slides exista (para heroes creados antes de esta función)
 // Se reasigna completo para garantizar la reactividad de Vue incluso si el objeto
 // content viene "plano" desde la BD (no reactivo).
 function ensureSlides() {
+  ensureContent()
   if (!section.content.slides || !Array.isArray(section.content.slides)) {
     section.content.slides = []
   }
@@ -700,6 +718,7 @@ async function onMediaUpload(field, event) {
   const file = event.target.files?.[0]
   if (!file) return
   uploadingField.value = field
+  ensureContent()
   try {
     const url = await uploadToStorage(file)
     if (url) {
@@ -722,6 +741,7 @@ async function onMediaUpload(field, event) {
 const uploadingList = ref(null)
 
 async function onImageListUpload(array, index, field, event) {
+  ensureContent()
   const file = event.target.files?.[0]
   if (!file) return
   uploadingList.value = `${array === section.content.images ? 'gallery' : 'list'}-${index}`
@@ -742,6 +762,7 @@ async function onImageListUpload(array, index, field, event) {
 }
 
 async function onReviewUpload(review, event) {
+  ensureContent()
   const file = event.target.files?.[0]
   if (!file) return
   const idx = section.content.items ? section.content.items.indexOf(review) : -1
@@ -789,6 +810,7 @@ function triggerSlideUpload(slide) {
 }
 
 async function onSlideUpload(slide, event) {
+  ensureContent()
   const file = event.target.files?.[0]
   if (!file) return
   const idx = section.content.slides.indexOf(slide)
