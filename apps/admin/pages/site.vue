@@ -21,10 +21,10 @@
     </div>
 
     <!-- Navegación por páginas -->
-    <PageTabs active="home" />
+    <EditorPageTabs active="home" />
 
     <!-- Editor de secciones dinámicas (la portada se arma desde page_sections) -->
-    <SectionsEditor page="home" />
+    <EditorSectionsEditor page="home" />
   </div>
 </template>
 

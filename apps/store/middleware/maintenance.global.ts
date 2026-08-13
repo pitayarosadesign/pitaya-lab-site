@@ -1,8 +1,9 @@
 // Middleware global de mantenimiento
+
 // Redirige todas las rutas a /maintenance mientras el sitio esté en mantenimiento.
 // Para desactivar el mantenimiento, cambia MAINTENANCE_MODE a false.
 
-const MAINTENANCE_MODE = true
+const MAINTENANCE_MODE = false
 
 export default defineNuxtRouteMiddleware((to) => {
   if (!MAINTENANCE_MODE) return

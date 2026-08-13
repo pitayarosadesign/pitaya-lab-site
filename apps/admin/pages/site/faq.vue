@@ -10,7 +10,7 @@
       </NuxtLink>
     </div>
 
-    <PageTabs active="faq" />
+    <EditorPageTabs active="faq" />
 
     <div class="flex items-center justify-between">
       <div>
@@ -26,7 +26,7 @@
       </button>
     </div>
 
-    <FaqPageEditor v-model="config" />
+    <EditorFaqPageEditor v-model="config" />
   </div>
 </template>
 
