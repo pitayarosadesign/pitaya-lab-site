@@ -162,12 +162,12 @@
     <section class="py-16 bg-gradient-to-b from-white to-primary-50/30">
       <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-10">
-          <span class="text-primary-600 font-semibold text-sm uppercase tracking-wider">Guía de Aromas</span>
+          <span class="text-primary-600 font-semibold text-sm uppercase tracking-wider">{{ catalogConfig.scent_guide.badge }}</span>
           <h2 class="text-3xl font-serif font-bold text-earth-900 mt-2 mb-4">
-            Encuentra tu aroma ideal
+            {{ catalogConfig.scent_guide.title }}
           </h2>
           <p class="text-earth-500 max-w-2xl mx-auto">
-            Cada aroma de PITAYA LAB está diseñado para una experiencia única. Elige según tu mood y el momento.
+            {{ catalogConfig.scent_guide.description }}
           </p>
         </div>
 
@@ -216,7 +216,7 @@
         </div>
 
         <p class="text-center text-[10px] text-earth-400 mt-4">
-          * Los aromas "Xcaret" y "Vidanta" son referencias inspiracionales. PITAYA LAB no tiene afiliación con los hoteles o marcas de dichos nombres.
+          {{ catalogConfig.scent_guide.disclaimer }}
         </p>
       </div>
     </section>
@@ -225,13 +225,13 @@
     <section class="py-16 bg-gradient-to-r from-primary-900 to-earth-900">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 class="text-3xl font-serif font-bold text-white mb-4">
-          ¡Todos disponibles en Amazon!
+          {{ catalogConfig.cta.title }}
         </h2>
         <p class="text-primary-200 mb-8">
-          Haz clic en cualquier producto o visita nuestra tienda oficial en Amazon México.
+          {{ catalogConfig.cta.description }}
         </p>
         <a
-          :href="AMAZON_LINK"
+          :href="catalogConfig.cta.button_link || AMAZON_LINK"
           target="_blank"
           rel="noopener noreferrer"
           class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-10 py-4 rounded-full text-lg font-semibold transition-all hover:shadow-xl hover:shadow-amber-900/30"
@@ -239,7 +239,7 @@
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
             <path d="M13.483 0a1.374 1.374 0 0 0-.961.438L7.116 6.226l-3.854 4.126a1.375 1.375 0 0 0 0 1.994l2.414 2.585a1.375 1.375 0 0 0 1.994 0l3.779-3.788-3.787 3.787-2.414-2.585a1.374 1.374 0 0 1 0-1.994l3.705-3.964 3.675-3.675a1.375 1.375 0 0 0-.044-1.92A1.374 1.374 0 0 0 13.483 0zm-1.587 2.585-3.673 3.675 3.673 3.675h7.252v-1.53h-5.733l-2.358-2.585 2.358-2.585h5.733v-1.53h-7.252z"/>
           </svg>
-          Ir a la Tienda en Amazon
+          {{ catalogConfig.cta.button_text }}
         </a>
       </div>
     </section>
@@ -255,6 +255,49 @@ useSeoMeta({
 })
 
 const AMAZON_LINK = 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329?'
+
+// Configuración editable de la página de catálogo (desde site_config)
+const catalogConfig = reactive({
+  header: {
+    badge: 'Catálogo',
+    title: 'Nuestros',
+    highlight: 'Productos',
+    description: 'Descubre nuestra colección completa de velas de soya, aceites aromáticos y brumas. Cada producto elaborado con ingredientes botánicos para cuidar de ti y del planeta.',
+  },
+  scent_guide: {
+    badge: 'Guía de Aromas',
+    title: 'Encuentra tu aroma ideal',
+    description: 'Cada aroma de PITAYA LAB está diseñado para una experiencia única. Elige según tu mood y el momento.',
+    disclaimer: '* Los aromas "Xcaret" y "Vidanta" son referencias inspiracionales. PITAYA LAB no tiene afiliación con los hoteles o marcas de dichos nombres.',
+  },
+  cta: {
+    title: '¡Todos disponibles en Amazon!',
+    description: 'Haz clic en cualquier producto o visita nuestra tienda oficial en Amazon México.',
+    button_text: 'Ir a la Tienda en Amazon',
+    button_link: 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329',
+  },
+})
+
+// Cargar configuración editable desde site_config
+async function loadCatalogConfig() {
+  try {
+    const supabase = useNuxtApp().$supabase
+    if (!supabase) return
+    const { data, error } = await supabase
+      .from('site_config')
+      .select('value')
+      .eq('key', 'catalog_page')
+      .single()
+    if (error) throw error
+    if (data?.value) {
+      Object.assign(catalogConfig.header, data.value.header)
+      Object.assign(catalogConfig.scent_guide, data.value.scent_guide)
+      Object.assign(catalogConfig.cta, data.value.cta)
+    }
+  } catch (e) {
+    console.warn('Usando configuración por defecto del catálogo:', e.message)
+  }
+}
 
 // Categorías cargadas dinámicamente desde la base de datos
 const categories = ref([
@@ -375,6 +418,7 @@ function goToAmazon(product) {
 }
 
 onMounted(() => {
+  loadCatalogConfig()
   loadCategories()
   loadProducts()
   loadAromas()

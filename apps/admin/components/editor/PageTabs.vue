@@ -21,6 +21,7 @@ const props = defineProps({
 
 const tabs = [
   { key: 'home', label: 'Portada', icon: '🏠', to: '/site' },
+  { key: 'catalog', label: 'Catálogo', icon: '🛍️', to: '/site/catalog' },
   { key: 'about', label: 'Sobre Nosotros', icon: '📖', to: '/site/about' },
   { key: 'philosophy', label: 'Filosofía', icon: '🌿', to: '/site/philosophy' },
   { key: 'faq', label: 'FAQ', icon: '❓', to: '/site/faq' },
