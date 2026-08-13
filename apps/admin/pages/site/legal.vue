@@ -4,7 +4,7 @@
       <h1 class="text-2xl font-bold text-gray-900">🌐 Editor del Sitio Web</h1>
     </div>
 
-    <EditorPageTabs active="legal" />
+    <PageTabs active="legal" />
 
     <div class="flex items-center justify-between">
       <div>
@@ -36,8 +36,8 @@
     </div>
 
     <!-- Editor del documento activo -->
-    <EditorLegalPageEditor v-if="activeDoc === 'privacy'" v-model="privacyConfig" />
-    <EditorLegalPageEditor v-else v-model="termsConfig" />
+    <LegalPageEditor v-if="activeDoc === 'privacy'" v-model="privacyConfig" />
+    <LegalPageEditor v-else v-model="termsConfig" />
   </div>
 </template>
 

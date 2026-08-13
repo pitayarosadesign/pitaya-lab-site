@@ -214,22 +214,76 @@
         </div>
       </div>
 
-      <!-- VARIANTES -->
+      <!-- Variantes (Aromas) -->
       <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
         <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-gray-900">Variantes (Aromas)</h2>
-          <button type="button" @click="addVariant" class="text-sm text-primary-600 hover:text-primary-700 font-medium">+ Agregar aroma</button>
-        </div>
-        <div v-for="(variant, index) in form.variants" :key="index" class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-          <div class="flex-1 grid grid-cols-3 gap-3">
-            <input v-model="variant.name" type="text" placeholder="Nombre del aroma" class="px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
-            <input v-model="variant.sku" type="text" placeholder="SKU variante" class="px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm font-mono" />
-            <input v-model="variant.price" type="number" placeholder="Precio" class="px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+          <div>
+            <h2 class="text-lg font-semibold text-gray-900">🧴 Disponible en estos Aromas</h2>
+            <p class="text-sm text-gray-400 mt-0.5">Selecciona en cuáles perfiles aromáticos estará disponible este producto</p>
           </div>
-          <button type="button" @click="removeVariant(index)" class="text-red-400 hover:text-red-600 transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-          </button>
+          <span class="text-xs font-medium px-3 py-1 rounded-full bg-primary-50 text-primary-700">
+            {{ selectedScentCount }} / {{ allScents.length }} seleccionados
+          </span>
         </div>
+
+        <div v-if="loadingProfiles" class="py-8 text-center text-gray-400 text-sm">
+          Cargando perfiles aromáticos...
+        </div>
+
+        <!-- Agrupado por colección -->
+        <div v-else class="space-y-6">
+          <div v-for="group in scentGroups" :key="group.collection.id || group.collection.name" class="border border-gray-100 rounded-xl overflow-hidden">
+            <div class="flex items-center gap-3 px-4 py-3 bg-gray-50 border-b border-gray-100">
+              <span class="text-lg">{{ group.collection.icon || '🌸' }}</span>
+              <div>
+                <h3 class="text-sm font-semibold text-gray-800">{{ group.collection.name }}</h3>
+                <p v-if="group.collection.subtitle" class="text-xs text-gray-400">{{ group.collection.subtitle }}</p>
+              </div>
+              <div class="ml-auto">
+                <button
+                  type="button"
+                  @click="toggleAllInGroup(group)"
+                  class="text-xs font-medium text-primary-600 hover:text-primary-700"
+                >
+                  {{ group.selectedCount === group.scents.length ? 'Quitar todos' : 'Seleccionar todos' }}
+                </button>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 p-4">
+              <label
+                v-for="scent in group.scents"
+                :key="scent.id"
+                class="flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer"
+                :class="isScentSelected(scent.id) ? 'border-primary-400 bg-primary-50/60' : 'border-gray-200 hover:border-gray-300'"
+              >
+                <input
+                  type="checkbox"
+                  :checked="isScentSelected(scent.id)"
+                  @change="toggleScent(scent.id)"
+                  class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                />
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium text-gray-800 truncate">{{ scent.name }}</span>
+                    <span v-if="scent.emoji" class="text-base">{{ scent.emoji }}</span>
+                  </div>
+                  <p v-if="scent.subtitle" class="text-xs text-gray-400 truncate">{{ scent.subtitle }}</p>
+                  <p v-if="scent.experience" class="text-xs text-earth-500 truncate">{{ scent.experience }}</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div v-if="allScents.length === 0" class="py-8 text-center border-2 border-dashed border-gray-200 rounded-xl">
+            <p class="text-3xl mb-2">🌸</p>
+            <p class="text-sm text-gray-400">No hay perfiles aromáticos configurados.</p>
+            <p class="text-xs text-gray-400 mt-1">Crea perfiles aromáticos desde Colecciones en el panel.</p>
+          </div>
+        </div>
+
+        <p class="text-xs text-gray-400">
+          💡 Los aromas seleccionados se guardarán como variantes del producto y aparecerán como opciones de compra en la tienda.
+        </p>
       </div>
 
       <!-- BOTONES -->
@@ -365,7 +419,11 @@ const form = reactive({
   amazon_price: '',
   amazon_link: '',
   sync_amazon: false,
-  variants: []
+  variants: [],
+  selectedScents: new Set(),
+  scentGroups: [],
+  allScents: [],
+  loadingProfiles: false,
 })
 
 watch(() => form.name, (name) => {
@@ -397,8 +455,80 @@ function setPrimary(index) {
   form.images.unshift(img)
 }
 
-function addVariant() { form.variants.push({ name: '', sku: '', price: '' }) }
-function removeVariant(index) { form.variants.splice(index, 1) }
+// ===== Aromas disponibles (perfiles aromáticos) =====
+const selectedScentCount = computed(() => form.selectedScents.size)
+
+async function loadScentProfiles() {
+  form.loadingProfiles = true
+  try {
+    const res = await $fetch('/api/fragrance-profiles/list')
+    const profiles = res.profiles || []
+
+    const activeProfiles = profiles.filter(p => p.is_active !== false)
+
+    const groups = []
+    const groupMap = new Map()
+    for (const p of activeProfiles) {
+      const colData = p.collection || p.collections
+      const colKey = colData?.id || p.collection_id || 'sin-coleccion'
+      const colName = colData?.name || p.collection_name || 'Otros aromas'
+      const colIcon = colData?.icon || '🌸'
+      const colSubtitle = colData?.subtitle || ''
+
+      if (!groupMap.has(colKey)) {
+        const g = {
+          collection: { id: colKey, name: colName, icon: colIcon, subtitle: colSubtitle },
+          scents: [],
+          selectedCount: 0,
+        }
+        groupMap.set(colKey, g)
+        groups.push(g)
+      }
+      groupMap.get(colKey).scents.push({
+        id: p.id,
+        name: p.name,
+        subtitle: p.subtitle,
+        experience: p.experience,
+        emoji: p.emoji,
+        collection_id: p.collection_id,
+      })
+    }
+
+    form.scentGroups = groups
+    form.allScents = activeProfiles.map(p => ({
+      id: p.id,
+      name: p.name,
+      subtitle: p.subtitle,
+      experience: p.experience,
+      emoji: p.emoji,
+      collection_id: p.collection_id,
+    }))
+    form.selectedScents = new Set()
+  } catch (e) {
+    console.error('Error cargando perfiles aromáticos:', e)
+  } finally {
+    form.loadingProfiles = false
+  }
+}
+
+function isScentSelected(scentId) { return form.selectedScents.has(scentId) }
+
+function toggleScent(scentId) {
+  form.selectedScents.has(scentId) ? form.selectedScents.delete(scentId) : form.selectedScents.add(scentId)
+  updateGroupCounts()
+}
+
+function toggleAllInGroup(group) {
+  const allSelected = group.scents.every(s => form.selectedScents.has(s.id))
+  group.scents.forEach(s => allSelected ? form.selectedScents.delete(s.id) : form.selectedScents.add(s.id))
+  updateGroupCounts()
+}
+
+function updateGroupCounts() {
+  form.scentGroups.forEach(g => {
+    g.selectedCount = g.scents.filter(s => form.selectedScents.has(s.id)).length
+  })
+}
 
 async function handleSave() {
   try {
@@ -451,11 +581,7 @@ async function handleSave() {
           published_at: new Date().toISOString(),
         },
         images,
-        variants: form.variants.map(v => ({
-          name: v.name,
-          sku: v.sku,
-          price: v.price,
-        })),
+        variantProfileIds: Array.from(form.selectedScents),
       },
     })
 
@@ -476,8 +602,9 @@ function fileToBase64(file) {
   })
 }
 
-onMounted(() => {
-  loadCategories()
+onMounted(async () => {
+  await loadCategories()
+  loadScentProfiles()
 })
 
 onUnmounted(() => {

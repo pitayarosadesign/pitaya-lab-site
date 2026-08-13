@@ -74,20 +74,16 @@ async function loadCollection() {
 
     // Cargar productos que tengan variantes con esos aromas
     if (profiles && profiles.length > 0) {
-      const profileNames = profiles.map(p => p.name.toLowerCase())
+      const profileIds = profiles.map(p => p.id)
+      // Buscar variantes que apunten a esos perfiles aromáticos de forma explícita
       const { data: variants, error: variantsError } = await supabase
         .from('product_variants')
-        .select('product_id, name')
+        .select('product_id, fragrance_profile_id')
+        .in('fragrance_profile_id', profileIds)
         .eq('is_active', true)
       if (variantsError) throw variantsError
 
-      // Filtrar variantes que coincidan con los perfiles de la colección
-      const matchingProductIds = [...new Set(
-        (variants || [])
-          .filter(v => profileNames.some(pn => v.name.toLowerCase().includes(pn) || pn.includes(v.name.toLowerCase())))
-          .map(v => v.product_id)
-      )]
-
+      const matchingProductIds = [...new Set((variants || []).map(v => v.product_id))]
       if (matchingProductIds.length > 0) {
         const { data: prodData, error: prodError } = await supabase
           .from('products')
@@ -119,3 +115,4 @@ async function loadCollection() {
 
 onMounted(loadCollection)
 </script>
+

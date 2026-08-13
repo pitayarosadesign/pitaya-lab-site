@@ -69,8 +69,36 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // 3. Insertar variantes
-    if (body.variants && body.variants.length > 0) {
+    // 3. Insertar variantes basadas en perfiles aromáticos seleccionados
+    const profileIds = body.variantProfileIds || []
+    if (profileIds.length > 0) {
+      const { data: profiles, error: pError } = await supabaseAdmin
+        .from('fragrance_profiles')
+        .select('id, name, slug, subtitle')
+        .in('id', profileIds)
+        .eq('is_active', true)
+
+      if (pError) throw pError
+
+      const variants = (profiles || []).map((p, i) => ({
+        product_id: product.id,
+        name: p.name,
+        sku: `${body.product.sku}-${p.slug.toUpperCase()}`,
+        description: p.subtitle || null,
+        fragrance_profile_id: p.id,
+        sort_order: i,
+        is_active: true,
+        stock: parseInt(body.product.stock) || 0,
+      }))
+
+      if (variants.length > 0) {
+        const { error: varError } = await supabaseAdmin
+          .from('product_variants')
+          .insert(variants)
+        if (varError) throw varError
+      }
+    } else if (body.variants && body.variants.length > 0) {
+      // Compatibilidad: variantes manuales (formato texto libre)
       const variants = body.variants.map(v => ({
         product_id: product.id,
         name: v.name,
@@ -78,7 +106,6 @@ export default defineEventHandler(async (event) => {
         price: v.price ? parseFloat(v.price) : null,
         sort_order: body.variants.indexOf(v),
       }))
-
       const { error: varError } = await supabaseAdmin
         .from('product_variants')
         .insert(variants)

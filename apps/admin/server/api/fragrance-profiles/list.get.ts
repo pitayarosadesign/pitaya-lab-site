@@ -20,7 +20,13 @@ export default defineEventHandler(async (event) => {
       ...p,
       collection_name: p.collections?.name || '',
       collection_slug: p.collections?.slug || '',
-      collection: p.collections ? { id: p.collections.id, name: p.collections.name, slug: p.collections.slug } : null,
+      collection: p.collections ? {
+        id: p.collections.id,
+        name: p.collections.name,
+        slug: p.collections.slug,
+        subtitle: p.collections.subtitle,
+        icon: p.collections.icon,
+      } : null,
     }))
 
     return { profiles }
@@ -28,3 +34,4 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, message: e.message })
   }
 })
+

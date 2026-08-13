@@ -44,12 +44,15 @@
           @drop.prevent="onDrop(index)"
         >
           <span class="text-gray-300 text-lg">⠿</span>
-          <div class="flex-1">
+          <span class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-lg flex-shrink-0 shadow-sm">
+            {{ typeIcon(section.type) }}
+          </span>
+          <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2">
-              <span class="text-sm font-semibold text-gray-800">{{ section.title || section.type }}</span>
-              <span class="text-xs px-2 py-0.5 rounded-full bg-primary-50 text-primary-700 font-medium">{{ section.type }}</span>
+              <span class="text-sm font-semibold text-gray-800 truncate">{{ section.title || section.type }}</span>
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-primary-50 text-primary-700 font-medium whitespace-nowrap">{{ section.type }}</span>
             </div>
-            <p class="text-xs text-gray-400 mt-0.5">Posición {{ index + 1 }}</p>
+            <p class="text-[11px] text-gray-400 mt-0.5">Posición {{ index + 1 }}</p>
           </div>
 
           <!-- Toggle activo -->
@@ -110,19 +113,31 @@
           </button>
         </div>
 
-        <p class="text-sm text-gray-500 mb-4">Selecciona el tipo de sección que quieres agregar:</p>
+        <p class="text-sm text-gray-500 mb-4">Elige una plantilla por categoría según el propósito en tu tienda:</p>
 
-        <div class="grid grid-cols-2 gap-3">
-          <button
-            v-for="type in sectionTypes"
-            :key="type.value"
-            @click="addSection(type.value)"
-            class="p-4 rounded-xl border border-gray-200 hover:border-primary-400 hover:bg-primary-50 transition-all text-left"
-          >
-            <span class="text-2xl block mb-2">{{ type.icon }}</span>
-            <span class="text-sm font-medium text-gray-800 block">{{ type.label }}</span>
-            <span class="text-xs text-gray-400 mt-1 block">{{ type.description }}</span>
-          </button>
+        <!-- Modal con scroll, agrupado por categoría -->
+        <div class="max-h-[60vh] overflow-y-auto pr-1 -mr-1 space-y-5">
+          <div v-for="cat in sectionCategories" :key="cat.key" class="space-y-2">
+            <div class="flex items-center gap-2 pt-1">
+              <span class="text-lg">{{ cat.icon }}</span>
+              <div>
+                <p class="text-sm font-semibold text-gray-800">{{ cat.label }}</p>
+                <p class="text-[11px] text-gray-400">{{ cat.hint }}</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2.5">
+              <button
+                v-for="type in sectionTypesByCategory(cat.key)"
+                :key="type.value"
+                @click="addSection(type.value)"
+                class="p-3.5 rounded-xl border border-gray-200 hover:border-primary-400 hover:bg-primary-50 transition-all text-left group"
+              >
+                <span class="text-xl block mb-1.5">{{ type.icon }}</span>
+                <span class="text-sm font-medium text-gray-800 block group-hover:text-primary-700">{{ type.label }}</span>
+                <span class="text-[11px] text-gray-400 mt-0.5 block leading-snug">{{ type.description }}</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -131,6 +146,10 @@
 
 <script setup>
 import SectionForm from './SectionForm.vue'
+
+const props = defineProps({
+  page: { type: String, default: 'home' },
+})
 
 const supabase = useSupabase()
 const supabaseAdmin = useSupabaseAdmin()
@@ -141,23 +160,48 @@ const expandedSection = ref(null)
 const showAddModal = ref(false)
 const dragIndex = ref(null)
 
-// Tipos de sección disponibles
+// Tipos de sección disponibles agrupados por categoría
 const sectionTypes = [
-  { value: 'hero', label: 'Hero', icon: '🖼️', description: 'Banner principal con imagen/video' },
-  { value: 'products', label: 'Productos', icon: '📦', description: 'Grilla de productos destacados' },
-  { value: 'collection', label: 'Colección', icon: '🏷️', description: 'Productos de una colección' },
-  { value: 'collections', label: 'Colecciones', icon: '🌸', description: 'Grid de colecciones de aromas' },
-  { value: 'scents', label: 'Aromas', icon: '🌿', description: 'Galería de perfiles aromáticos' },
-  { value: 'values', label: 'Valores', icon: '🎯', description: 'Grid de valores de la marca' },
-  { value: 'trust', label: 'Confianza', icon: '📦', description: 'Beneficios de envío y confianza' },
-  { value: 'reviews', label: 'Reseñas', icon: '⭐', description: 'Carrusel de testimonios' },
-  { value: 'cta', label: 'CTA', icon: '🚀', description: 'Llamada a la acción con botón' },
-  { value: 'text', label: 'Texto', icon: '📝', description: 'Título y párrafos' },
-  { value: 'image_text', label: 'Imagen + Texto', icon: '🖼️', description: 'Imagen a un lado, texto al otro' },
-  { value: 'gallery', label: 'Galería', icon: '🖼️', description: 'Grid de imágenes' },
-  { value: 'html', label: 'HTML', icon: '💻', description: 'HTML libre' },
-  { value: 'newsletter', label: 'Newsletter', icon: '✉️', description: 'Formulario de suscripción' },
+  // Productos & Catálogo
+  { value: 'products', label: 'Productos', icon: '📦', description: 'Grilla de productos destacados', category: 'Productos' },
+  { value: 'collection', label: 'Colección', icon: '🏷️', description: 'Productos de una colección', category: 'Productos' },
+  { value: 'collections', label: 'Colecciones', icon: '🌸', description: 'Grid de colecciones de aromas', category: 'Productos' },
+  { value: 'scents', label: 'Aromas', icon: '🌿', description: 'Galería de perfiles aromáticos', category: 'Productos' },
+
+  // Contenido
+  { value: 'hero', label: 'Hero', icon: '🖼️', description: 'Banner principal con imagen/video', category: 'Contenido' },
+  { value: 'text', label: 'Texto', icon: '📝', description: 'Título y párrafos', category: 'Contenido' },
+  { value: 'image_text', label: 'Imagen + Texto', icon: '🖼️', description: 'Imagen a un lado, texto al otro', category: 'Contenido' },
+  { value: 'gallery', label: 'Galería', icon: '🖼️', description: 'Grid de imágenes', category: 'Contenido' },
+  { value: 'html', label: 'HTML', icon: '💻', description: 'HTML libre', category: 'Contenido' },
+
+  // Prueba social & Confianza
+  { value: 'values', label: 'Valores', icon: '🎯', description: 'Grid de valores de la marca', category: 'Confianza' },
+  { value: 'trust', label: 'Confianza', icon: '📦', description: 'Beneficios de envío y confianza', category: 'Confianza' },
+  { value: 'reviews', label: 'Reseñas', icon: '⭐', description: 'Carrusel de testimonios', category: 'Confianza' },
+
+  // Conversión & Marketing
+  { value: 'cta', label: 'CTA', icon: '🚀', description: 'Llamada a la acción con botón', category: 'Conversión' },
+  { value: 'newsletter', label: 'Newsletter', icon: '✉️', description: 'Formulario de suscripción', category: 'Conversión' },
 ]
+
+// Categorías con su orden e ícono para mostrarse en el modal
+const sectionCategories = [
+  { key: 'Productos', label: 'Productos & Catálogo', icon: '📦', hint: 'Vende y exhibe tus productos' },
+  { key: 'Contenido', label: 'Contenido', icon: '📝', hint: 'Construye narrativa de marca' },
+  { key: 'Confianza', label: 'Prueba social', icon: '⭐', hint: 'Genera confianza y fidelidad' },
+  { key: 'Conversión', label: 'Conversión', icon: '🚀', hint: 'Impulsa acciones de compra' },
+]
+
+function sectionTypesByCategory(category) {
+  return sectionTypes.filter(t => t.category === category)
+}
+
+// Ícono visual para cada tipo de sección en el listado
+function typeIcon(type) {
+  const found = sectionTypes.find(t => t.value === type)
+  return found ? found.icon : '🧩'
+}
 
 async function loadSections() {
   loading.value = true
@@ -166,7 +210,7 @@ async function loadSections() {
     const { data, error } = await client
       .from('page_sections')
       .select('*')
-      .eq('page', 'home')
+      .eq('page', props.page)
       .order('sort_order', { ascending: true })
 
     if (error) throw error
@@ -182,7 +226,7 @@ async function loadSections() {
 async function addSection(type) {
   const defaults = getDefaultContent(type)
   const newSection = {
-    page: 'home',
+    page: props.page,
     type,
     title: defaults.title,
     content: defaults.content,

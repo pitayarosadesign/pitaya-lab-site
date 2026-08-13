@@ -10,7 +10,7 @@
       </NuxtLink>
     </div>
 
-    <EditorPageTabs active="philosophy" />
+    <PageTabs active="philosophy" />
 
     <div class="flex items-center justify-between">
       <div>
@@ -26,7 +26,7 @@
       </button>
     </div>
 
-    <EditorPhilosophyPageEditor v-model="config" />
+    <PhilosophyPageEditor v-model="config" />
   </div>
 </template>
 

@@ -26,7 +26,14 @@ export default defineEventHandler(async (event) => {
       .eq('product_id', id)
       .order('sort_order', { ascending: true })
 
-    return { ...product, images: images || [] }
+    // Obtener variantes (aromas)
+    const { data: variants } = await supabaseAdmin
+      .from('product_variants')
+      .select('*')
+      .eq('product_id', id)
+      .order('sort_order', { ascending: true })
+
+    return { ...product, images: images || [], variants: variants || [] }
   } catch (e) {
     throw createError({ statusCode: 404, message: 'Producto no encontrado' })
   }

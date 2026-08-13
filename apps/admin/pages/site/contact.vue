@@ -10,7 +10,7 @@
       </NuxtLink>
     </div>
 
-    <EditorPageTabs active="contact" />
+    <PageTabs active="contact" />
 
     <div class="flex items-center justify-between">
       <div>
@@ -26,7 +26,7 @@
       </button>
     </div>
 
-    <EditorContactPageEditor v-model="config" />
+    <ContactPageEditor v-model="config" />
   </div>
 </template>
 

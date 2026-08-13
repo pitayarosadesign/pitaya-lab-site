@@ -177,13 +177,13 @@
             <thead class="bg-earth-50 sticky top-0 z-10">
               <tr>
                 <th class="px-5 py-4 text-left font-semibold text-earth-700 w-[120px]">Aroma</th>
-                <th class="px-5 py-4 text-left font-semibold text-earth-700 w-[100px]">Categoría</th>
+                <th class="px-5 py-4 text-left font-semibold text-earth-700 w-[140px]">Colección</th>
                 <th class="px-5 py-4 text-left font-semibold text-earth-700 w-[100px]">Vibra</th>
                 <th class="px-5 py-4 text-left font-semibold text-earth-700">Ideal para</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-earth-100">
-              <tr v-for="scent in SCENTS" :key="scent.id" class="hover:bg-primary-50/40 transition-colors">
+              <tr v-for="scent in aromas" :key="scent.id" class="hover:bg-primary-50/40 transition-colors">
                 <td class="px-5 py-4">
                   <div class="flex items-center gap-3">
                     <!-- Círculo con foto del aroma o emoji fallback -->
@@ -200,9 +200,8 @@
                   </div>
                 </td>
                 <td class="px-5 py-4">
-                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
-                    :class="scent.category === 'vela' || scent.category === 'velas' ? 'bg-amber-50 text-amber-700' : scent.category === 'aceite' || scent.category === 'aceites' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'">
-                    {{ scent.categoryLabel || scent.category }}
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary-50 text-primary-700">
+                    {{ scent.categoryLabel || 'Perfil' }}
                   </span>
                 </td>
                 <td class="px-5 py-4">
@@ -248,8 +247,6 @@
 </template>
 
 <script setup>
-import { SCENTS as staticSCENTS, getScentById as staticGetScentById } from '~/products/data'
-
 useSeoMeta({
   title: 'Catálogo de Productos | PITAYA LAB',
   description: 'Explora nuestro catálogo completo de velas de soya perfumadas, aceites aromáticos para difusores y brumas aromáticas. Productos botánicos biodegradables.',
@@ -270,16 +267,44 @@ const loading = ref(true)
 
 // Productos desde API
 const products = ref([])
-const SCENTS = ref(staticSCENTS)
 
-// Filtrar aromas con imagen
-const scentsWithImage = computed(() => SCENTS.value.filter(s => s.image))
+// Perfiles aromáticos (fragancias disponibles) cargados desde la base de datos
+const aromas = ref([])
 
-// Helper para obtener aroma
+// Aromas con imagen de perfil aromático
+const scentsWithImage = computed(() => aromas.value.filter(s => s.image_url))
+
+// Helper para obtener aroma por id
 function getScentById(id) {
-  const found = SCENTS.value.find(s => s.id === id)
-  if (found) return found
-  return staticGetScentById(id)
+  return aromas.value.find(s => s.id === id)
+}
+
+// Cargar perfiles aromáticos desde fragrance_profiles
+async function loadAromas() {
+  try {
+    const supabase = useNuxtApp().$supabase
+    if (!supabase) return
+    const { data, error } = await supabase
+      .from('fragrance_profiles')
+      .select('*, collections(name, slug, subtitle, icon)')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
+    if (error) throw error
+    // Mapear a la forma esperada por la plantilla
+    aromas.value = (data || []).map(p => ({
+      id: p.id,
+      name: p.name,
+      description: p.experience || p.subtitle || p.description || '',
+      image: p.image_url,
+      emoji: p.emoji || '🌸',
+      category: p.collections?.slug || '',
+      categoryLabel: p.collections?.name || 'Perfil',
+      vibe: p.experience || p.subtitle || '',
+      bestFor: p.notes || p.description || p.hotel_reference || '',
+    }))
+  } catch (e) {
+    console.warn('No se pudieron cargar los perfiles aromáticos:', e.message)
+  }
 }
 
 // Productos filtrados
@@ -352,5 +377,6 @@ function goToAmazon(product) {
 onMounted(() => {
   loadCategories()
   loadProducts()
+  loadAromas()
 })
 </script>
