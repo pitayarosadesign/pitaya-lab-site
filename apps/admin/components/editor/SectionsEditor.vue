@@ -214,7 +214,14 @@ async function loadSections() {
       .order('sort_order', { ascending: true })
 
     if (error) throw error
-    sections.value = data || []
+    // Normalizar contenido: asegurar que los heroes tengan el array 'slides'
+    // (las secciones creadas antes de la función de carrusel no lo tienen).
+    sections.value = (data || []).map(s => {
+      if (s.type === 'hero' && s.content && !Array.isArray(s.content.slides)) {
+        s.content.slides = []
+      }
+      return s
+    })
   } catch (e) {
     console.error('Error cargando secciones:', e)
     alert('Error al cargar secciones: ' + e.message)

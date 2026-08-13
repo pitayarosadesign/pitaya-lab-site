@@ -496,11 +496,27 @@ async function loadCollections() {
   }
 }
 
+// Asegura que el array de slides exista (para heroes creados antes de esta función)
+function ensureSlides() {
+  if (!section.content.slides) {
+    section.content.slides = []
+  }
+}
+
 // Agrega un slide vacío al carrusel del hero
 function addSlide() {
-  if (!section.content.slides) section.content.slides = []
+  ensureSlides()
   section.content.slides.push({ image: '', link: '' })
 }
+
+// Cuando el tipo de fondo cambia a carrusel, inicializa el array de slides
+watch(
+  () => section.content.media_type,
+  (val) => {
+    if (val === 'carousel') ensureSlides()
+  },
+  { immediate: true }
+)
 
 onMounted(loadCollections)
 </script>
