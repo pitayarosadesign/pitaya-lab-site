@@ -270,34 +270,89 @@
                 </div>
 
                 <!-- Campos de la variante (solo si está seleccionada) -->
-                <div v-if="isScentSelected(scent.id)" class="px-3 pb-3 pl-11 grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <div>
-                    <label class="block text-[11px] font-medium text-gray-500 mb-1">Stock</label>
-                    <input
-                      v-model="variantData[scent.id].stock"
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      class="w-full px-2.5 py-1.5 rounded-md border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm"
-                    />
+                <div v-if="isScentSelected(scent.id)" class="px-3 pb-3 pl-11 space-y-2">
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div>
+                      <label class="block text-[11px] font-medium text-gray-500 mb-1">Precio ($)</label>
+                      <input
+                        v-model="variantData[scent.id].price"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="Usa el del producto"
+                        class="w-full px-2.5 py-1.5 rounded-md border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-medium text-gray-500 mb-1">Stock</label>
+                      <input
+                        v-model="variantData[scent.id].stock"
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        class="w-full px-2.5 py-1.5 rounded-md border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-medium text-gray-500 mb-1">SKU</label>
+                      <input
+                        v-model="variantData[scent.id].sku"
+                        type="text"
+                        placeholder="Auto"
+                        class="w-full px-2.5 py-1.5 rounded-md border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-medium text-gray-500 mb-1">GTIN</label>
+                      <input
+                        v-model="variantData[scent.id].gtin"
+                        type="text"
+                        placeholder="Opcional"
+                        class="w-full px-2.5 py-1.5 rounded-md border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm font-mono"
+                      />
+                    </div>
                   </div>
+
+                  <!-- Imagen de la variante -->
                   <div>
-                    <label class="block text-[11px] font-medium text-gray-500 mb-1">SKU</label>
-                    <input
-                      v-model="variantData[scent.id].sku"
-                      type="text"
-                      placeholder="Auto"
-                      class="w-full px-2.5 py-1.5 rounded-md border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label class="block text-[11px] font-medium text-gray-500 mb-1">GTIN</label>
-                    <input
-                      v-model="variantData[scent.id].gtin"
-                      type="text"
-                      placeholder="Opcional"
-                      class="w-full px-2.5 py-1.5 rounded-md border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm font-mono"
-                    />
+                    <label class="block text-[11px] font-medium text-gray-500 mb-1">Imagen del aroma (opcional)</label>
+                    <div class="flex items-center gap-3">
+                      <div
+                        class="w-12 h-12 rounded-lg overflow-hidden border flex-shrink-0"
+                        :class="variantData[scent.id].imagePreview || variantData[scent.id].imageUrl ? 'border-gray-300' : 'border-dashed border-gray-300 bg-gray-50'"
+                      >
+                        <img
+                          v-if="variantData[scent.id].imagePreview || variantData[scent.id].imageUrl"
+                          :src="variantData[scent.id].imagePreview || variantData[scent.id].imageUrl"
+                          alt="Imagen del aroma"
+                          class="w-full h-full object-cover"
+                        />
+                        <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-lg">🖼️</div>
+                      </div>
+                      <div class="flex flex-col gap-1.5">
+                        <label class="cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            class="hidden"
+                            @change="onVariantImageChange($event, scent.id)"
+                          />
+                          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-gray-300 text-xs font-medium text-gray-600 hover:border-primary-300 hover:text-primary-700 hover:bg-primary-50 transition-all">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            Subir
+                          </span>
+                        </label>
+                        <button
+                          v-if="variantData[scent.id].imagePreview || variantData[scent.id].imageUrl"
+                          type="button"
+                          @click="clearVariantImage(scent.id)"
+                          class="text-[11px] text-red-500 hover:text-red-700 text-left"
+                        >
+                          Quitar imagen
+                        </button>
+                      </div>
+                    </div>
+                    <p class="text-[10px] text-gray-400 mt-1">Al hacer clic en este aroma en la tienda se mostrará esta imagen.</p>
                   </div>
                 </div>
               </label>
@@ -479,15 +534,20 @@ async function loadProduct() {
         .map(v => v.fragrance_profile_id)
       selectedScents.value = new Set(profileIds)
 
-      // Cargar datos de cada variante (stock, sku, gtin)
+      // Cargar datos de cada variante (stock, sku, gtin, precio, imagen)
       for (const v of data.variants) {
         if (v.fragrance_profile_id) {
           if (!variantData[v.fragrance_profile_id]) {
-            variantData[v.fragrance_profile_id] = { stock: 0, sku: '', gtin: '' }
+            variantData[v.fragrance_profile_id] = { stock: 0, sku: '', gtin: '', price: '', compare_at_price: '', imageUrl: '', imagePreview: '' }
           }
           variantData[v.fragrance_profile_id].stock = v.stock || 0
           variantData[v.fragrance_profile_id].sku = v.sku || ''
           variantData[v.fragrance_profile_id].gtin = v.gtin || ''
+          variantData[v.fragrance_profile_id].price = v.price ?? ''
+          variantData[v.fragrance_profile_id].compare_at_price = v.compare_at_price ?? ''
+          variantData[v.fragrance_profile_id].imageUrl = v.image_url || ''
+          variantData[v.fragrance_profile_id].imagePreview = v.image_url || ''
+          variantData[v.fragrance_profile_id].existingImage = v.image_url || ''
         }
       }
       updateGroupCounts()
@@ -555,7 +615,7 @@ async function loadScentProfiles() {
     // Inicializar datos de variante para cada aroma
     for (const p of activeProfiles) {
       if (!variantData[p.id]) {
-        variantData[p.id] = { stock: 0, sku: '', gtin: '' }
+        variantData[p.id] = { stock: 0, sku: '', gtin: '', price: '', compare_at_price: '', imageUrl: '', imagePreview: '' }
       }
     }
   } catch (e) {
@@ -582,6 +642,28 @@ function updateGroupCounts() {
   scentGroups.value.forEach(g => {
     g.selectedCount = g.scents.filter(s => selectedScents.value.has(s.id)).length
   })
+}
+
+// ===== Imagen por variante (aroma) =====
+function onVariantImageChange(e, scentId) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  if (!file.type.startsWith('image/')) return
+  if (!variantData[scentId]) variantData[scentId] = { stock: 0, sku: '', gtin: '', price: '', compare_at_price: '', imageUrl: '', imagePreview: '' }
+  // Guardar el archivo para enviarlo al guardar
+  variantData[scentId]._imageFile = file
+  // Mostrar preview
+  variantData[scentId].imagePreview = URL.createObjectURL(file)
+  // Resetear el input para permitir volver a seleccionar el mismo archivo
+  e.target.value = ''
+}
+
+function clearVariantImage(scentId) {
+  if (variantData[scentId]) {
+    variantData[scentId]._imageFile = null
+    variantData[scentId].imagePreview = variantData[scentId].existingImage || ''
+    variantData[scentId].imageUrl = variantData[scentId].existingImage || ''
+  }
 }
 
 function triggerUpload() { fileInput.value?.click() }
@@ -699,6 +781,29 @@ async function handleSave() {
     const selectedCat = categories.value.find(c => c.slug === form.category)
     const categoryId = selectedCat?.id || null
 
+    // Procesar variantes: convertir imágenes nuevas a base64
+    const variantProfileIds = []
+    for (const profileId of selectedScents.value) {
+      const vd = variantData[profileId] || {}
+      let image = undefined
+      if (vd._imageFile) {
+        image = {
+          name: vd._imageFile.name,
+          type: vd._imageFile.type,
+          data: await fileToBase64(vd._imageFile),
+        }
+      }
+      variantProfileIds.push({
+        profileId,
+        stock: vd.stock || 0,
+        sku: vd.sku || '',
+        gtin: vd.gtin || '',
+        price: vd.price,
+        compare_at_price: vd.compare_at_price,
+        image,
+      })
+    }
+
     await $fetch('/api/products/update', {
       method: 'PUT',
       body: {
@@ -722,12 +827,7 @@ async function handleSave() {
           category_id: categoryId,
         },
         images,
-        variantProfileIds: Array.from(selectedScents.value).map(profileId => ({
-          profileId,
-          stock: variantData[profileId]?.stock || 0,
-          sku: variantData[profileId]?.sku || '',
-          gtin: variantData[profileId]?.gtin || '',
-        })),
+        variantProfileIds,
       },
     })
 

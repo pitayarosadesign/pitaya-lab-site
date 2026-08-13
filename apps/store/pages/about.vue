@@ -96,8 +96,6 @@
 </template>
 
 <script setup>
-import { brandValues as staticBrandValues } from '~/products/data'
-
 const supabase = useNuxtApp().$supabase
 
 // Contenido de la página, editable desde el panel admin vía site_config
@@ -119,7 +117,10 @@ const pageContent = reactive({
   },
 })
 
-const brandValues = ref(staticBrandValues)
+// Los valores de marca provienen de site_config (clave brand_values), editables
+// desde el panel admin. Se inician vacíos; si no existen, se muestra solo la
+// sección cuando haya datos.
+const brandValues = ref([])
 
 // Unir párrafos con HTML (para v-html)
 const storyParagraphsHtml = computed(() =>
@@ -146,7 +147,7 @@ async function loadConfig() {
       if (bv?.value && Array.isArray(bv.value)) brandValues.value = bv.value
     }
   } catch (e) {
-    console.warn('Usando datos estáticos para About (fallback):', e.message)
+    console.warn('Error cargando configuración de About:', e.message)
   }
 }
 

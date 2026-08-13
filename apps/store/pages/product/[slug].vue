@@ -86,12 +86,15 @@
               {{ product.subtitle }}
             </p>
 
-            <!-- Precio -->
+            <!-- Precio (usando la variante seleccionada si tiene precio propio) -->
             <div class="flex items-baseline gap-3 mb-6">
-              <span class="text-3xl font-bold text-earth-900">${{ formatPrice(product.price) }}</span>
-              <span v-if="product.compareAtPrice" class="text-lg text-earth-400 line-through">${{ formatPrice(product.compareAtPrice) }}</span>
-              <span v-if="discountPercent > 0" class="bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-full">
-                -{{ discountPercent }}%
+              <span class="text-3xl font-bold text-earth-900">${{ formatPrice(activePrice) }}</span>
+              <span v-if="activeCompareAtPrice" class="text-lg text-earth-400 line-through">${{ formatPrice(activeCompareAtPrice) }}</span>
+              <span v-if="activeDiscountPercent > 0" class="bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                -{{ activeDiscountPercent }}%
+              </span>
+              <span v-if="selectedVariant?.name" class="text-xs text-earth-400 mt-1">
+                ※ {{ selectedVariant.name }}
               </span>
             </div>
 
@@ -179,11 +182,11 @@
               </ul>
             </div>
 
-            <!-- SKU y GTIN -->
+            <!-- SKU y GTIN (usa los de la variante seleccionada si existe) -->
             <div class="mt-8 pt-6 border-t border-earth-100">
               <div class="flex flex-wrap gap-6 text-xs text-earth-400">
-                <span v-if="product.sku">SKU: {{ product.sku }}</span>
-                <span v-if="product.gtin">GTIN: {{ product.gtin }}</span>
+                <span v-if="activeSku">SKU: {{ activeSku }}</span>
+                <span v-if="activeGtin">GTIN: {{ activeGtin }}</span>
                 <span v-if="product.brand">Marca: {{ product.brand }}</span>
               </div>
             </div>
@@ -226,19 +229,54 @@ const error = ref(false)
 const activeImageIndex = ref(0)
 const selectedVariant = ref(null)
 
-// Imagen activa
+// Imagen activa: prioriza la imagen de la variante seleccionada
 const activeImage = computed(() => {
+  // Si hay una variante seleccionada con imagen propia, mostrarla
+  if (selectedVariant.value?.imageUrl) {
+    return selectedVariant.value.imageUrl
+  }
+  // Si no, mostrar la imagen activa del producto (thumbnails)
   if (product.value?.images && product.value.images.length > 0) {
     return product.value.images[activeImageIndex.value]?.url || product.value.image
   }
   return product.value?.image
 })
 
-// Descuento porcentual
-const discountPercent = computed(() => {
-  if (!product.value?.compareAtPrice) return 0
-  const diff = product.value.compareAtPrice - product.value.price
-  return Math.round((diff / product.value.compareAtPrice) * 100)
+// Precio activo: prioriza el precio de la variante seleccionada
+const activePrice = computed(() => {
+  if (selectedVariant.value?.price != null) {
+    return selectedVariant.value.price
+  }
+  return product.value?.price || 0
+})
+
+// Compare-at price activo
+const activeCompareAtPrice = computed(() => {
+  if (selectedVariant.value?.compareAtPrice != null) {
+    return selectedVariant.value.compareAtPrice
+  }
+  return product.value?.compareAtPrice || null
+})
+
+// SKU activo (el de la variante si existe)
+const activeSku = computed(() => {
+  if (selectedVariant.value?.sku) return selectedVariant.value.sku
+  return product.value?.sku || ''
+})
+
+// GTIN activo (el de la variante si existe)
+const activeGtin = computed(() => {
+  if (selectedVariant.value?.gtin) return selectedVariant.value.gtin
+  return product.value?.gtin || ''
+})
+
+// Descuento porcentual (usa precio activo y compare-at activo)
+const activeDiscountPercent = computed(() => {
+  if (!activeCompareAtPrice.value) return 0
+  const base = Number(activeCompareAtPrice.value)
+  if (base <= 0) return 0
+  const diff = base - Number(activePrice.value)
+  return Math.round((diff / base) * 100)
 })
 
 // Stock actual: el de la variante seleccionada si existe, si no el general
@@ -283,11 +321,14 @@ function addToCart() {
     slug: product.value.slug,
     name: product.value.name,
     subtitle: product.value.subtitle,
-    price: product.value.price,
-    image: product.value.image,
+    // Precio: el de la variante seleccionada si existe, si no el del producto
+    price: selectedVariant.value?.price ?? product.value.price,
+    // Imagen: la de la variante seleccionada si existe, si no la del producto
+    image: selectedVariant.value?.imageUrl || product.value.image,
     variant: selectedVariant.value ? {
       id: selectedVariant.value.id,
       name: selectedVariant.value.name,
+      sku: selectedVariant.value.sku,
     } : null,
     quantity: 1,
   }
@@ -318,71 +359,12 @@ async function loadProduct() {
       error.value = true
     }
   } catch (e) {
-    if (e.status === 404) {
-      error.value = true
-    } else {
-      // Fallback: buscar en datos estáticos
-      console.warn('Error cargando producto, intentando con datos estáticos:', e.message)
-      await loadStaticProduct()
-    }
+    // El producto solo proviene de Supabase (vía API). Si no existe o hay un
+    // error de red, se muestra el estado de error (sin inventar datos estáticos).
+    console.warn('Error cargando producto:', e.message)
+    error.value = true
   } finally {
     loading.value = false
-  }
-}
-
-// Fallback a datos estáticos
-async function loadStaticProduct() {
-  try {
-    const { products: staticProducts, getProductById } = await import('~/products/data')
-    const found = staticProducts.find(p => p.id === route.params.slug || p.slug === route.params.slug)
-    if (found) {
-      const { SCENTS } = await import('~/products/data')
-      product.value = {
-        id: found.id,
-        sku: found.id?.toUpperCase(),
-        name: found.name,
-        slug: found.id,
-        subtitle: found.subtitle || '',
-        description: found.description || '',
-        longDescription: found.longDescription || '',
-        price: 0,
-        category: found.category || '',
-        categorySlug: found.category || '',
-        image: found.image || null,
-        images: found.image ? [{ url: found.image, isPrimary: true }] : [],
-        variants: (found.scents || []).map((scentId, i) => {
-          const scent = SCENTS.find(s => s.id === scentId)
-          return {
-            id: scentId,
-            name: scent?.name || scentId,
-            description: scent?.description || '',
-            imageUrl: scent?.image || null,
-            stock: 10,
-            isActive: true,
-          }
-        }),
-        stock: 10,
-        features: found.features || [],
-        amazonLink: found.amazonLink || null,
-        brand: 'PITAYA LAB',
-      }
-      if (product.value.variants?.length > 0) {
-        selectedVariant.value = product.value.variants[0]
-      }
-      relatedProducts.value = staticProducts
-        .filter(p => p.category === found.category && p.id !== found.id)
-        .slice(0, 4)
-        .map(p => ({
-          ...p,
-          slug: p.id,
-          categorySlug: p.category,
-        }))
-    } else {
-      error.value = true
-    }
-  } catch (e2) {
-    console.error('Error en fallback:', e2)
-    error.value = true
   }
 }
 

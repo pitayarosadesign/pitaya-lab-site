@@ -87,7 +87,7 @@ async function loadCollection() {
       if (matchingProductIds.length > 0) {
         const { data: prodData, error: prodError } = await supabase
           .from('products')
-          .select('*, product_images(url)')
+          .select('*, product_images(url, is_primary, sort_order)')
           .in('id', matchingProductIds)
           .eq('is_active', true)
           .limit(props.content.max_products || 4)

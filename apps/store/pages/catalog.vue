@@ -374,40 +374,24 @@ async function loadCategories() {
       ]
     }
   } catch (e) {
-    console.warn('No se pudieron cargar las categorías, usando por defecto:', e.message)
-    categories.value = [
-      { id: 'all', label: 'Todos' },
-      { id: 'velas', label: 'Velas' },
-      { id: 'aceites', label: 'Aceites' },
-      { id: 'brumas', label: 'Brumas' },
-    ]
+    console.warn('No se pudieron cargar las categorías:', e.message)
+    // Mantener solo "Todos" (sin categorías estáticas hardcodeadas)
+    categories.value = [{ id: 'all', label: 'Todos' }]
   }
 }
 
-// Cargar productos desde Supabase
+// Cargar productos únicamente desde Supabase (vía API). Si no hay productos,
+// se muestra el estado vacío de la UI ("No hay productos en esta categoría").
 async function loadProducts() {
   loading.value = true
   try {
     const data = await $fetch('/api/products', {
       query: { limit: 50 }
     })
-    if (data?.products?.length > 0) {
-      products.value = data.products
-    } else {
-      // Fallback a datos estáticos
-      const { products: staticProducts } = await import('~/products/data')
-      products.value = staticProducts.map(p => ({
-        ...p,
-        categorySlug: p.category,
-      }))
-    }
+    products.value = data?.products || []
   } catch (e) {
-    console.warn('Error cargando productos, usando estáticos:', e.message)
-    const { products: staticProducts } = await import('~/products/data')
-    products.value = staticProducts.map(p => ({
-      ...p,
-      categorySlug: p.category,
-    }))
+    console.warn('Error cargando productos:', e.message)
+    products.value = []
   } finally {
     loading.value = false
   }

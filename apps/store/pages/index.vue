@@ -38,7 +38,9 @@
 </template>
 
 <script setup>
-import { products as staticProducts } from '~/products/data'
+// La portada ya no depende de datos estáticos (products/data.js).
+// Todo el contenido proviene de Supabase: page_sections para el layout
+// de la página y products para el JSON-LD de Store.
 
 useSeoMeta({
   title: 'PITAYA LAB | Velas de Soya, Aceites Aromáticos y Brumas Ecológicas',
@@ -95,7 +97,6 @@ const featuredProducts = ref([])
 
 async function loadProductsForSchema() {
   if (!supabase) {
-    featuredProducts.value = staticProducts.slice(0, 4)
     return
   }
   try {
@@ -108,7 +109,8 @@ async function loadProductsForSchema() {
     if (error) throw error
     featuredProducts.value = data || []
   } catch (e) {
-    featuredProducts.value = staticProducts.slice(0, 4)
+    console.warn('Error cargando productos para schema:', e.message)
+    featuredProducts.value = []
   }
 }
 

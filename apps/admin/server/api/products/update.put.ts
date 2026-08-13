@@ -125,7 +125,7 @@ async function syncVariantsByProfiles(supabaseAdmin, productId, profileIds, base
   if (selectedProfileIdSet.size > 0) {
     const { data: profiles, error: pError } = await supabaseAdmin
       .from('fragrance_profiles')
-      .select('id, name, slug, subtitle, collection_id')
+      .select('id, name, slug, subtitle, collection_id, image_url')
       .in('id', Array.from(selectedProfileIdSet))
       .eq('is_active', true)
 
@@ -176,6 +176,46 @@ async function syncVariantsByProfiles(supabaseAdmin, productId, profileIds, base
           ? `${baseSku}-${profile.slug.toUpperCase()}`
           : `${baseSku}-${profile.name.replace(/\s+/g, '').toUpperCase()}`)
 
+    // Resolver imagen de la variante:
+    //   1) Si se subió una imagen nueva en el admin, subirla a Storage y usar su URL.
+    //   2) Si no, conservar la imagen que ya tenía la variante.
+    //   3) Si no, usar la imagen del perfil aromático.
+    let variantImageUrl = null
+    if (existingVar) {
+      const { data: ev } = await supabaseAdmin
+        .from('product_variants')
+        .select('image_url')
+        .eq('id', existingVar.id)
+        .single()
+      variantImageUrl = ev?.image_url || null
+    }
+    if (selection.image && selection.image.data) {
+      const ext = (selection.image.name || 'image.png').split('.').pop()
+      const filePath = `${productId}/variant-${profile.slug || profile.id}-${Date.now()}.${ext}`
+      const base64Data = selection.image.data.replace(/^data:image\/\w+;base64,/, '')
+      const buffer = Buffer.from(base64Data, 'base64')
+
+      const { error: uploadError } = await supabaseAdmin.storage
+        .from('product-images')
+        .upload(filePath, buffer, {
+          contentType: selection.image.type || 'image/png',
+          cacheControl: '31536000',
+          upsert: true,
+        })
+      if (uploadError) throw uploadError
+
+      const { data: publicUrl } = supabaseAdmin.storage
+        .from('product-images')
+        .getPublicUrl(filePath)
+      variantImageUrl = publicUrl.publicUrl
+    } else if (!variantImageUrl && profile.image_url) {
+      variantImageUrl = profile.image_url
+    }
+
+    // Resolver precio de la variante: el proporcionado o null (usará el del producto).
+    const variantPrice = (!selection.price || selection.price === '') ? null : parseFloat(selection.price)
+    const variantCompareAt = (!selection.compare_at_price || selection.compare_at_price === '') ? null : parseFloat(selection.compare_at_price)
+
     const variantData = {
       name: profile.name,
       sku: variantSku,
@@ -185,7 +225,9 @@ async function syncVariantsByProfiles(supabaseAdmin, productId, profileIds, base
       is_active: true,
       stock: selection.stock !== undefined ? parseInt(selection.stock) || 0 : 0,
       gtin: selection.gtin || null,
-      price: null, // se usa el precio del producto
+      price: variantPrice,
+      compare_at_price: variantCompareAt,
+      image_url: variantImageUrl,
     }
 
     if (existingVar) {
@@ -199,6 +241,9 @@ async function syncVariantsByProfiles(supabaseAdmin, productId, profileIds, base
       if (selection.stock !== undefined) updateData.stock = parseInt(selection.stock) || 0
       if (selection.sku) updateData.sku = selection.sku
       if (selection.gtin !== undefined) updateData.gtin = selection.gtin || null
+      if (selection.price !== undefined) updateData.price = variantPrice
+      if (selection.compare_at_price !== undefined) updateData.compare_at_price = variantCompareAt
+      if (selection.image && selection.image.data) updateData.image_url = variantImageUrl
 
       const { error: updError } = await supabaseAdmin
         .from('product_variants')

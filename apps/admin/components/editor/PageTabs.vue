@@ -3,7 +3,7 @@
     <button
       v-for="tab in tabs"
       :key="tab.to"
-      @click="navigateTo(tab.to)"
+      @click="go(tab.to)"
       class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
       :class="active === tab.key
         ? 'bg-primary-600 text-white shadow-sm'
@@ -19,6 +19,15 @@ const props = defineProps({
   active: { type: String, required: true },
 })
 
+const router = useRouter()
+
+// Navegación programática robusta. Se usa router.push en lugar de navigateTo()
+// porque navigateTo() en un handler de clic (sin await/return) no siempre
+// dispara la navegación de forma inmediata en Nuxt.
+function go(to) {
+  router.push(to)
+}
+
 const tabs = [
   { key: 'home', label: 'Portada', icon: '🏠', to: '/site' },
   { key: 'catalog', label: 'Catálogo', icon: '🛍️', to: '/site/catalog' },
@@ -29,3 +38,4 @@ const tabs = [
   { key: 'legal', label: 'Legal', icon: '📜', to: '/site/legal' },
 ]
 </script>
+

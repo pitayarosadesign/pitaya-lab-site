@@ -41,8 +41,6 @@
 </template>
 
 <script setup>
-import { products as staticProducts } from '~/products/data'
-
 const props = defineProps({
   content: { type: Object, default: () => ({}) },
   settings: { type: Object, default: () => ({}) },
@@ -52,58 +50,39 @@ const supabase = useNuxtApp().$supabase
 const products = ref([])
 const maxProducts = computed(() => props.content.max_products || 4)
 
+// Carga los productos únicamente desde Supabase. Si no hay ningún producto
+// activo, la sección simplemente no muestra tarjetas (estado vacío limpio).
 async function loadProducts() {
-  if (!supabase) {
-    products.value = staticProducts.slice(0, maxProducts.value).map(p => ({
-      ...p,
-      price: p.price || 0,
-      slug: p.slug || p.id,
-      amazonLink: p.amazonLink || 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329',
-    }))
-    return
-  }
+  if (!supabase) return
 
   try {
     const { data, error } = await supabase
       .from('products')
-      .select('*, product_categories(name), product_images(url)')
+      .select('*, product_categories(name), product_images(url, is_primary, sort_order)')
       .eq('is_active', true)
       .order('sort_order', { ascending: true })
       .limit(maxProducts.value)
 
     if (error) throw error
 
-    if (data && data.length > 0) {
-      products.value = data.map(p => {
-        const primaryImg = p.product_images?.find(img => img.is_primary) || p.product_images?.[0]
-        return {
-          id: p.slug || p.id,
-          slug: p.slug,
-          name: p.name,
-          subtitle: p.subtitle || '',
-          description: p.description || '',
-          price: p.price || 0,
-          image: primaryImg?.url || null,
-          amazonLink: p.amazon_link || 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329',
-          category: p.product_categories?.name || '',
-        }
-      })
-    } else {
-      products.value = staticProducts.slice(0, maxProducts.value).map(p => ({
-        ...p,
+    products.value = (data || []).map(p => {
+      const primaryImg = p.product_images?.find(img => img.is_primary) || p.product_images?.[0]
+      return {
+        id: p.slug || p.id,
+        slug: p.slug,
+        name: p.name,
+        subtitle: p.subtitle || '',
+        description: p.description || '',
         price: p.price || 0,
-        slug: p.slug || p.id,
-        amazonLink: p.amazonLink || 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329',
-      }))
-    }
+
+        image: primaryImg?.url || null,
+        amazonLink: p.amazon_link || 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329',
+        category: p.product_categories?.name || '',
+      }
+    })
   } catch (e) {
-    console.warn('Error cargando productos, usando estáticos:', e.message)
-    products.value = staticProducts.slice(0, maxProducts.value).map(p => ({
-      ...p,
-      price: p.price || 0,
-      slug: p.slug || p.id,
-      amazonLink: p.amazonLink || 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329',
-    }))
+    console.warn('Error cargando productos:', e.message)
+    products.value = []
   }
 }
 

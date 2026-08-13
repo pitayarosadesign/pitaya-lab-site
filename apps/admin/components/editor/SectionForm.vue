@@ -497,16 +497,19 @@ async function loadCollections() {
 }
 
 // Asegura que el array de slides exista (para heroes creados antes de esta función)
+// Se reasigna completo para garantizar la reactividad de Vue incluso si el objeto
+// content viene "plano" desde la BD (no reactivo).
 function ensureSlides() {
-  if (!section.content.slides) {
+  if (!section.content.slides || !Array.isArray(section.content.slides)) {
     section.content.slides = []
   }
 }
 
-// Agrega un slide vacío al carrusel del hero
+// Agrega un slide vacío al carrusel del hero.
+// Reasignamos el array (spread) en lugar de push para forzar la actualización reactiva.
 function addSlide() {
   ensureSlides()
-  section.content.slides.push({ image: '', link: '' })
+  section.content.slides = [...section.content.slides, { image: '', link: '' }]
 }
 
 // Cuando el tipo de fondo cambia a carrusel, inicializa el array de slides
