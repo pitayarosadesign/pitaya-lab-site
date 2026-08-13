@@ -153,10 +153,15 @@ function isExternal(link) {
   return /^https?:\/\//i.test(link || '')
 }
 
-// Si viene una imagen en media_url pero media_type dice 'video' (o vacío),
-// inferimos el tipo correcto para que la imagen se muestre.
+// Determina el tipo de media a mostrar. Si `media_type` es 'video' pero la URL
+// apunta a una imagen (p. ej. el admin subió una imagen sin cambiar el tipo),
+// inferimos el tipo real para que la imagen se muestre en lugar del video.
 const resolvedMediaType = computed(() => {
   const type = props.media_type || (props.media_url ? inferType(props.media_url) : 'video')
+  // Si dice 'video' pero la URL es claramente una imagen, corregimos a 'image'
+  if (type === 'video' && props.media_url && inferType(props.media_url) === 'image') {
+    return 'image'
+  }
   return type
 })
 
