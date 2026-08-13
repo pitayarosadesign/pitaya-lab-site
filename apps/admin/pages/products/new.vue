@@ -154,9 +154,38 @@
             <div><label class="block text-sm font-medium text-gray-700 mb-1">Categoría Google</label>
               <select v-model="form.google_category" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
                 <option value="">Seleccionar</option>
-                <option value="Home & Garden > Home Decor > Candles">Hogar > Decoración > Velas</option>
-                <option value="Health & Beauty > Aromatherapy > Essential Oils">Salud > Aromaterapia > Aceites</option>
-                <option value="Home & Garden > Home Decor > Home Fragrance Accessories">Hogar > Fragancias</option>
+                <optgroup label="Velas">
+                  <option value="Home & Garden > Home Decor > Candles">Hogar > Decoración > Velas</option>
+                  <option value="Home & Garden > Home Decor > Candles > Candle Holders">Hogar > Decoración > Velas > Portavelas</option>
+                  <option value="Home & Garden > Home Decor > Candles > Scented Candles">Hogar > Decoración > Velas > Velas Aromáticas</option>
+                  <option value="Home & Garden > Home Decor > Candles > Tea Light Candles">Hogar > Decoración > Velas > Velas de Té</option>
+                  <option value="Home & Garden > Home Decor > Candles > Votive Candles">Hogar > Decoración > Velas > Velas Votivas</option>
+                  <option value="Home & Garden > Home Decor > Candles > Pillar Candles">Hogar > Decoración > Velas > Velas de Columna</option>
+                </optgroup>
+                <optgroup label="Fragancias para el Hogar">
+                  <option value="Home & Garden > Home Decor > Home Fragrance Accessories">Hogar > Decoración > Accesorios de Fragancia</option>
+                  <option value="Home & Garden > Home Decor > Home Fragrance Accessories > Air Fresheners">Hogar > Decoración > Ambientadores</option>
+                  <option value="Home & Garden > Home Decor > Home Fragrance Accessories > Reed Diffusers">Hogar > Decoración > Difusores de Vara</option>
+                  <option value="Home & Garden > Home Decor > Home Fragrance Accessories > Wax Melts">Hogar > Decoración > Ceras Derretibles</option>
+                  <option value="Home & Garden > Home Decor > Home Fragrance Accessories > Room Sprays">Hogar > Decoración > Sprays para Habitación</option>
+                  <option value="Home & Garden > Home Decor > Home Fragrance Accessories > Incense">Hogar > Decoración > Incienso</option>
+                </optgroup>
+                <optgroup label="Aromaterapia y Aceites">
+                  <option value="Health & Beauty > Aromatherapy > Essential Oils">Salud > Aromaterapia > Aceites Esenciales</option>
+                  <option value="Health & Beauty > Aromatherapy > Aromatherapy Candles">Salud > Aromaterapia > Velas de Aromaterapia</option>
+                  <option value="Health & Beauty > Aromatherapy > Aromatherapy Diffusers">Salud > Aromaterapia > Difusores</option>
+                  <option value="Health & Beauty > Aromatherapy > Aromatherapy Kits">Salud > Aromaterapia > Kits de Aromaterapia</option>
+                  <option value="Health & Beauty > Aromatherapy > Aromatherapy Oils">Salud > Aromaterapia > Aceites de Aromaterapia</option>
+                  <option value="Health & Beauty > Aromatherapy > Aromatherapy Sprays">Salud > Aromaterapia > Sprays de Aromaterapia</option>
+                </optgroup>
+                <optgroup label="Cuidado Personal">
+                  <option value="Health & Beauty > Bath & Body > Bath & Body Gift Sets">Salud > Cuidado Personal > Sets de Regalo</option>
+                  <option value="Health & Beauty > Bath & Body > Body Lotion">Salud > Cuidado Personal > Loción Corporal</option>
+                  <option value="Health & Beauty > Bath & Body > Body Oil">Salud > Cuidado Personal > Aceite Corporal</option>
+                  <option value="Health & Beauty > Bath & Body > Body Spray">Salud > Cuidado Personal > Spray Corporal</option>
+                  <option value="Health & Beauty > Bath & Body > Bath Salts">Salud > Cuidado Personal > Sales de Baño</option>
+                  <option value="Health & Beauty > Bath & Body > Soap">Salud > Cuidado Personal > Jabón</option>
+                </optgroup>
               </select>
             </div>
             <div><label class="block text-sm font-medium text-gray-700 mb-1">GTIN (código barras)</label><input v-model="form.gtin" type="text" placeholder="7501234567890" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all font-mono" /></div>

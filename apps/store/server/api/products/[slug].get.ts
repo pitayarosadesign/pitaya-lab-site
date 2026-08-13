@@ -65,6 +65,8 @@ export default defineEventHandler(async (event) => {
           isActive: v.is_active,
         })),
         stock: product.stock,
+        trackInventory: product.track_inventory,
+        allowBackorder: product.allow_backorder,
         isFeatured: product.is_featured,
         amazonLink: product.amazon_link,
         amazonAsin: product.amazon_asin,

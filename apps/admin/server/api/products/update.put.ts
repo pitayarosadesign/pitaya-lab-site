@@ -110,14 +110,23 @@ export default defineEventHandler(async (event) => {
 // ============================================
 // Sincronizar variantes basadas en selección de perfiles aromáticos
 // ============================================
+// profileIds puede ser:
+//   - array de strings (solo IDs, backward compat): stock/sku/gtin por defecto
+//   - array de objetos { profileId, stock, sku, gtin }: datos por variante
 async function syncVariantsByProfiles(supabaseAdmin, productId, profileIds, baseSku = '') {
+  // Normalizar a array de objetos
+  const selections = (profileIds || []).map(item =>
+    typeof item === 'string' ? { profileId: item } : item
+  )
+  const selectedProfileIdSet = new Set(selections.map(s => s.profileId))
+
   // Obtener los perfiles aromáticos seleccionados (con sus datos)
   let selectedProfiles = []
-  if (profileIds.length > 0) {
+  if (selectedProfileIdSet.size > 0) {
     const { data: profiles, error: pError } = await supabaseAdmin
       .from('fragrance_profiles')
       .select('id, name, slug, subtitle, collection_id')
-      .in('id', profileIds)
+      .in('id', Array.from(selectedProfileIdSet))
       .eq('is_active', true)
 
     if (pError) throw pError
@@ -133,7 +142,6 @@ async function syncVariantsByProfiles(supabaseAdmin, productId, profileIds, base
   if (existingError) throw existingError
 
   const existing = existingVariants || []
-  const selectedProfileIdSet = new Set(profileIds)
 
   // Variantes que hay que ELIMINAR:
   //   - las que apuntan a un perfil que ya no está seleccionado
@@ -158,11 +166,16 @@ async function syncVariantsByProfiles(supabaseAdmin, productId, profileIds, base
 
   for (let i = 0; i < selectedProfiles.length; i++) {
     const profile = selectedProfiles[i]
+    const selection = selections.find(s => s.profileId === profile.id) || {}
     const existingVar = existingByProfile.get(profile.id)
 
-    const variantSku = profile.slug
-      ? `${baseSku}-${profile.slug.toUpperCase()}`
-      : `${baseSku}-${profile.name.replace(/\s+/g, '').toUpperCase()}`
+    // SKU: usar el proporcionado o generar uno automáticamente
+    const variantSku = selection.sku
+      ? selection.sku
+      : (profile.slug
+          ? `${baseSku}-${profile.slug.toUpperCase()}`
+          : `${baseSku}-${profile.name.replace(/\s+/g, '').toUpperCase()}`)
+
     const variantData = {
       name: profile.name,
       sku: variantSku,
@@ -170,20 +183,26 @@ async function syncVariantsByProfiles(supabaseAdmin, productId, profileIds, base
       fragrance_profile_id: profile.id,
       sort_order: i,
       is_active: true,
-      stock: 0,
+      stock: selection.stock !== undefined ? parseInt(selection.stock) || 0 : 0,
+      gtin: selection.gtin || null,
       price: null, // se usa el precio del producto
     }
 
     if (existingVar) {
-      // Actualizar
+      // Actualizar (preservar stock/sku/gtin si se proporcionaron)
+      const updateData = {
+        name: profile.name,
+        description: profile.subtitle || null,
+        sort_order: i,
+        is_active: true,
+      }
+      if (selection.stock !== undefined) updateData.stock = parseInt(selection.stock) || 0
+      if (selection.sku) updateData.sku = selection.sku
+      if (selection.gtin !== undefined) updateData.gtin = selection.gtin || null
+
       const { error: updError } = await supabaseAdmin
         .from('product_variants')
-        .update({
-          name: profile.name,
-          description: profile.subtitle || null,
-          sort_order: i,
-          is_active: true,
-        })
+        .update(updateData)
         .eq('id', existingVar.id)
       if (updError) throw updError
     } else {

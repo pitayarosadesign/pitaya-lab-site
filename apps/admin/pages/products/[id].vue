@@ -111,9 +111,38 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">Categoría de Google</label>
             <select v-model="form.google_category" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all">
               <option value="">Seleccionar</option>
-              <option value="Home & Garden > Home Decor > Candles">Hogar > Decoración > Velas</option>
-              <option value="Health & Beauty > Aromatherapy > Essential Oils">Salud > Aromaterapia > Aceites</option>
-              <option value="Home & Garden > Home Decor > Home Fragrance Accessories">Hogar > Fragancias</option>
+              <optgroup label="Velas">
+                <option value="Home & Garden > Home Decor > Candles">Hogar > Decoración > Velas</option>
+                <option value="Home & Garden > Home Decor > Candles > Candle Holders">Hogar > Decoración > Velas > Portavelas</option>
+                <option value="Home & Garden > Home Decor > Candles > Scented Candles">Hogar > Decoración > Velas > Velas Aromáticas</option>
+                <option value="Home & Garden > Home Decor > Candles > Tea Light Candles">Hogar > Decoración > Velas > Velas de Té</option>
+                <option value="Home & Garden > Home Decor > Candles > Votive Candles">Hogar > Decoración > Velas > Velas Votivas</option>
+                <option value="Home & Garden > Home Decor > Candles > Pillar Candles">Hogar > Decoración > Velas > Velas de Columna</option>
+              </optgroup>
+              <optgroup label="Fragancias para el Hogar">
+                <option value="Home & Garden > Home Decor > Home Fragrance Accessories">Hogar > Decoración > Accesorios de Fragancia</option>
+                <option value="Home & Garden > Home Decor > Home Fragrance Accessories > Air Fresheners">Hogar > Decoración > Ambientadores</option>
+                <option value="Home & Garden > Home Decor > Home Fragrance Accessories > Reed Diffusers">Hogar > Decoración > Difusores de Vara</option>
+                <option value="Home & Garden > Home Decor > Home Fragrance Accessories > Wax Melts">Hogar > Decoración > Ceras Derretibles</option>
+                <option value="Home & Garden > Home Decor > Home Fragrance Accessories > Room Sprays">Hogar > Decoración > Sprays para Habitación</option>
+                <option value="Home & Garden > Home Decor > Home Fragrance Accessories > Incense">Hogar > Decoración > Incienso</option>
+              </optgroup>
+              <optgroup label="Aromaterapia y Aceites">
+                <option value="Health & Beauty > Aromatherapy > Essential Oils">Salud > Aromaterapia > Aceites Esenciales</option>
+                <option value="Health & Beauty > Aromatherapy > Aromatherapy Candles">Salud > Aromaterapia > Velas de Aromaterapia</option>
+                <option value="Health & Beauty > Aromatherapy > Aromatherapy Diffusers">Salud > Aromaterapia > Difusores</option>
+                <option value="Health & Beauty > Aromatherapy > Aromatherapy Kits">Salud > Aromaterapia > Kits de Aromaterapia</option>
+                <option value="Health & Beauty > Aromatherapy > Aromatherapy Oils">Salud > Aromaterapia > Aceites de Aromaterapia</option>
+                <option value="Health & Beauty > Aromatherapy > Aromatherapy Sprays">Salud > Aromaterapia > Sprays de Aromaterapia</option>
+              </optgroup>
+              <optgroup label="Cuidado Personal">
+                <option value="Health & Beauty > Bath & Body > Bath & Body Gift Sets">Salud > Cuidado Personal > Sets de Regalo</option>
+                <option value="Health & Beauty > Bath & Body > Body Lotion">Salud > Cuidado Personal > Loción Corporal</option>
+                <option value="Health & Beauty > Bath & Body > Body Oil">Salud > Cuidado Personal > Aceite Corporal</option>
+                <option value="Health & Beauty > Bath & Body > Body Spray">Salud > Cuidado Personal > Spray Corporal</option>
+                <option value="Health & Beauty > Bath & Body > Bath Salts">Salud > Cuidado Personal > Sales de Baño</option>
+                <option value="Health & Beauty > Bath & Body > Soap">Salud > Cuidado Personal > Jabón</option>
+              </optgroup>
             </select>
           </div>
           <div>
@@ -216,26 +245,60 @@
                 </button>
               </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 p-4">
+            <div class="p-4 space-y-2">
               <label
                 v-for="scent in group.scents"
                 :key="scent.id"
-                class="flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer"
-                :class="isScentSelected(scent.id) ? 'border-primary-400 bg-primary-50/60' : 'border-gray-200 hover:border-gray-300'"
+                class="block rounded-lg border transition-all cursor-pointer"
+                :class="isScentSelected(scent.id) ? 'border-primary-400 bg-primary-50/40' : 'border-gray-200 hover:border-gray-300'"
               >
-                <input
-                  type="checkbox"
-                  :checked="isScentSelected(scent.id)"
-                  @change="toggleScent(scent.id)"
-                  class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                />
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2">
-                    <span class="text-sm font-medium text-gray-800 truncate">{{ scent.name }}</span>
-                    <span v-if="scent.emoji" class="text-base">{{ scent.emoji }}</span>
+                <!-- Fila de selección -->
+                <div class="flex items-center gap-3 p-3">
+                  <input
+                    type="checkbox"
+                    :checked="isScentSelected(scent.id)"
+                    @change="toggleScent(scent.id)"
+                    class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm font-medium text-gray-800 truncate">{{ scent.name }}</span>
+                      <span v-if="scent.emoji" class="text-base">{{ scent.emoji }}</span>
+                    </div>
+                    <p v-if="scent.subtitle" class="text-xs text-gray-400 truncate">{{ scent.subtitle }}</p>
                   </div>
-                  <p v-if="scent.subtitle" class="text-xs text-gray-400 truncate">{{ scent.subtitle }}</p>
-                  <p v-if="scent.experience" class="text-xs text-earth-500 truncate">{{ scent.experience }}</p>
+                </div>
+
+                <!-- Campos de la variante (solo si está seleccionada) -->
+                <div v-if="isScentSelected(scent.id)" class="px-3 pb-3 pl-11 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div>
+                    <label class="block text-[11px] font-medium text-gray-500 mb-1">Stock</label>
+                    <input
+                      v-model="variantData[scent.id].stock"
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      class="w-full px-2.5 py-1.5 rounded-md border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-medium text-gray-500 mb-1">SKU</label>
+                    <input
+                      v-model="variantData[scent.id].sku"
+                      type="text"
+                      placeholder="Auto"
+                      class="w-full px-2.5 py-1.5 rounded-md border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-medium text-gray-500 mb-1">GTIN</label>
+                    <input
+                      v-model="variantData[scent.id].gtin"
+                      type="text"
+                      placeholder="Opcional"
+                      class="w-full px-2.5 py-1.5 rounded-md border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm font-mono"
+                    />
+                  </div>
                 </div>
               </label>
             </div>
@@ -249,7 +312,7 @@
         </div>
 
         <p class="text-xs text-gray-400">
-          💡 Los aromas seleccionados se guardarán como variantes del producto y aparecerán como opciones de compra en la tienda.
+          💡 Al seleccionar un aroma puedes definir su stock, SKU y GTIN propios. Si dejas el SKU vacío se genera automáticamente.
         </p>
       </div>
 
@@ -338,6 +401,8 @@ const scentGroups = ref([])
 const allScents = ref([])
 const loadingProfiles = ref(false)
 const selectedScentCount = computed(() => selectedScents.value.size)
+// Datos por variante: { [profileId]: { stock, sku, gtin } }
+const variantData = reactive({})
 
 async function loadCategories() {
   try {
@@ -413,6 +478,18 @@ async function loadProduct() {
         .filter(v => v.fragrance_profile_id)
         .map(v => v.fragrance_profile_id)
       selectedScents.value = new Set(profileIds)
+
+      // Cargar datos de cada variante (stock, sku, gtin)
+      for (const v of data.variants) {
+        if (v.fragrance_profile_id) {
+          if (!variantData[v.fragrance_profile_id]) {
+            variantData[v.fragrance_profile_id] = { stock: 0, sku: '', gtin: '' }
+          }
+          variantData[v.fragrance_profile_id].stock = v.stock || 0
+          variantData[v.fragrance_profile_id].sku = v.sku || ''
+          variantData[v.fragrance_profile_id].gtin = v.gtin || ''
+        }
+      }
       updateGroupCounts()
     }
 
@@ -474,6 +551,13 @@ async function loadScentProfiles() {
       emoji: p.emoji,
       collection_id: p.collection_id,
     }))
+
+    // Inicializar datos de variante para cada aroma
+    for (const p of activeProfiles) {
+      if (!variantData[p.id]) {
+        variantData[p.id] = { stock: 0, sku: '', gtin: '' }
+      }
+    }
   } catch (e) {
     console.error('Error cargando perfiles aromáticos:', e)
   } finally {
@@ -638,7 +722,12 @@ async function handleSave() {
           category_id: categoryId,
         },
         images,
-        variantProfileIds: Array.from(selectedScents.value),
+        variantProfileIds: Array.from(selectedScents.value).map(profileId => ({
+          profileId,
+          stock: variantData[profileId]?.stock || 0,
+          sku: variantData[profileId]?.sku || '',
+          gtin: variantData[profileId]?.gtin || '',
+        })),
       },
     })
 

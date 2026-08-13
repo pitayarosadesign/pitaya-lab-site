@@ -56,7 +56,9 @@ export default defineEventHandler(async (event) => {
             additional_image_links: images
               .filter(img => !img.is_primary && img.url)
               .map(img => img.url.startsWith('http') ? img.url : `${BASE_URL}${img.url}`),
-            availability: product.stock > 0 ? 'in stock' : 'out of stock',
+            availability: product.stock > 0
+              ? 'in stock'
+              : (product.allow_backorder ? 'preorder' : 'out of stock'),
             price: `${product.price} MXN`,
             sale_price: product.compare_at_price && product.compare_at_price > product.price
               ? `${product.price} MXN`

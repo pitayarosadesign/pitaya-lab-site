@@ -61,7 +61,10 @@ export default defineEventHandler(async (event) => {
       xml += `      <g:description><![CDATA[${product.long_description || product.description || product.name}]]></g:description>\n`
       xml += `      <g:link>${productUrl}</g:link>\n`
       xml += `      <g:image_link>${imageLink}</g:image_link>\n`
-      xml += `      <g:availability>${product.stock > 0 ? 'in_stock' : 'out_of_stock'}</g:availability>\n`
+      const availability = product.stock > 0
+        ? 'in_stock'
+        : (product.allow_backorder ? 'preorder' : 'out_of_stock')
+      xml += `      <g:availability>${availability}</g:availability>\n`
       xml += `      <g:price>${product.price} MXN</g:price>\n`
 
       if (product.compare_at_price && product.compare_at_price > product.price) {

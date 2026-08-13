@@ -127,10 +127,17 @@
 
             <!-- Stock y envío -->
             <div class="flex flex-wrap items-center gap-4 mb-8 text-sm">
-              <span v-if="product.stock > 0" class="flex items-center gap-1.5 text-green-600">
+              <!-- En stock -->
+              <span v-if="currentStock > 0" class="flex items-center gap-1.5 text-green-600">
                 <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                En stock ({{ product.stock }} disponibles)
+                En stock ({{ currentStock }} disponibles)
               </span>
+              <!-- Sobre pedido (sin stock pero permitido) -->
+              <span v-else-if="product.allowBackorder" class="flex items-center gap-1.5 text-amber-600">
+                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                Preparación sobre pedido (3-5 días hábiles)
+              </span>
+              <!-- Agotado -->
               <span v-else class="flex items-center gap-1.5 text-red-500">
                 <span class="w-2 h-2 rounded-full bg-red-400"></span>
                 Agotado temporalmente
@@ -149,12 +156,12 @@
               <button
                 @click="addToCart"
                 class="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-4 px-6 rounded-2xl text-lg transition-all hover:shadow-xl hover:shadow-primary-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
-                :disabled="product.stock === 0"
+                :disabled="!isPurchasable"
               >
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/>
                 </svg>
-                {{ product.stock === 0 ? 'Agotado' : 'Agregar al carrito' }}
+                {{ buttonLabel }}
               </button>
 
             </div>
@@ -234,6 +241,29 @@ const discountPercent = computed(() => {
   return Math.round((diff / product.value.compareAtPrice) * 100)
 })
 
+// Stock actual: el de la variante seleccionada si existe, si no el general
+const currentStock = computed(() => {
+  if (!product.value) return 0
+  if (selectedVariant.value && selectedVariant.value.stock !== undefined) {
+    return selectedVariant.value.stock
+  }
+  return product.value.stock
+})
+
+// ¿Se puede comprar? (en stock o sobre pedido permitido)
+const isPurchasable = computed(() => {
+  if (!product.value) return false
+  return currentStock.value > 0 || product.value.allowBackorder === true
+})
+
+// Texto del botón según estado
+const buttonLabel = computed(() => {
+  if (!product.value) return 'Agregar al carrito'
+  if (currentStock.value > 0) return 'Agregar al carrito'
+  if (product.value.allowBackorder) return 'Agregar al carrito (sobre pedido)'
+  return 'Agotado'
+})
+
 // Productos relacionados (misma categoría)
 const relatedProducts = ref([])
 
@@ -244,7 +274,7 @@ function formatPrice(price) {
 
 // Agregar al carrito
 function addToCart() {
-  if (!product.value || product.value.stock === 0) return
+  if (!product.value || !isPurchasable.value) return
 
   const cartStore = useCartStore()
 
@@ -413,7 +443,7 @@ const productSchema = computed(() => {
       price: product.value.price || 0,
       availability: product.value.stock > 0
         ? 'https://schema.org/InStock'
-        : 'https://schema.org/OutOfStock',
+        : (product.value.allowBackorder ? 'https://schema.org/PreOrder' : 'https://schema.org/OutOfStock'),
       hasMerchantReturnPolicy: {
         '@type': 'MerchantReturnPolicy',
         applicableCountry: 'MX',
