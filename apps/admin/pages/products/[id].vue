@@ -181,6 +181,78 @@
         </div>
       </div>
 
+      <!-- Variantes (Aromas) -->
+      <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-semibold text-gray-900">🧴 Disponible en estos Aromas</h2>
+            <p class="text-sm text-gray-400 mt-0.5">Selecciona en cuáles perfiles aromáticos estará disponible este producto</p>
+          </div>
+          <span class="text-xs font-medium px-3 py-1 rounded-full bg-primary-50 text-primary-700">
+            {{ selectedScentCount }} / {{ allScents.length }} seleccionados
+          </span>
+        </div>
+
+        <div v-if="loadingProfiles" class="py-8 text-center text-gray-400 text-sm">
+          Cargando perfiles aromáticos...
+        </div>
+
+        <!-- Agrupado por colección -->
+        <div v-else class="space-y-6">
+          <div v-for="group in scentGroups" :key="group.collection.id || group.collection.name" class="border border-gray-100 rounded-xl overflow-hidden">
+            <div class="flex items-center gap-3 px-4 py-3 bg-gray-50 border-b border-gray-100">
+              <span class="text-lg">{{ group.collection.icon || '🌸' }}</span>
+              <div>
+                <h3 class="text-sm font-semibold text-gray-800">{{ group.collection.name }}</h3>
+                <p v-if="group.collection.subtitle" class="text-xs text-gray-400">{{ group.collection.subtitle }}</p>
+              </div>
+              <div class="ml-auto">
+                <button
+                  type="button"
+                  @click="toggleAllInGroup(group)"
+                  class="text-xs font-medium text-primary-600 hover:text-primary-700"
+                >
+                  {{ group.selectedCount === group.scents.length ? 'Quitar todos' : 'Seleccionar todos' }}
+                </button>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 p-4">
+              <label
+                v-for="scent in group.scents"
+                :key="scent.id"
+                class="flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer"
+                :class="isScentSelected(scent.id) ? 'border-primary-400 bg-primary-50/60' : 'border-gray-200 hover:border-gray-300'"
+              >
+                <input
+                  type="checkbox"
+                  :checked="isScentSelected(scent.id)"
+                  @change="toggleScent(scent.id)"
+                  class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                />
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium text-gray-800 truncate">{{ scent.name }}</span>
+                    <span v-if="scent.emoji" class="text-base">{{ scent.emoji }}</span>
+                  </div>
+                  <p v-if="scent.subtitle" class="text-xs text-gray-400 truncate">{{ scent.subtitle }}</p>
+                  <p v-if="scent.experience" class="text-xs text-earth-500 truncate">{{ scent.experience }}</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div v-if="allScents.length === 0" class="py-8 text-center border-2 border-dashed border-gray-200 rounded-xl">
+            <p class="text-3xl mb-2">🌸</p>
+            <p class="text-sm text-gray-400">No hay perfiles aromáticos configurados.</p>
+            <p class="text-xs text-gray-400 mt-1">Crea perfiles aromáticos desde Colecciones en el panel.</p>
+          </div>
+        </div>
+
+        <p class="text-xs text-gray-400">
+          💡 Los aromas seleccionados se guardarán como variantes del producto y aparecerán como opciones de compra en la tienda.
+        </p>
+      </div>
+
       <!-- Botones -->
       <div class="flex items-center justify-end gap-3">
         <NuxtLink to="/products" class="px-6 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-800">
@@ -260,6 +332,13 @@ const showCategoryModal = ref(false)
 const creatingCategory = ref(false)
 const newCategory = reactive({ name: '', slug: '', description: '' })
 
+// ===== Variantes (perfiles aromáticos) =====
+const selectedScents = ref(new Set())
+const scentGroups = ref([])
+const allScents = ref([])
+const loadingProfiles = ref(false)
+const selectedScentCount = computed(() => selectedScents.value.size)
+
 async function loadCategories() {
   try {
     const data = await $fetch('/api/categories/list')
@@ -328,6 +407,15 @@ async function loadProduct() {
     form.cost_price = data.cost_price || ''
     form.images = data.images || []
 
+    // Pre-seleccionar las variantes (aromas) existentes del producto
+    if (data.variants && data.variants.length > 0) {
+      const profileIds = data.variants
+        .filter(v => v.fragrance_profile_id)
+        .map(v => v.fragrance_profile_id)
+      selectedScents.value = new Set(profileIds)
+      updateGroupCounts()
+    }
+
     // Resolver el slug de la categoría a partir del category_id
     if (data.category_id) {
       const cat = categories.value.find(c => c.id === data.category_id)
@@ -338,6 +426,78 @@ async function loadProduct() {
   } finally {
     loading.value = false
   }
+}
+
+// ===== Carga de perfiles aromáticos (variantes) =====
+async function loadScentProfiles() {
+  loadingProfiles.value = true
+  try {
+    const res = await $fetch('/api/fragrance-profiles/list')
+    const profiles = res.profiles || []
+
+    const activeProfiles = profiles.filter(p => p.is_active !== false)
+
+    const groups = []
+    const groupMap = new Map()
+    for (const p of activeProfiles) {
+      const colData = p.collection || p.collections
+      const colKey = colData?.id || p.collection_id || 'sin-coleccion'
+      const colName = colData?.name || p.collection_name || 'Otros aromas'
+      const colIcon = colData?.icon || '🌸'
+      const colSubtitle = colData?.subtitle || ''
+
+      if (!groupMap.has(colKey)) {
+        const g = {
+          collection: { id: colKey, name: colName, icon: colIcon, subtitle: colSubtitle },
+          scents: [],
+          selectedCount: 0,
+        }
+        groupMap.set(colKey, g)
+        groups.push(g)
+      }
+      groupMap.get(colKey).scents.push({
+        id: p.id,
+        name: p.name,
+        subtitle: p.subtitle,
+        experience: p.experience,
+        emoji: p.emoji,
+        collection_id: p.collection_id,
+      })
+    }
+
+    scentGroups.value = groups
+    allScents.value = activeProfiles.map(p => ({
+      id: p.id,
+      name: p.name,
+      subtitle: p.subtitle,
+      experience: p.experience,
+      emoji: p.emoji,
+      collection_id: p.collection_id,
+    }))
+  } catch (e) {
+    console.error('Error cargando perfiles aromáticos:', e)
+  } finally {
+    loadingProfiles.value = false
+  }
+}
+
+function isScentSelected(scentId) { return selectedScents.value.has(scentId) }
+
+function toggleScent(scentId) {
+  selectedScents.value.has(scentId) ? selectedScents.value.delete(scentId) : selectedScents.value.add(scentId)
+  updateGroupCounts()
+}
+
+function toggleAllInGroup(group) {
+  const allSelected = group.scents.every(s => selectedScents.value.has(s.id))
+  group.scents.forEach(s => allSelected ? selectedScents.value.delete(s.id) : selectedScents.value.add(s.id))
+  updateGroupCounts()
+}
+
+function updateGroupCounts() {
+  scentGroups.value.forEach(g => {
+    g.selectedCount = g.scents.filter(s => selectedScents.value.has(s.id)).length
+  })
 }
 
 function triggerUpload() { fileInput.value?.click() }
@@ -478,6 +638,7 @@ async function handleSave() {
           category_id: categoryId,
         },
         images,
+        variantProfileIds: Array.from(selectedScents.value),
       },
     })
 
@@ -512,9 +673,12 @@ async function duplicateHere() {
   }
 }
 
-onMounted(() => {
-  // Ejecutar ambas cargas en paralelo para que loadProduct no dependa de loadCategories
+onMounted(async () => {
+  // Cargar categorías y perfiles aromáticos en paralelo
   loadCategories()
+  await loadScentProfiles()
+  // Cargar el producto después de tener los perfiles aromáticos
+  // para poder pre-seleccionar sus variantes correctamente
   loadProduct()
 })
 </script>
