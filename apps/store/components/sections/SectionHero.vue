@@ -10,6 +10,7 @@
     :media_type="content.media_type"
     :media_url="content.media_url"
     :poster="content.poster_url"
+    :slides="content.slides"
   />
 </template>
 

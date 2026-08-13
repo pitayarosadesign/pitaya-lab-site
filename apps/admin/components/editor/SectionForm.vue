@@ -45,7 +45,7 @@
         </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de fondo</label>
-          <div class="flex gap-4">
+          <div class="flex gap-4 flex-wrap">
             <label class="inline-flex items-center gap-2">
               <input type="radio" value="video" v-model="section.content.media_type" class="text-primary-600" />
               <span class="text-sm">Video</span>
@@ -54,15 +54,68 @@
               <input type="radio" value="image" v-model="section.content.media_type" class="text-primary-600" />
               <span class="text-sm">Imagen</span>
             </label>
+            <label class="inline-flex items-center gap-2">
+              <input type="radio" value="carousel" v-model="section.content.media_type" class="text-primary-600" />
+              <span class="text-sm">Carrusel</span>
+            </label>
           </div>
         </div>
-        <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-gray-700 mb-1">URL del {{ section.content.media_type === 'video' ? 'video' : 'imagen' }}</label>
-          <input v-model="section.content.media_url" type="text" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" placeholder="https://... o /images/..." />
-        </div>
-        <div v-if="section.content.media_type === 'video'" class="md:col-span-2">
-          <label class="block text-sm font-medium text-gray-700 mb-1">URL del poster (imagen de portada)</label>
-          <input v-model="section.content.poster_url" type="text" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" placeholder="https://... o /images/..." />
+
+        <!-- Imagen única -->
+        <template v-if="section.content.media_type === 'image'">
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">URL de la imagen</label>
+            <input v-model="section.content.media_url" type="text" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" placeholder="https://... o /images/..." />
+          </div>
+        </template>
+
+        <!-- Video -->
+        <template v-if="section.content.media_type === 'video'">
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">URL del video</label>
+            <input v-model="section.content.media_url" type="text" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" placeholder="https://... o /images/..." />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">URL del poster (imagen de portada)</label>
+            <input v-model="section.content.poster_url" type="text" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" placeholder="https://... o /images/..." />
+          </div>
+        </template>
+
+        <!-- Carrusel -->
+        <div v-if="section.content.media_type === 'carousel'" class="md:col-span-2 space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="text-sm font-medium text-gray-700">Slides del carrusel</label>
+            <button
+              @click="addSlide"
+              class="text-sm text-primary-600 hover:text-primary-700 font-medium"
+            >+ Agregar slide</button>
+          </div>
+          <p class="text-xs text-gray-400">Cada slide es una imagen de fondo con su enlace al hacer clic. Se reproducen en bucle automáticamente.</p>
+
+          <div v-for="(slide, index) in section.content.slides" :key="index" class="p-3 bg-gray-50 rounded-lg space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-gray-700">Slide {{ index + 1 }}</span>
+              <button @click="section.content.slides.splice(index, 1)" class="text-red-400 hover:text-red-600 text-xs">Eliminar</button>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-16 h-12 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0">
+                <img v-if="slide.image" :src="slide.image" class="w-full h-full object-cover" />
+                <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-lg">🖼️</div>
+              </div>
+              <input
+                v-model="slide.image"
+                type="text"
+                placeholder="URL de la imagen (https://... o /images/...)"
+                class="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm"
+              />
+            </div>
+            <input
+              v-model="slide.link"
+              type="text"
+              placeholder="Link al hacer clic (ej. /catalog, https://amazon.com/...)"
+              class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm font-mono"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -441,6 +494,12 @@ async function loadCollections() {
   } catch (e) {
     console.warn('Error cargando colecciones:', e.message)
   }
+}
+
+// Agrega un slide vacío al carrusel del hero
+function addSlide() {
+  if (!section.content.slides) section.content.slides = []
+  section.content.slides.push({ image: '', link: '' })
 }
 
 onMounted(loadCollections)

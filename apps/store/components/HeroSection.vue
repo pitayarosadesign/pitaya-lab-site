@@ -20,6 +20,37 @@
         :alt="title"
         class="w-full h-full object-cover"
       />
+      <!-- Carrusel de fondo -->
+      <template v-else-if="resolvedMediaType === 'carousel' && slides.length">
+        <div
+          v-for="(slide, i) in slides"
+          :key="i"
+          class="absolute inset-0 transition-opacity duration-1000"
+          :class="i === currentSlide ? 'opacity-100' : 'opacity-0'"
+        >
+          <a
+            v-if="slide.link"
+            :href="slide.link"
+            :target="isExternal(slide.link) ? '_blank' : undefined"
+            :rel="isExternal(slide.link) ? 'noopener noreferrer' : undefined"
+            class="block w-full h-full"
+          >
+            <img :src="slide.image" :alt="title" class="w-full h-full object-cover" />
+          </a>
+          <img v-else :src="slide.image" :alt="title" class="w-full h-full object-cover" />
+        </div>
+        <!-- Indicadores del carrusel -->
+        <div v-if="slides.length > 1" class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+          <button
+            v-for="(slide, i) in slides"
+            :key="'dot' + i"
+            @click="currentSlide = i"
+            class="w-2.5 h-2.5 rounded-full transition-all"
+            :class="i === currentSlide ? 'bg-white w-6' : 'bg-white/50 hover:bg-white/80'"
+            :aria-label="'Ir al slide ' + (i + 1)"
+          ></button>
+        </div>
+      </template>
       <div class="absolute inset-0 bg-gradient-to-r from-earth-950/70 via-earth-950/50 to-transparent"></div>
     </div>
 
@@ -79,7 +110,48 @@ const props = defineProps({
   media_type: { type: String, default: 'video' },
   media_url: { type: String, default: '/images/brand/hero-video.mp4' },
   poster: { type: String, default: '/images/brand/hero-bruma.png' },
+  slides: { type: Array, default: () => [] },
 })
+
+// Índice del slide actual del carrusel
+const currentSlide = ref(0)
+
+// Autoplay del carrusel
+let carouselTimer = null
+function startCarousel() {
+  stopCarousel()
+  if (props.slides.length > 1) {
+    carouselTimer = setInterval(() => {
+      currentSlide.value = (currentSlide.value + 1) % props.slides.length
+    }, 5000)
+  }
+}
+function stopCarousel() {
+  if (carouselTimer) {
+    clearInterval(carouselTimer)
+    carouselTimer = null
+  }
+}
+
+watch(
+  () => props.slides,
+  (val) => {
+    if (val && val.length) {
+      currentSlide.value = 0
+      startCarousel()
+    } else {
+      stopCarousel()
+    }
+  },
+  { immediate: true }
+)
+
+onBeforeUnmount(stopCarousel)
+
+// Determina si un enlace es externo (http/https) para abrirlo en pestaña nueva
+function isExternal(link) {
+  return /^https?:\/\//i.test(link || '')
+}
 
 // Si viene una imagen en media_url pero media_type dice 'video' (o vacío),
 // inferimos el tipo correcto para que la imagen se muestre.

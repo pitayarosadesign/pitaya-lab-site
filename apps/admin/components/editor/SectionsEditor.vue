@@ -268,6 +268,7 @@ function getDefaultContent(type) {
         media_type: 'video',
         media_url: '',
         poster_url: '',
+        slides: [],
       },
       settings: { enabled: true, full_width: true },
     },

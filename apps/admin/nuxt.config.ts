@@ -31,6 +31,7 @@ export default defineNuxtConfig({
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL || '',
       supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY || '',
       stripePublishableKey: process.env.NUXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '',
+      storeUrl: process.env.NUXT_PUBLIC_STORE_URL || 'https://www.pitayalab.com.mx',
     },
     supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY || '',
     stripeSecretKey: process.env.STRIPE_SECRET_KEY || '',
