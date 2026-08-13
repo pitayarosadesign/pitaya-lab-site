@@ -26,6 +26,9 @@
 
     <!-- Editor de secciones dinámicas (la portada se arma desde page_sections) -->
     <EditorSectionsEditor page="home" />
+
+    <!-- Configuración de la barra promocional de envíos (arriba del navbar) -->
+    <ShippingBarEditor />
   </div>
 </template>
 
@@ -38,3 +41,4 @@
 const config = useRuntimeConfig()
 const storeUrl = config.public.storeUrl
 </script>
+

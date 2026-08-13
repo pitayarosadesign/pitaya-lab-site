@@ -3,8 +3,10 @@
     <!-- Barra de navegación -->
     <NavBar />
 
-    <!-- Contenido principal -->
-    <main class="flex-grow pt-20">
+    <!-- Contenido principal
+         El padding superior compensa el header fijo. La navbar mide
+         4rem (64px) en móvil y 5rem (80px) en desktop. -->
+    <main class="flex-grow pt-16 md:pt-20">
       <slot />
     </main>
 

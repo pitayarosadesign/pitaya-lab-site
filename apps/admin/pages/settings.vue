@@ -105,6 +105,46 @@
             </label>
           </div>
 
+          <!-- ============ BARRA PROMOCIONAL DE ENVÍOS ============ -->
+          <!-- Esta es la barra superior (arriba del navbar). Se guarda en la
+               clave `shipping_bar` de site_config, la misma que lee el NavBar
+               y el CartSidebar de la tienda. -->
+          <div class="rounded-xl border border-dashed border-gray-300 p-4 bg-amber-50/40">
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+              <div>
+                <h4 class="text-sm font-bold text-gray-800">🚚 Barra promocional superior</h4>
+                <p class="text-xs text-gray-500 mt-0.5">Aparece sobre el menú de navegación y se oculta al hacer scroll. Se desactiva por completo desmarcando el toggle.</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" v-model="shippingBar.enabled" class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                <span class="ms-3 text-sm font-medium" :class="shippingBar.enabled ? 'text-primary-600' : 'text-gray-400'">
+                  {{ shippingBar.enabled ? 'Activo' : 'Inactivo' }}
+                </span>
+              </label>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" :class="shippingBar.enabled ? '' : 'opacity-50 pointer-events-none'">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Monto mínimo envío gratis ($)</label>
+                <input v-model.number="shippingBar.free_shipping_min" type="number" min="0" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Costo de envío menor ($)</label>
+                <input v-model.number="shippingBar.shipping_fee" type="number" min="0" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tiempo estimado</label>
+                <input v-model="shippingBar.delivery_days" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" placeholder="3 a 5 días hábiles" />
+              </div>
+              <div class="md:col-span-3">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Mensajerías (separadas por coma)</label>
+                <input v-model="shippingBarCouriersText" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
+                <p class="text-xs text-gray-400 mt-1.5">Ej: Paquete Express, Estafeta, FedEx (el NavBar mostrará la sinopsis de tu configuración y los montos).</p>
+              </div>
+            </div>
+          </div>
+
           <div class="flex items-center justify-end pt-2 border-t border-gray-100">
             <button
               @click="saveShippingConfig"
@@ -414,6 +454,24 @@ const shipping = reactive({
   useEnviaApi: false,
 })
 
+// 🚚 Barra promocional superior (arriba del navbar).
+// Se guarda en site_config → clave `shipping_bar`, la misma que leen el NavBar
+// y el CartSidebar de la tienda. Por defecto DESACTIVADA.
+const shippingBar = reactive({
+  enabled: false,
+  free_shipping_min: 200,
+  shipping_fee: 50,
+  couriers: ['Paquete Express', 'Estafeta', 'FedEx'],
+  delivery_days: '3 a 5 días hábiles',
+})
+
+const shippingBarCouriersText = computed({
+  get: () => (Array.isArray(shippingBar.couriers) ? shippingBar.couriers.join(', ') : ''),
+  set: (val) => {
+    shippingBar.couriers = val.split(',').map(c => c.trim()).filter(Boolean)
+  },
+})
+
 const apiKeys = reactive({
   resend: '',
   stripe: '',
@@ -465,6 +523,9 @@ onMounted(async () => {
           case 'shipping_config':
             Object.assign(shipping, value)
             break
+          case 'shipping_bar':
+            Object.assign(shippingBar, value)
+            break
           case 'api_keys':
             Object.assign(apiKeys, value)
             break
@@ -507,6 +568,14 @@ async function saveShippingConfig() {
       shippingFee: Number(shipping.shippingFee),
       originZip: shipping.originZip,
       useEnviaApi: shipping.useEnviaApi,
+    })
+    // Guarda también la barra promocional superior en site_config (shipping_bar)
+    await saveSection('shipping_bar', {
+      enabled: !!shippingBar.enabled,
+      free_shipping_min: Number(shippingBar.free_shipping_min),
+      shipping_fee: Number(shippingBar.shipping_fee),
+      couriers: shippingBar.couriers,
+      delivery_days: shippingBar.delivery_days,
     })
     alert('✅ Configuración de envíos guardada')
   } catch (e) {
