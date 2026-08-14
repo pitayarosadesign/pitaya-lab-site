@@ -80,6 +80,11 @@
           <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
           <textarea v-model="form.description" rows="3" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all" />
         </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción larga</label>
+          <textarea v-model="form.long_description" rows="4" placeholder="Descripción detallada para la página del producto. Déjalo vacío para ocultarlo." class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all" />
+          <p class="text-xs text-gray-400 mt-1">Se muestra en la página del producto. Vacío = no se muestra.</p>
+        </div>
       </div>
 
       <!-- Estado y Configuración -->
@@ -435,7 +440,7 @@ const saving = ref(false)
 const fileInput = ref(null)
 
 const form = reactive({
-  name: '', sku: '', slug: '', description: '', price: '', stock: 0,
+  name: '', sku: '', slug: '', description: '', long_description: '', price: '', stock: 0,
   gtin: '', amazon_asin: '', images: [],
   is_active: true, is_featured: false, google_category: '', free_shipping: false,
   amazon_link: '', compare_at_price: '', cost_price: '',
@@ -514,6 +519,7 @@ async function loadProduct() {
     form.sku = data.sku
     form.slug = data.slug
     form.description = data.description || ''
+    form.long_description = data.long_description || ''
     form.price = data.price
     form.stock = data.stock || 0
     form.gtin = data.gtin || ''
@@ -813,6 +819,7 @@ async function handleSave() {
           sku: form.sku,
           slug: form.slug,
           description: form.description,
+          long_description: form.long_description || null,
           price: parseFloat(form.price),
           stock: parseInt(form.stock) || 0,
           gtin: form.gtin || null,
