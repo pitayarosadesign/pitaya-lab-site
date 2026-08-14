@@ -131,10 +131,11 @@
       </div>
     </section>
 
-    <!-- 🌸 Panel de experiencia olfativa (cuando hay un aroma seleccionado) -->
-    <section v-if="selectedAroma" class="py-10 bg-gradient-to-b from-primary-50/50 to-white">
+    <!-- 🌸 Panel de experiencia olfativa -->
+    <section class="py-10 bg-gradient-to-b from-primary-50/50 to-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-white rounded-3xl border border-earth-100 shadow-sm overflow-hidden">
+        <!-- Cuando hay un aroma seleccionado: panel detallado -->
+        <div v-if="selectedAroma" class="bg-white rounded-3xl border border-earth-100 shadow-sm overflow-hidden">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-0">
             <!-- Imagen del aroma -->
             <div class="md:col-span-1 relative min-h-[220px] bg-earth-100">
@@ -214,6 +215,50 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Cuando NO hay filtro: galería de todos los aromas -->
+        <div v-else-if="aromas.length > 0">
+          <div class="text-center mb-8">
+            <span class="text-primary-600 font-semibold text-sm uppercase tracking-wider">Explora por aroma</span>
+            <h2 class="text-3xl font-serif font-bold text-earth-900 mt-2 mb-3">
+              Todos nuestros aromas
+            </h2>
+            <p class="text-earth-500 max-w-2xl mx-auto">
+              Selecciona un aroma para descubrir su experiencia olfativa y en qué productos está disponible.
+            </p>
+          </div>
+
+          <!-- Grid de aromas -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <button
+              v-for="aroma in aromas"
+              :key="aroma.id"
+              @click="selectAroma(aroma)"
+              class="group bg-white rounded-2xl border border-earth-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 hover:border-primary-300 transition-all text-left"
+            >
+              <!-- Imagen del aroma -->
+              <div class="aspect-square overflow-hidden bg-earth-100 relative">
+                <img
+                  v-if="aroma.image"
+                  :src="aroma.image"
+                  :alt="aroma.name"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                />
+                <div v-else class="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-amber-100">
+                  <span class="text-5xl text-primary-300 font-serif font-bold">{{ aroma.name.charAt(0) }}</span>
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              </div>
+
+              <!-- Nombre y colección -->
+              <div class="p-3">
+                <p class="text-sm font-semibold text-earth-800 group-hover:text-primary-600 transition-colors truncate">{{ aroma.name }}</p>
+                <p class="text-[11px] text-earth-400 truncate">{{ aroma.categoryLabel }}</p>
+              </div>
+            </button>
           </div>
         </div>
       </div>
