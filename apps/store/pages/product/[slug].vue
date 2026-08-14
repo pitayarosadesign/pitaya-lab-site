@@ -43,9 +43,9 @@
             <!-- Imagen principal -->
             <div class="aspect-square rounded-3xl overflow-hidden bg-earth-50 shadow-sm border border-earth-100">
               <img
-                v-if="product.image"
+                v-if="activeImage"
                 :src="activeImage"
-                :alt="product.name"
+                :alt="activeImageAlt"
                 class="w-full h-full object-cover"
               />
               <div v-else class="w-full h-full flex items-center justify-center text-earth-300">
@@ -55,16 +55,20 @@
               </div>
             </div>
 
-            <!-- Thumbnails -->
-            <div v-if="product.images && product.images.length > 1" class="flex gap-3 overflow-x-auto pb-2">
+            <!-- Thumbnails: imágenes del producto + imágenes de cada variante -->
+            <div v-if="allGalleryImages.length > 1" class="flex gap-3 overflow-x-auto pb-2">
               <button
-                v-for="(img, index) in product.images"
-                :key="img.id || index"
-                @click="activeImageIndex = index"
-                class="w-20 h-20 rounded-xl overflow-hidden border-2 flex-shrink-0 transition-all"
-                :class="activeImageIndex === index ? 'border-primary-500 shadow-md' : 'border-earth-200 hover:border-earth-300'"
+                v-for="(img, index) in allGalleryImages"
+                :key="img.key"
+                @click="selectGalleryImage(index)"
+                class="w-20 h-20 rounded-xl overflow-hidden border-2 flex-shrink-0 transition-all relative"
+                :class="activeGalleryIndex === index ? 'border-primary-500 shadow-md' : 'border-earth-200 hover:border-earth-300'"
               >
-                <img :src="img.url" :alt="img.altText || product.name" class="w-full h-full object-cover" />
+                <img :src="img.url" :alt="img.alt || product.name" class="w-full h-full object-cover" />
+                <!-- Etiqueta si es imagen de una variante -->
+                <span v-if="img.variantName" class="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[9px] py-0.5 text-center truncate">
+                  {{ img.variantName }}
+                </span>
               </button>
             </div>
           </div>
@@ -121,7 +125,7 @@
                 <button
                   v-for="variant in product.variants"
                   :key="variant.id"
-                  @click="selectedVariant = variant"
+                  @click="selectVariant(variant)"
                   class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all border-2"
                   :class="selectedVariant?.id === variant.id
                     ? 'border-primary-500 bg-primary-50 text-primary-700'
@@ -228,18 +232,83 @@ const error = ref(false)
 const activeImageIndex = ref(0)
 const selectedVariant = ref(null)
 
-// Imagen activa: prioriza la imagen de la variante seleccionada
-const activeImage = computed(() => {
-  // Si hay una variante seleccionada con imagen propia, mostrarla
-  if (selectedVariant.value?.imageUrl) {
-    return selectedVariant.value.imageUrl
+// ===== Galería combinada: imágenes del producto + imágenes de cada variante =====
+// Construye una lista unificada de todas las imágenes disponibles para que el
+// usuario pueda deslizar entre las del producto y las de cada aroma.
+const allGalleryImages = computed(() => {
+  if (!product.value) return []
+  const list = []
+
+  // Imágenes generales del producto
+  if (product.value.images && product.value.images.length > 0) {
+    product.value.images.forEach((img, i) => {
+      list.push({
+        key: `product-${img.id || i}`,
+        url: img.url,
+        alt: img.altText || product.value.name,
+        variantName: null,
+      })
+    })
+  } else if (product.value.image) {
+    list.push({
+      key: 'product-main',
+      url: product.value.image,
+      alt: product.value.name,
+      variantName: null,
+    })
   }
-  // Si no, mostrar la imagen activa del producto (thumbnails)
-  if (product.value?.images && product.value.images.length > 0) {
-    return product.value.images[activeImageIndex.value]?.url || product.value.image
+
+  // Imágenes de cada variante (aroma) que tengan imagen propia
+  if (product.value.variants && product.value.variants.length > 0) {
+    product.value.variants.forEach(v => {
+      if (v.imageUrl) {
+        list.push({
+          key: `variant-${v.id}`,
+          url: v.imageUrl,
+          alt: `${product.value.name} – ${v.name}`,
+          variantName: v.name,
+        })
+      }
+    })
   }
-  return product.value?.image
+
+  return list
 })
+
+// Índice activo en la galería combinada
+const activeGalleryIndex = ref(0)
+
+// Imagen activa: la del índice activo de la galería combinada
+const activeImage = computed(() => {
+  const img = allGalleryImages.value[activeGalleryIndex.value]
+  return img?.url || product.value?.image || null
+})
+
+// Alt de la imagen activa
+const activeImageAlt = computed(() => {
+  const img = allGalleryImages.value[activeGalleryIndex.value]
+  return img?.alt || product.value?.name || ''
+})
+
+// Al seleccionar una imagen de la galería, actualizar el índice y, si es de una
+// variante, seleccionar esa variante.
+function selectGalleryImage(index) {
+  activeGalleryIndex.value = index
+  const img = allGalleryImages.value[index]
+  if (img?.variantName && product.value?.variants) {
+    const v = product.value.variants.find(x => x.name === img.variantName)
+    if (v) selectedVariant.value = v
+  }
+}
+
+// Al seleccionar una variante, mostrar su imagen en la galería (si tiene).
+function selectVariant(variant) {
+  selectedVariant.value = variant
+  if (variant?.imageUrl) {
+    const idx = allGalleryImages.value.findIndex(img => img.key === `variant-${variant.id}`)
+    if (idx !== -1) activeGalleryIndex.value = idx
+  }
+}
 
 // Precio activo: prioriza el precio de la variante seleccionada
 const activePrice = computed(() => {
@@ -358,8 +427,16 @@ async function loadProduct() {
     const data = await $fetch(`/api/products/${route.params.slug}`)
     if (data?.product) {
       product.value = data.product
+      // Seleccionar la primera variante y mostrar su imagen si tiene
       if (data.product.variants?.length > 0) {
-        selectedVariant.value = data.product.variants[0]
+        const first = data.product.variants[0]
+        selectedVariant.value = first
+        if (first?.imageUrl) {
+          // Esperar a que se construya la galería para ubicar el índice
+          await nextTick()
+          const idx = allGalleryImages.value.findIndex(img => img.key === `variant-${first.id}`)
+          if (idx !== -1) activeGalleryIndex.value = idx
+        }
       }
       // Cargar relacionados
       await loadRelatedProducts(data.product.categorySlug, data.product.id)
