@@ -97,6 +97,10 @@
                 ※ {{ selectedVariant.name }}
               </span>
             </div>
+            <!-- Precio base del producto (referencia "desde") -->
+            <p v-if="showFromPrice" class="text-sm text-earth-400 -mt-4 mb-6">
+              Precio base del producto: <span class="font-semibold text-earth-600">${{ formatPrice(product.price) }}</span>
+            </p>
 
             <!-- Descripción -->
             <p class="text-earth-600 leading-relaxed mb-6">
@@ -251,6 +255,16 @@ const activeCompareAtPrice = computed(() => {
     return selectedVariant.value.compareAtPrice
   }
   return product.value?.compareAtPrice || null
+})
+
+// Mostrar el precio base del producto como referencia "desde" cuando la
+// variante seleccionada tiene un precio propio distinto al del producto.
+const showFromPrice = computed(() => {
+  if (!product.value) return false
+  // Solo si hay variantes y la seleccionada tiene precio propio
+  if (!selectedVariant.value || selectedVariant.value.price == null) return false
+  // Mostrar solo si el precio de la variante difiere del precio del producto
+  return Number(selectedVariant.value.price) !== Number(product.value.price)
 })
 
 // SKU activo (el de la variante si existe)
