@@ -179,11 +179,14 @@ async function syncVariantsByProfiles(supabaseAdmin, productId, profileIds, base
           : `${baseSku}-${profile.name.replace(/\s+/g, '').toUpperCase()}`)
 
     // Resolver imagen de la variante:
-    //   1) Si se subió una imagen nueva en el admin, subirla a Storage y usar su URL.
-    //   2) Si no, conservar la imagen que ya tenía la variante.
-    //   3) Si no, usar la imagen del perfil aromático.
+    //   1) Si se marcó para eliminar (removeImage), usar null (borra la imagen).
+    //   2) Si no, y se subió una imagen nueva en el admin, subirla a Storage y usar su URL.
+    //   3) Si no, conservar la imagen que ya tenía la variante.
+    //   4) Si no, usar la imagen del perfil aromático.
     let variantImageUrl = null
-    if (existingVar) {
+    const shouldRemoveImage = selection.removeImage === true
+    const hasNewImage = !!(selection.image && selection.image.data)
+    if (existingVar && !shouldRemoveImage && !hasNewImage) {
       const { data: ev } = await supabaseAdmin
         .from('product_variants')
         .select('image_url')
@@ -191,7 +194,7 @@ async function syncVariantsByProfiles(supabaseAdmin, productId, profileIds, base
         .single()
       variantImageUrl = ev?.image_url || null
     }
-    if (selection.image && selection.image.data) {
+    if (hasNewImage) {
       const ext = (selection.image.name || 'image.png').split('.').pop()
       const filePath = `${productId}/variant-${profile.slug || profile.id}-${Date.now()}.${ext}`
       const base64Data = selection.image.data.replace(/^data:image\/\w+;base64,/, '')
@@ -210,7 +213,7 @@ async function syncVariantsByProfiles(supabaseAdmin, productId, profileIds, base
         .from('product-images')
         .getPublicUrl(filePath)
       variantImageUrl = publicUrl.publicUrl
-    } else if (!variantImageUrl && profile.image_url) {
+    } else if (!shouldRemoveImage && !variantImageUrl && profile.image_url) {
       variantImageUrl = profile.image_url
     }
 
@@ -245,7 +248,8 @@ async function syncVariantsByProfiles(supabaseAdmin, productId, profileIds, base
       if (selection.gtin !== undefined) updateData.gtin = selection.gtin || null
       if (selection.price !== undefined) updateData.price = variantPrice
       if (selection.compare_at_price !== undefined) updateData.compare_at_price = variantCompareAt
-      if (selection.image && selection.image.data) updateData.image_url = variantImageUrl
+      // Actualizar la imagen: si se marcó para eliminar, forzar null; si hay imagen nueva, usarla.
+      if (selection.removeImage === true || (selection.image && selection.image.data)) updateData.image_url = variantImageUrl
 
       const { error: updError } = await supabaseAdmin
         .from('product_variants')
