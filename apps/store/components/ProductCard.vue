@@ -52,6 +52,27 @@
         {{ shortDescription }}
       </p>
 
+      <!-- 🌸 Fragancias disponibles -->
+      <div v-if="fragrances && fragrances.length" class="mb-3">
+        <div class="flex flex-wrap gap-1.5">
+          <span
+            v-for="frag in fragrances.slice(0, 4)"
+            :key="frag.id"
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-50 text-primary-700 text-[11px] font-medium border border-primary-100"
+            :title="frag.name"
+          >
+            <span class="text-xs leading-none">{{ frag.emoji }}</span>
+            {{ frag.name }}
+          </span>
+          <span
+            v-if="fragrances.length > 4"
+            class="inline-flex items-center px-2 py-0.5 rounded-full bg-earth-50 text-earth-500 text-[11px] font-medium"
+          >
+            +{{ fragrances.length - 4 }}
+          </span>
+        </div>
+      </div>
+
       <!-- PRECIO -->
       <div class="mb-4" itemprop="offers" itemscope itemtype="https://schema.org/Offer">
         <p class="text-xl font-bold text-earth-900">
@@ -141,6 +162,10 @@ const props = defineProps({
   price: {
     type: Number,
     default: 0
+  },
+  fragrances: {
+    type: Array,
+    default: () => []
   },
 })
 

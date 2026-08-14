@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
   try {
     let query = supabase
       .from('products')
-      .select('*, product_categories(name, slug), product_images(url, alt_text, sort_order, is_primary)')
+      .select('*, product_categories(name, slug), product_images(url, alt_text, sort_order, is_primary), product_variants(id, name, image_url, fragrance_profile_id, fragrance_profiles(name, emoji, subtitle, slug, image_url, experience, notes, description))')
       .eq('is_active', true)
       .order('sort_order', { ascending: true, nullsFirst: false })
 
@@ -42,6 +42,25 @@ export default defineEventHandler(async (event) => {
       const images = p.product_images || []
       const primaryImage = images.find(img => img.is_primary) || images[0]
 
+      // Fragancias disponibles del producto (desde sus variantes vinculadas a perfiles aromáticos)
+      const variants = p.product_variants || []
+      const fragrances = variants
+        .filter(v => v.fragrance_profiles)
+        .map(v => ({
+          id: v.fragrance_profiles.id,
+          name: v.fragrance_profiles.name,
+          slug: v.fragrance_profiles.slug,
+          emoji: v.fragrance_profiles.emoji || '',
+          subtitle: v.fragrance_profiles.subtitle || '',
+          image: v.fragrance_profiles.image_url || null,
+          experience: v.fragrance_profiles.experience || '',
+          notes: v.fragrance_profiles.notes || '',
+          description: v.fragrance_profiles.description || '',
+        }))
+
+      // Nombres de todas las variantes (para filtrado por coincidencia de aroma)
+      const variantNames = variants.map(v => v.name).filter(Boolean)
+
       return {
         id: p.id,
         sku: p.sku,
@@ -60,6 +79,8 @@ export default defineEventHandler(async (event) => {
           altText: img.alt_text,
           isPrimary: img.is_primary,
         })),
+        fragrances,
+        variantNames,
         stock: p.stock,
         isFeatured: p.is_featured,
         amazonLink: p.amazon_link,
@@ -79,3 +100,5 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, message: e.message })
   }
 })
+
+

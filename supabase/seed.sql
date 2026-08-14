@@ -91,31 +91,48 @@ INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) V
 ('a0000000-0000-0000-0000-000000000004', '/images/products/vela-mistica.png', 'Vela Aromática Mística PITAYA LAB', 0, true);
 
 -- VARIANTES (AROMAS) PARA CADA PRODUCTO
--- Primero creamos los aromas que se repiten en todos los productos
+-- Cada variante se vincula a su perfil aromático (fragrance_profiles) para que
+-- el catálogo pueda filtrar por fragancia de forma consistente.
 DO $$
 DECLARE
   product_id UUID;
+  scent_slug text;
+  scent_name text;
+  scent_sku text;
+  scent_desc text;
+  scent_img text;
+  profile_id UUID;
   scents text[][] := ARRAY[
-    ['Xcaret', 'SCR-XCT', 'Inspirado en la esencia de los hoteles de lujo Xcaret México*', '/images/scents/aroma-xcaret.png'],
-    ['Vidanta', 'SCR-VID', 'Inspirado en la esencia de los hoteles de lujo Vidanta*', '/images/scents/aroma-vidanta.png'],
-    ['Solara', 'SCR-SOL', 'Cítrico floral vibrante', '/images/scents/aroma-solara.png'],
-    ['Maderas del Edén', 'SCR-MDE', 'Notas amaderadas que evocan la naturaleza', NULL],
-    ['Jazmín Blanco', 'SCR-JBL', 'Elegancia floral con jazmín puro y bambú verde', '/images/scents/aroma-jazmin-blanco.png'],
-    ['Kiyosumi', 'SCR-KIY', 'Inspiración japonesa, sereno y sofisticado', NULL],
-    ['Té Verde', 'SCR-TVE', 'Fresco y revitalizante como el té verde', NULL]
+    ['xcaret', 'Xcaret', 'SCR-XCT', 'Inspirado en la esencia de los hoteles de lujo Xcaret México*', '/images/scents/aroma-xcaret.png'],
+    ['vidanta', 'Vidanta', 'SCR-VID', 'Inspirado en la esencia de los hoteles de lujo Vidanta*', '/images/scents/aroma-vidanta.png'],
+    ['solara', 'Solara', 'SCR-SOL', 'Cítrico floral vibrante', '/images/scents/aroma-solara.png'],
+    ['maderas-del-eden', 'Maderas del Edén', 'SCR-MDE', 'Notas amaderadas que evocan la naturaleza', NULL],
+    ['jazmin-blanco', 'Jazmín Blanco', 'SCR-JBL', 'Elegancia floral con jazmín puro y bambú verde', '/images/scents/aroma-jazmin-blanco.png'],
+    ['six-senses-kiyosumi', 'Six Senses Kiyosumi', 'SCR-KIY', 'Inspiración japonesa, sereno y sofisticado', NULL],
+    ['te-blanco', 'Té Blanco Mexicano', 'SCR-TVE', 'Fresco y revitalizante como el té verde', NULL]
   ];
   i integer;
 BEGIN
   FOREACH product_id IN ARRAY ARRAY['a0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000004']
   LOOP
     FOR i IN 1..array_length(scents, 1) LOOP
-      INSERT INTO product_variants (product_id, name, sku, description, image_url, sort_order)
+      scent_slug := scents[i][1];
+      scent_name := scents[i][2];
+      scent_sku := scents[i][3];
+      scent_desc := scents[i][4];
+      scent_img := scents[i][5];
+
+      -- Buscar el perfil aromático correspondiente por slug
+      SELECT id INTO profile_id FROM fragrance_profiles WHERE slug = scent_slug;
+
+      INSERT INTO product_variants (product_id, name, sku, description, image_url, fragrance_profile_id, sort_order)
       VALUES (
         product_id,
-        scents[i][1],
-        (SELECT sku FROM products WHERE id = product_id) || '-' || scents[i][2],
-        scents[i][3],
-        scents[i][4],
+        scent_name,
+        (SELECT sku FROM products WHERE id = product_id) || '-' || scent_sku,
+        scent_desc,
+        scent_img,
+        profile_id,
         i
       );
     END LOOP;

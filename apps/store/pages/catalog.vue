@@ -16,10 +16,93 @@
       </div>
     </section>
 
-    <!-- Filtros de categoría -->
+    <!-- 🔍 Barra de búsqueda de aroma -->
     <section class="py-8 bg-white border-b border-earth-100 sticky top-20 z-30">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-wrap items-center justify-center gap-3">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Buscador de aroma -->
+        <div class="relative">
+          <div class="flex items-center gap-3 bg-earth-50 rounded-2xl px-4 py-3 border border-earth-200 focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-100 transition-all">
+            <svg class="w-5 h-5 text-earth-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Busca un aroma... (ej. Xcaret, Vidanta, Sándalo)"
+              class="flex-1 bg-transparent outline-none text-earth-800 placeholder-earth-400 text-sm"
+              @focus="showSuggestions = true"
+              @input="onSearchInput"
+              @keydown.enter="selectFirstSuggestion"
+              @keydown.esc="showSuggestions = false"
+            />
+            <button
+              v-if="searchQuery"
+              @click="clearSearch"
+              class="w-7 h-7 rounded-full bg-earth-200 hover:bg-earth-300 flex items-center justify-center text-earth-500 transition-colors flex-shrink-0"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Sugerencias de autocompletado -->
+          <div
+            v-if="showSuggestions && filteredAromas.length > 0"
+            class="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-earth-100 overflow-hidden z-40"
+          >
+            <button
+              v-for="aroma in filteredAromas"
+              :key="aroma.id"
+              @click="selectAroma(aroma)"
+              class="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary-50/50 transition-colors text-left"
+            >
+              <div class="w-10 h-10 rounded-lg overflow-hidden bg-earth-100 flex-shrink-0">
+                <img
+                  v-if="aroma.image"
+                  :src="aroma.image"
+                  :alt="aroma.name"
+                  class="w-full h-full object-cover"
+                />
+                <div v-else class="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-amber-100 text-earth-400 text-sm font-semibold">
+                  {{ aroma.name.charAt(0) }}
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-earth-800">{{ aroma.name }}</p>
+                <p class="text-xs text-earth-400 truncate">{{ aroma.categoryLabel }}</p>
+              </div>
+              <span class="text-xs text-primary-600 font-medium flex-shrink-0">Ver productos →</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Selector desplegable de aromas -->
+        <div class="mt-4 flex items-center justify-center gap-3">
+          <label class="text-sm font-medium text-earth-600 flex-shrink-0">O elige un aroma:</label>
+          <div class="relative flex-1 max-w-xs">
+            <select
+              v-model="activeFragrance"
+              @change="onSelectChange"
+              class="w-full appearance-none bg-white border border-earth-200 rounded-xl px-4 py-2.5 pr-10 text-sm text-earth-800 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-all cursor-pointer"
+            >
+              <option :value="null">Todos los aromas</option>
+              <option
+                v-for="aroma in allAromas"
+                :key="aroma.id"
+                :value="aroma.id"
+              >
+                {{ aroma.name }}
+              </option>
+            </select>
+            <svg class="w-4 h-4 text-earth-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Filtros de categoría -->
+        <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
           <button
             @click="activeCategory = 'all'"
             :class="[
@@ -48,6 +131,94 @@
       </div>
     </section>
 
+    <!-- 🌸 Panel de experiencia olfativa (cuando hay un aroma seleccionado) -->
+    <section v-if="selectedAroma" class="py-10 bg-gradient-to-b from-primary-50/50 to-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-3xl border border-earth-100 shadow-sm overflow-hidden">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-0">
+            <!-- Imagen del aroma -->
+            <div class="md:col-span-1 relative min-h-[220px] bg-earth-100">
+              <img
+                v-if="selectedAroma.image"
+                :src="selectedAroma.image"
+                :alt="selectedAroma.name"
+                class="absolute inset-0 w-full h-full object-cover"
+              />
+              <div v-else class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-100 to-amber-100">
+                <span class="text-6xl text-primary-300 font-serif font-bold">{{ selectedAroma.name.charAt(0) }}</span>
+              </div>
+              <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+              <div class="absolute bottom-4 left-4 right-4">
+                <span v-if="selectedAroma.hotel_reference" class="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-500/90 text-white text-[10px] font-semibold uppercase tracking-wide backdrop-blur mb-2">
+                  ✨ {{ selectedAroma.hotel_reference }}
+                </span>
+                <h2 class="text-2xl font-serif font-bold text-white">{{ selectedAroma.name }}</h2>
+                <p v-if="selectedAroma.subtitle" class="text-sm text-white/90 font-medium">{{ selectedAroma.subtitle }}</p>
+              </div>
+            </div>
+
+            <!-- Descripción y notas -->
+            <div class="md:col-span-2 p-6 md:p-8">
+              <div class="flex items-center justify-between mb-4">
+                <span class="inline-flex items-center px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-semibold">
+                  {{ selectedAroma.categoryLabel }}
+                </span>
+                <button
+                  @click="clearAromaSelection"
+                  class="text-sm text-earth-400 hover:text-earth-600 font-medium transition-colors"
+                >
+                  ✕ Quitar filtro
+                </button>
+              </div>
+
+              <p v-if="selectedAroma.experience" class="text-earth-700 leading-relaxed mb-4">
+                {{ selectedAroma.experience }}
+              </p>
+              <p v-if="selectedAroma.description" class="text-earth-500 text-sm leading-relaxed mb-4">
+                {{ selectedAroma.description }}
+              </p>
+
+              <!-- Notas aromáticas -->
+              <div v-if="selectedAroma.notesList.length" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div
+                  v-for="note in selectedAroma.notesList"
+                  :key="note.label"
+                  class="p-3 rounded-xl bg-gradient-to-br from-primary-50 to-amber-50 border border-primary-100"
+                >
+                  <p class="text-[10px] font-bold text-primary-600 uppercase tracking-wider mb-1">{{ note.label }}</p>
+                  <p class="text-xs text-earth-700 font-medium">{{ note.values }}</p>
+                </div>
+              </div>
+
+              <!-- Productos disponibles -->
+              <div class="mt-6">
+                <p class="text-sm font-semibold text-earth-800 mb-3">
+                  Disponible en {{ filteredProducts.length }} {{ filteredProducts.length === 1 ? 'producto' : 'productos' }}:
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  <NuxtLink
+                    v-for="product in filteredProducts"
+                    :key="product.id"
+                    :to="`/product/${product.slug}`"
+                    class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-earth-50 hover:bg-primary-50 border border-earth-100 hover:border-primary-200 transition-all group"
+                  >
+                    <div class="w-8 h-8 rounded-lg overflow-hidden bg-earth-100 flex-shrink-0">
+                      <img v-if="product.image" :src="product.image" :alt="product.name" class="w-full h-full object-cover" />
+                      <div v-else class="w-full h-full flex items-center justify-center text-earth-300 text-xs">📦</div>
+                    </div>
+                    <div class="text-left">
+                      <p class="text-xs font-semibold text-earth-800 group-hover:text-primary-700">{{ product.name }}</p>
+                      <p class="text-[10px] text-earth-400">${{ formatPrice(product.price) }} MXN</p>
+                    </div>
+                  </NuxtLink>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Grid de productos -->
     <section class="py-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -57,13 +228,39 @@
           <p class="text-earth-500">Cargando productos...</p>
         </div>
 
+        <!-- Contador de resultados -->
+        <div v-if="!loading && filteredProducts.length > 0" class="flex items-center justify-between mb-6">
+          <p class="text-sm text-earth-500">
+            <span class="font-semibold text-earth-800">{{ filteredProducts.length }}</span>
+            {{ filteredProducts.length === 1 ? 'producto' : 'productos' }}
+            <template v-if="activeFragrance">
+              · fragancia <span class="font-medium text-primary-600">{{ activeFragranceName }}</span>
+            </template>
+          </p>
+          <button
+            v-if="activeCategory !== 'all' || activeFragrance"
+            @click="resetFilters"
+            class="text-sm text-primary-600 hover:text-primary-700 font-medium underline"
+          >
+            Limpiar filtros
+          </button>
+        </div>
+
         <!-- Sin resultados -->
-        <div v-else-if="filteredProducts.length === 0" class="text-center py-20">
-          <p class="text-earth-500 text-lg">No hay productos en esta categoría.</p>
+        <div v-else-if="!loading && filteredProducts.length === 0" class="text-center py-20">
+          <p class="text-5xl mb-4">🌸</p>
+          <p class="text-earth-600 text-lg mb-2">No encontramos productos con esos filtros.</p>
+          <p class="text-earth-400 text-sm mb-6">Prueba con otra fragancia o categoría.</p>
+          <button
+            @click="resetFilters"
+            class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-full text-sm font-semibold transition-all"
+          >
+            Ver todos los productos
+          </button>
         </div>
 
         <!-- Grid -->
-        <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div v-else-if="!loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           <div
             v-for="product in filteredProducts"
             :key="product.id"
@@ -76,87 +273,12 @@
               :product-slug="product.slug"
               :price="product.price"
               :product-id="product.id"
+              :fragrances="product.fragrances"
             />
           </div>
         </div>
       </div>
     </section>
-
-    <!-- Modal selector de aromas -->
-    <Teleport to="body">
-      <div
-        v-if="selectedProduct"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-        @click.self="selectedProduct = null"
-      >
-        <div class="bg-white rounded-3xl p-8 md:p-10 max-w-2xl w-full shadow-2xl relative animate-fadeIn">
-          <!-- Botón cerrar -->
-          <button
-            @click="selectedProduct = null"
-            class="absolute top-4 right-4 w-10 h-10 rounded-full bg-earth-100 hover:bg-earth-200 flex items-center justify-center transition-colors"
-          >
-            <svg class="w-5 h-5 text-earth-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-
-          <!-- Header del modal -->
-          <div class="text-center mb-8">
-            <h3 class="text-2xl font-serif font-bold text-earth-900 mb-2">
-              {{ selectedProduct.name }}
-            </h3>
-            <p class="text-earth-400 text-sm">
-              Elige tu aroma favorito ✨
-            </p>
-          </div>
-
-          <!-- Círculos de aromas (solo con imagen) -->
-          <div class="flex flex-wrap justify-center gap-6">
-            <div
-              v-for="scent in scentsWithImage"
-              :key="scent.id"
-              class="group flex flex-col items-center gap-2 cursor-pointer"
-              @click="goToAmazon(selectedProduct)"
-            >
-              <div class="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-primary-400 group-hover:scale-105">
-                <img
-                  :src="scent.image"
-                  :alt="`Aroma ${scent.name}`"
-                  class="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              </div>
-              <span class="text-sm font-medium text-earth-700 group-hover:text-primary-600 transition-colors">
-                {{ scent.name }}
-              </span>
-              <span class="text-[10px] text-earth-400 text-center leading-tight max-w-[100px]">
-                {{ scent.description }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Link a Amazon -->
-          <div class="mt-8 text-center">
-            <a
-              :href="selectedProduct.amazonLink"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-8 py-3 rounded-full text-sm font-semibold transition-all hover:shadow-lg hover:shadow-amber-200"
-            >
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M13.483 0a1.374 1.374 0 0 0-.961.438L7.116 6.226l-3.854 4.126a1.375 1.375 0 0 0 0 1.994l2.414 2.585a1.375 1.375 0 0 0 1.994 0l3.779-3.788-3.787 3.787-2.414-2.585a1.374 1.374 0 0 1 0-1.994l3.705-3.964 3.675-3.675a1.375 1.375 0 0 0-.044-1.92A1.374 1.374 0 0 0 13.483 0zm-1.587 2.585-3.673 3.675 3.673 3.675h7.252v-1.53h-5.733l-2.358-2.585 2.358-2.585h5.733v-1.53h-7.252z"/>
-              </svg>
-              Ver todos en Amazon
-            </a>
-          </div>
-
-          <!-- Disclaimer aromas -->
-          <p class="mt-6 text-[10px] text-earth-400 text-center leading-tight max-w-md mx-auto">
-            * Los aromas "Xcaret" y "Vidanta" son referencias inspiracionales y descriptivas de la experiencia sensorial que evocan. PITAYA LAB no tiene afiliación, vínculo, patrocinio o asociación con los hoteles, marcas turísticas o titulares de dichos nombres. El uso de estas referencias se realiza con fines meramente descriptivos.
-          </p>
-        </div>
-      </div>
-    </Teleport>
 
     <!-- 🎯 Guía de Aromas por Mood -->
     <section v-if="catalogConfig.scent_guide.enabled" class="py-16 bg-gradient-to-b from-white to-primary-50/30">
@@ -194,7 +316,7 @@
                         :alt="scent.name"
                         class="w-full h-full object-cover"
                       />
-                      <span v-else class="w-full h-full flex items-center justify-center text-base">{{ scent.emoji || '🌸' }}</span>
+                      <span v-else class="w-full h-full flex items-center justify-center text-sm font-semibold text-earth-400">{{ scent.name.charAt(0) }}</span>
                     </div>
                     <span class="font-semibold text-earth-800">{{ scent.name }}</span>
                   </div>
@@ -306,7 +428,9 @@ const categories = ref([
 ])
 
 const activeCategory = ref('all')
-const selectedProduct = ref(null)
+const activeFragrance = ref(null)
+const searchQuery = ref('')
+const showSuggestions = ref(false)
 const loading = ref(true)
 
 // Productos desde API
@@ -315,8 +439,27 @@ const products = ref([])
 // Perfiles aromáticos (fragancias disponibles) cargados desde la base de datos
 const aromas = ref([])
 
-// Aromas con imagen de perfil aromático
-const scentsWithImage = computed(() => aromas.value.filter(s => s.image_url))
+// Todos los aromas (para el selector desplegable)
+const allAromas = computed(() => aromas.value)
+
+// Aromas filtrados por búsqueda (autocompletado)
+const filteredAromas = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return aromas.value.slice(0, 6)
+  return aromas.value
+    .filter(a => a.name.toLowerCase().includes(q) || (a.categoryLabel || '').toLowerCase().includes(q))
+    .slice(0, 6)
+})
+
+// Aroma seleccionado (para el panel de experiencia olfativa)
+const selectedAroma = computed(() => {
+  if (!activeFragrance.value) return null
+  return aromas.value.find(a => a.id === activeFragrance.value) || null
+})
+
+const activeFragranceName = computed(() => {
+  return selectedAroma.value?.name || ''
+})
 
 // Helper para obtener aroma por id
 function getScentById(id) {
@@ -340,22 +483,114 @@ async function loadAromas() {
       name: p.name,
       description: p.experience || p.subtitle || p.description || '',
       image: p.image_url,
-      emoji: p.emoji || '🌸',
+      subtitle: p.subtitle || '',
+      experience: p.experience || '',
+      notes: p.notes || '',
+      hotel_reference: p.hotel_reference || '',
       category: p.collections?.slug || '',
       categoryLabel: p.collections?.name || 'Perfil',
       vibe: p.experience || p.subtitle || '',
       bestFor: p.notes || p.description || p.hotel_reference || '',
+      notesList: parseNotes(p.notes),
     }))
   } catch (e) {
     console.warn('No se pudieron cargar los perfiles aromáticos:', e.message)
   }
 }
 
-// Productos filtrados
+// Parsear notas aromáticas (SAL/COR/FONDO)
+function parseNotes(notes) {
+  if (!notes) return []
+  const raw = notes.split('/').map(n => n.trim()).filter(Boolean)
+  const order = ['SAL', 'COR', 'FONDO']
+  return order
+    .map(label => {
+      const found = raw.find(r => r.toUpperCase().startsWith(label))
+      if (!found) return null
+      return { label, values: found.replace(new RegExp(`^${label}\\.?\\s*`, 'i'), '') }
+    })
+    .filter(Boolean)
+}
+
+// Productos filtrados (por categoría y/o fragancia)
 const filteredProducts = computed(() => {
-  if (activeCategory.value === 'all') return products.value
-  return products.value.filter(p => p.categorySlug === activeCategory.value)
+  let result = products.value
+
+  // Filtro por categoría (presentación: bruma, aceite, vela, jabón...)
+  if (activeCategory.value !== 'all') {
+    result = result.filter(p => p.categorySlug === activeCategory.value)
+  }
+
+  // Filtro por fragancia (experiencia olfativa)
+  if (activeFragrance.value) {
+    const activeAroma = aromas.value.find(a => a.id === activeFragrance.value)
+    const aromaName = activeAroma?.name?.toLowerCase() || ''
+
+    result = result.filter(p => {
+      // 1) Coincidencia por perfil aromático vinculado (fragrance_profile_id)
+      const byProfile = (p.fragrances || []).some(f => f.id === activeFragrance.value)
+      if (byProfile) return true
+
+      // 2) Fallback: coincidencia por nombre de variante (aroma)
+      if (aromaName) {
+        return (p.variantNames || []).some(n => n.toLowerCase().includes(aromaName))
+      }
+
+      return false
+    })
+  }
+
+  return result
 })
+
+function resetFilters() {
+  activeCategory.value = 'all'
+  activeFragrance.value = null
+  searchQuery.value = ''
+  showSuggestions.value = false
+}
+
+function clearSearch() {
+  searchQuery.value = ''
+  showSuggestions.value = false
+}
+
+function clearAromaSelection() {
+  activeFragrance.value = null
+  searchQuery.value = ''
+  showSuggestions.value = false
+}
+
+function onSearchInput() {
+  showSuggestions.value = true
+}
+
+function selectAroma(aroma) {
+  activeFragrance.value = aroma.id
+  searchQuery.value = aroma.name
+  showSuggestions.value = false
+}
+
+function selectFirstSuggestion() {
+  if (filteredAromas.value.length > 0) {
+    selectAroma(filteredAromas.value[0])
+  }
+}
+
+function onSelectChange() {
+  // Al cambiar el select, sincronizar la búsqueda
+  if (activeFragrance.value) {
+    const aroma = aromas.value.find(a => a.id === activeFragrance.value)
+    searchQuery.value = aroma?.name || ''
+  } else {
+    searchQuery.value = ''
+  }
+  showSuggestions.value = false
+}
+
+function formatPrice(price) {
+  return Number(price).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
 
 // Cargar categorías desde Supabase
 async function loadCategories() {
@@ -396,10 +631,6 @@ async function loadProducts() {
   } finally {
     loading.value = false
   }
-}
-
-function goToAmazon(product) {
-  window.open(product.amazonLink || AMAZON_LINK, '_blank', 'noopener,noreferrer')
 }
 
 onMounted(() => {
