@@ -182,33 +182,11 @@
         </div>
 
         <!-- Footer con total y checkout -->
-        <div v-if="cart.hasItems" class="border-t border-earth-100 px-6 py-5 bg-white flex-shrink-0 pb-8">
-          <!-- Subtotal -->
+        <div v-if="cart.hasItems" class="border-t border-earth-100 px-6 py-4 bg-white flex-shrink-0 pb-6 shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+          <!-- ✅ Total + botón de pagar (SIEMPRE visibles) -->
           <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-medium text-earth-600">Subtotal</span>
-            <span class="text-base font-semibold text-earth-900">${{ cart.formattedTotal }}</span>
-          </div>
-          <!-- Envío -->
-          <div class="flex items-center justify-between mb-4">
-            <span class="text-sm font-medium text-earth-600">Envío</span>
-            <span v-if="shippingCost > 0" class="text-sm font-medium text-earth-900">${{ formatPrice(shippingCost) }}</span>
-            <span v-else class="text-sm font-medium text-green-600">Gratis</span>
-          </div>
-          <!-- Total -->
-          <div class="flex items-center justify-between mb-3 pt-3 border-t border-earth-100">
             <span class="text-base font-bold text-earth-800">Total</span>
             <span class="text-xl font-bold text-earth-900">${{ formatPrice(cart.totalPrice + shippingCost) }}</span>
-          </div>
-          <p class="text-[11px] text-earth-400 mb-3">
-            IVA incluido · Envío a todo México
-          </p>
-          <!-- Info de envío -->
-          <div class="bg-primary-50 rounded-xl p-3 mb-4 text-xs text-primary-700">
-            <p class="flex items-center gap-1.5 font-medium">
-              <span>🚚</span>
-              <span>Envío gratis en compras mayores a <strong>${{ formatPrice(FREE_SHIPPING_THRESHOLD) }} MXN</strong></span>
-            </p>
-            <p class="text-primary-500 mt-0.5">Menores a ${{ formatPrice(FREE_SHIPPING_THRESHOLD) }}: solo ${{ formatPrice(SHIPPING_COST) }}</p>
           </div>
           <button
             @click="handleCheckout"
@@ -221,10 +199,58 @@
             </svg>
             {{ checkoutLoading ? 'Procesando...' : 'Proceder al pago' }}
           </button>
+
+          <!-- 🧾 Desglose detallado (colapsable: ocupa poco, se despliega con un clic) -->
+          <div class="mt-3">
+            <button
+              @click="showPaymentDetails = !showPaymentDetails"
+              class="w-full flex items-center justify-between text-sm font-medium text-earth-500 hover:text-primary-600 transition-colors py-1"
+              aria-expanded="showPaymentDetails"
+            >
+              <span>{{ showPaymentDetails ? 'Ocultar detalles' : 'Ver detalles de la compra' }}</span>
+              <svg
+                class="w-4 h-4 transition-transform duration-300"
+                :class="showPaymentDetails ? 'rotate-180' : ''"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+
+            <div v-if="showPaymentDetails" class="pt-2">
+              <!-- Subtotal -->
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-earth-600">Subtotal</span>
+                <span class="text-base font-semibold text-earth-900">${{ cart.formattedTotal }}</span>
+              </div>
+              <!-- Envío -->
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-earth-600">Envío</span>
+                <span v-if="shippingCost > 0" class="text-sm font-medium text-earth-900">${{ formatPrice(shippingCost) }}</span>
+                <span v-else class="text-sm font-medium text-green-600">Gratis</span>
+              </div>
+              <div class="flex items-center justify-between mb-2 pt-2 border-t border-earth-100">
+                <span class="text-base font-bold text-earth-800">Total</span>
+                <span class="text-base font-bold text-earth-900">${{ formatPrice(cart.totalPrice + shippingCost) }}</span>
+              </div>
+              <p class="text-[11px] text-earth-400 mb-2">
+                IVA incluido · Envío a todo México
+              </p>
+              <!-- Info de envío -->
+              <div class="bg-primary-50 rounded-xl p-3 mb-3 text-xs text-primary-700">
+                <p class="flex items-center gap-1.5 font-medium">
+                  <span>🚚</span>
+                  <span>Envío gratis en compras mayores a <strong>${{ formatPrice(FREE_SHIPPING_THRESHOLD) }} MXN</strong></span>
+                </p>
+                <p class="text-primary-500 mt-0.5">Menores a ${{ formatPrice(FREE_SHIPPING_THRESHOLD) }}: solo ${{ formatPrice(SHIPPING_COST) }}</p>
+              </div>
+            </div>
+          </div>
+
           <!-- Seguir comprando (reducir fricción para el indeciso) -->
           <button
             @click="cart.closeCart()"
-            class="w-full mt-2 inline-flex items-center justify-center gap-2 text-sm font-medium text-earth-600 hover:text-primary-600 py-2 rounded-xl transition-colors"
+            class="w-full mt-1 inline-flex items-center justify-center gap-2 text-sm font-medium text-earth-600 hover:text-primary-600 py-2 rounded-xl transition-colors"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12h16m0 0l-6-6m6 6l-6 6"/>
@@ -242,6 +268,9 @@
 const cart = useCartStore()
 const checkoutLoading = ref(false)
 const isMounted = ref(false)
+
+// Controla el desglose de la compra (subtotal/envío) colapsable en el footer
+const showPaymentDetails = ref(false)
 
 const config = useRuntimeConfig()
 

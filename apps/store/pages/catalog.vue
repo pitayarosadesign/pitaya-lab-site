@@ -16,9 +16,36 @@
       </div>
     </section>
 
-    <!-- 🔍 Barra de búsqueda de aroma -->
-    <section class="py-8 bg-white border-b border-earth-100 sticky top-20 z-30">
-      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- 🔍 Filtros: barra compacta (colapsable en móvil) -->
+    <section class="bg-white border-b border-earth-100 sticky top-20 z-30 shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Botón toggle (solo móvil) -->
+        <div class="lg:hidden flex items-center justify-between py-2">
+          <button
+            @click="filtersOpen = !filtersOpen"
+            class="flex items-center gap-2 w-full text-left text-earth-800 font-semibold text-sm"
+            aria-expanded="filtersOpen"
+          >
+            <svg class="w-5 h-5 text-primary-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+            </svg>
+            Filtros
+            <span v-if="hasActiveFilters" class="w-2 h-2 rounded-full bg-primary-600 ml-1"></span>
+          </button>
+          <svg
+            class="w-5 h-5 text-earth-400 transition-transform flex-shrink-0"
+            :class="filtersOpen ? 'rotate-180' : ''"
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </div>
+
+        <!-- Panel de filtros (colapsable en móvil, siempre visible en desktop) -->
+        <div
+          class="pb-4 lg:pb-6"
+          :class="filtersOpen ? 'block' : 'hidden lg:block'"
+        >
         <!-- Buscador de aroma -->
         <div class="relative">
           <div class="flex items-center gap-3 bg-earth-50 rounded-2xl px-4 py-3 border border-earth-200 focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-100 transition-all">
@@ -127,6 +154,7 @@
           >
             {{ cat.label }}
           </button>
+        </div>
         </div>
       </div>
     </section>
@@ -477,6 +505,14 @@ const activeFragrance = ref(null)
 const searchQuery = ref('')
 const showSuggestions = ref(false)
 const loading = ref(true)
+
+// Estado del panel de filtros (colapsable en móvil)
+const filtersOpen = ref(false)
+
+// Indica si hay algún filtro activo (para mostrar el punto indicador en móvil)
+const hasActiveFilters = computed(() => {
+  return activeCategory.value !== 'all' || !!activeFragrance.value || !!searchQuery.value.trim()
+})
 
 // Productos desde API
 const products = ref([])
