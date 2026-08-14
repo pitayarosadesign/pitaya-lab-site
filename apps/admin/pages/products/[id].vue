@@ -279,7 +279,7 @@
                         type="number"
                         min="0"
                         step="0.01"
-                        placeholder="Usa el del producto"
+                        :placeholder="`Usa el del producto ($${formatPrice(form.price)})`"
                         class="w-full px-2.5 py-1.5 rounded-md border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm"
                       />
                     </div>
@@ -847,6 +847,11 @@ function fileToBase64(file) {
     reader.onload = () => resolve(reader.result)
     reader.onerror = (error) => reject(error)
   })
+}
+
+// Formatear precio en MXN
+function formatPrice(price) {
+  return Number(price || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 async function duplicateHere() {
