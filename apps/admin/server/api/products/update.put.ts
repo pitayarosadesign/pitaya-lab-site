@@ -2,7 +2,9 @@ import { createClient } from '@supabase/supabase-js'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
-  const body = await readBody(event)
+  // Aumentar el límite del body a 50MB para permitir subir varias imágenes
+  // (producto + variantes) en base64 sin que falle el guardado.
+  const body = await readBody(event, { sizeLimit: 50 * 1024 * 1024 })
 
   const supabaseAdmin = createClient(
     config.public.supabaseUrl,
