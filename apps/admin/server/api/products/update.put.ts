@@ -179,14 +179,10 @@ async function syncVariantsByProfiles(supabaseAdmin, productId, profileIds, base
           : `${baseSku}-${profile.name.replace(/\s+/g, '').toUpperCase()}`)
 
     // Resolver imagen de la variante:
-    //   1) Si se marcó para eliminar (removeImage), usar null (borra la imagen).
-    //   2) Si no, y se subió una imagen nueva en el admin, subirla a Storage y usar su URL.
-    //   3) Si no, conservar la imagen que ya tenía la variante.
-    //   4) Si no, usar la imagen del perfil aromático.
+    //   1) Conservar la imagen que ya tenía la variante si existe.
+    //   2) Si no, usar la imagen del perfil aromático (fallback automático).
     let variantImageUrl = null
-    const shouldRemoveImage = selection.removeImage === true
-    const hasNewImage = !!(selection.image && selection.image.data)
-    if (existingVar && !shouldRemoveImage && !hasNewImage) {
+    if (existingVar) {
       const { data: ev } = await supabaseAdmin
         .from('product_variants')
         .select('image_url')
@@ -194,26 +190,7 @@ async function syncVariantsByProfiles(supabaseAdmin, productId, profileIds, base
         .single()
       variantImageUrl = ev?.image_url || null
     }
-    if (hasNewImage) {
-      const ext = (selection.image.name || 'image.png').split('.').pop()
-      const filePath = `${productId}/variant-${profile.slug || profile.id}-${Date.now()}.${ext}`
-      const base64Data = selection.image.data.replace(/^data:image\/\w+;base64,/, '')
-      const buffer = Buffer.from(base64Data, 'base64')
-
-      const { error: uploadError } = await supabaseAdmin.storage
-        .from('product-images')
-        .upload(filePath, buffer, {
-          contentType: selection.image.type || 'image/png',
-          cacheControl: '31536000',
-          upsert: true,
-        })
-      if (uploadError) throw uploadError
-
-      const { data: publicUrl } = supabaseAdmin.storage
-        .from('product-images')
-        .getPublicUrl(filePath)
-      variantImageUrl = publicUrl.publicUrl
-    } else if (!shouldRemoveImage && !variantImageUrl && profile.image_url) {
+    if (!variantImageUrl && profile.image_url) {
       variantImageUrl = profile.image_url
     }
 
@@ -248,8 +225,8 @@ async function syncVariantsByProfiles(supabaseAdmin, productId, profileIds, base
       if (selection.gtin !== undefined) updateData.gtin = selection.gtin || null
       if (selection.price !== undefined) updateData.price = variantPrice
       if (selection.compare_at_price !== undefined) updateData.compare_at_price = variantCompareAt
-      // Actualizar la imagen: si se marcó para eliminar, forzar null; si hay imagen nueva, usarla.
-      if (selection.removeImage === true || (selection.image && selection.image.data)) updateData.image_url = variantImageUrl
+      // La imagen de la variante ya se resolvió arriba (conservar existente o usar la del perfil).
+      updateData.image_url = variantImageUrl
 
       const { error: updError } = await supabaseAdmin
         .from('product_variants')

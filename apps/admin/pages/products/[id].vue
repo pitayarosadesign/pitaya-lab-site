@@ -251,10 +251,10 @@
               </div>
             </div>
             <div class="p-4 space-y-2">
-              <label
+              <div
                 v-for="scent in group.scents"
                 :key="scent.id"
-                class="block rounded-lg border transition-all cursor-pointer"
+                class="rounded-lg border transition-all"
                 :class="isScentSelected(scent.id) ? 'border-primary-400 bg-primary-50/40' : 'border-gray-200 hover:border-gray-300'"
               >
                 <!-- Fila de selección -->
@@ -263,16 +263,16 @@
                     type="checkbox"
                     :checked="isScentSelected(scent.id)"
                     @change="toggleScent(scent.id)"
-                    class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 flex-shrink-0"
                   />
-                  <div class="flex-1 min-w-0">
+                  <label @click.stop class="flex-1 min-w-0 cursor-pointer" @click="toggleScent(scent.id)">
                     <div class="flex items-center gap-2">
                       <span class="text-sm font-medium text-gray-800 truncate">{{ scent.name }}</span>
                       <span v-if="scent.emoji" class="text-base">{{ scent.emoji }}</span>
                     </div>
                     <p v-if="scent.subtitle" class="text-xs text-gray-400 truncate">{{ scent.subtitle }}</p>
+                  </label>
                   </div>
-                </div>
 
                 <!-- Campos de la variante (solo si está seleccionada) -->
                 <div v-if="isScentSelected(scent.id)" class="px-3 pb-3 pl-11 space-y-2">
@@ -318,60 +318,11 @@
                     </div>
                   </div>
 
-                  <!-- Imagen de la variante (colapsable, no requerida para productos aromáticos) -->
-                  <div>
-                    <button
-                      type="button"
-                      @click="toggleVariantImagePanel(scent.id)"
-                      class="flex items-center gap-1.5 text-[11px] font-medium text-gray-400 hover:text-primary-600 transition-colors"
-                    >
-                      <svg class="w-3 h-3 transition-transform duration-200" :class="showVariantImage[scent.id] ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                      <span>{{ variantData[scent.id].imageUrl || variantData[scent.id]._removeImage ? 'Imagen de la variante (configurada)' : 'Subir imagen de la variante (opcional)' }}</span>
-                    </button>
-                    <div v-if="showVariantImage[scent.id]" class="mt-2">
-                    <div class="flex items-center gap-3">
-                      <div
-                        class="w-12 h-12 rounded-lg overflow-hidden border flex-shrink-0"
-                        :class="variantData[scent.id].imagePreview || variantData[scent.id].imageUrl ? 'border-gray-300' : 'border-dashed border-gray-300 bg-gray-50'"
-                      >
-                        <img
-                          v-if="variantData[scent.id].imagePreview || variantData[scent.id].imageUrl"
-                          :src="variantData[scent.id].imagePreview || variantData[scent.id].imageUrl"
-                          alt="Imagen del aroma"
-                          class="w-full h-full object-cover"
-                        />
-                        <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-lg">🖼️</div>
-                      </div>
-                      <div class="flex flex-col gap-1.5">
-                        <label class="cursor-pointer">
-                          <input
-                            type="file"
-                            accept="image/png,image/jpeg,image/webp"
-                            class="hidden"
-                            @change="onVariantImageChange($event, scent.id)"
-                          />
-                          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-gray-300 text-xs font-medium text-gray-600 hover:border-primary-300 hover:text-primary-700 hover:bg-primary-50 transition-all">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                            Subir
-                          </span>
-                        </label>
-                        <button
-                          v-if="variantData[scent.id].imagePreview || variantData[scent.id].imageUrl || variantData[scent.id]._removeImage"
-                          type="button"
-                          @click="clearVariantImage(scent.id)"
-                          class="text-[11px] font-medium text-left"
-                          :class="variantData[scent.id]._removeImage ? 'text-primary-600 hover:text-primary-700' : 'text-red-500 hover:text-red-700'"
-                        >
-                          {{ variantData[scent.id]._removeImage ? '↩️ Restaurar imagen' : 'Quitar imagen' }}
-                        </button>
-                        <p v-if="variantData[scent.id]._removeImage" class="text-[11px] text-red-500 font-medium">✕ Se eliminará al guardar</p>
-                      </div>
-                    </div>
-                    <p class="text-[10px] text-gray-400 mt-1">Opcional: solo si la variante necesita una imagen distinta a la del perfume aromático.</p>
-                    </div>
-                  </div>
+                  <!-- La imagen de la variante se gestiona en la galería general del producto.
+                       El ángulo de previsualización usa la imagen del perfil aromático de forma automática. -->
+                  <p class="text-[10px] text-gray-400">🖼️ La imagen de este aroma se toma automáticamente del perfil aromático seleccionado.</p>
                 </div>
-              </label>
+              </div>
             </div>
           </div>
 
@@ -474,8 +425,6 @@ const loadingProfiles = ref(false)
 const selectedScentCount = computed(() => selectedScents.value.size)
 // Datos por variante: { [profileId]: { stock, sku, gtin } }
 const variantData = reactive({})
-// Control de visibilidad del panel de imagen por variante (oculto por defecto)
-const showVariantImage = reactive({})
 
 async function loadCategories() {
   try {
@@ -564,12 +513,6 @@ async function loadProduct() {
           variantData[v.fragrance_profile_id].gtin = v.gtin || ''
           variantData[v.fragrance_profile_id].price = v.price ?? ''
           variantData[v.fragrance_profile_id].compare_at_price = v.compare_at_price ?? ''
-          variantData[v.fragrance_profile_id].imageUrl = v.image_url || ''
-          variantData[v.fragrance_profile_id].imagePreview = v.image_url || ''
-          variantData[v.fragrance_profile_id].existingImage = v.image_url || ''
-          // Si la variante ya tiene una imagen configurada, mostrar el panel
-          // para que el usuario pueda verla o quitarla.
-          if (v.image_url) showVariantImage[v.fragrance_profile_id] = true
         }
       }
       updateGroupCounts()
@@ -664,46 +607,6 @@ function updateGroupCounts() {
   scentGroups.value.forEach(g => {
     g.selectedCount = g.scents.filter(s => selectedScents.value.has(s.id)).length
   })
-}
-
-// ===== Imagen por variante (aroma) =====
-function toggleVariantImagePanel(scentId) {
-  showVariantImage[scentId] = !showVariantImage[scentId]
-}
-
-function onVariantImageChange(e, scentId) {
-  const file = e.target.files?.[0]
-  if (!file) return
-  if (!file.type.startsWith('image/')) return
-  if (!variantData[scentId]) variantData[scentId] = { stock: 0, sku: '', gtin: '', price: '', compare_at_price: '', imageUrl: '', imagePreview: '', existingImage: '' }
-  // Guardar el archivo para enviarlo al guardar
-  variantData[scentId]._imageFile = file
-  // Si había marcado una imagen para quitar, se cancela porque va a subir una nueva
-  variantData[scentId]._removeImage = false
-  // Mostrar preview
-  variantData[scentId].imagePreview = URL.createObjectURL(file)
-  // Resetear el input para permitir volver a seleccionar el mismo archivo
-  e.target.value = ''
-}
-
-function clearVariantImage(scentId) {
-  if (variantData[scentId]) {
-    // Toggle: si ya estaba marcado para quitar, restauramos la imagen existente.
-    if (variantData[scentId]._removeImage) {
-      variantData[scentId]._removeImage = false
-      variantData[scentId]._imageFile = null
-      variantData[scentId].imagePreview = variantData[scentId].existingImage || ''
-      variantData[scentId].imageUrl = variantData[scentId].existingImage || ''
-      return
-    }
-    const hadExisting = !!variantData[scentId].existingImage
-    // Marcar para eliminar la imagen guardada (proveniente de la BD o del perfil aromático).
-    // Si solo era una imagen recién subida sin guardar, basta con limpiar el preview.
-    variantData[scentId]._removeImage = hadExisting
-    variantData[scentId]._imageFile = null
-    variantData[scentId].imagePreview = ''
-    variantData[scentId].imageUrl = ''
-  }
 }
 
 function triggerUpload() { fileInput.value?.click() }
@@ -821,18 +724,11 @@ async function handleSave() {
     const selectedCat = categories.value.find(c => c.slug === form.category)
     const categoryId = selectedCat?.id || null
 
-    // Procesar variantes: convertir imágenes nuevas a base64
+    // Procesar variantes: solo datos de inventario/códigos/precio.
+    // La imagen de cada aroma se toma automáticamente del perfil aromático.
     const variantProfileIds = []
     for (const profileId of selectedScents.value) {
       const vd = variantData[profileId] || {}
-      let image = undefined
-      if (vd._imageFile) {
-        image = {
-          name: vd._imageFile.name,
-          type: vd._imageFile.type,
-          data: await fileToBase64(vd._imageFile),
-        }
-      }
       variantProfileIds.push({
         profileId,
         stock: vd.stock || 0,
@@ -840,10 +736,6 @@ async function handleSave() {
         gtin: vd.gtin || '',
         price: vd.price,
         compare_at_price: vd.compare_at_price,
-        image,
-        // Flag para indicar que la imagen de esta variante debe eliminarse
-        // (solo aplica cuando el usuario hizo clic en "Quitar imagen")
-        removeImage: vd._removeImage || false,
       })
     }
 
