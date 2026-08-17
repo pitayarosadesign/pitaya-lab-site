@@ -17,17 +17,22 @@ export default defineEventHandler(async (event) => {
     apiVersion: '2026-06-24.dahlia',
   })
 
-  const resend = new Resend(config.resendApiKey || '')
+  const resend = config.resendApiKey ? new Resend(config.resendApiKey) : null
 
-  const supabaseAdmin = createClient(
-    config.public.supabaseUrl,
-    config.supabaseServiceKey,
-    { auth: { persistSession: false, autoRefreshToken: false } }
-  )
+  let supabaseAdmin: any = null
+  try {
+    supabaseAdmin = createClient(
+      config.public.supabaseUrl,
+      config.supabaseServiceKey,
+      { auth: { persistSession: false, autoRefreshToken: false } }
+    )
+  } catch (e) {
+    console.error('Error creando cliente Supabase:', e)
+  }
 
   // Helper para enviar correo de confirmación
   async function sendConfirmationEmail(order: any) {
-    if (!config.resendApiKey) {
+    if (!resend || !config.resendApiKey) {
       console.warn('Resend no configurado, no se envió correo')
       return
     }
@@ -115,7 +120,13 @@ export default defineEventHandler(async (event) => {
 
     // ✅ Leer el RAW BODY UNA SOLA VEZ → es la fuente de verdad para la firma
     // ⚠️ No usar readBody() aquí: consumiría el stream y rompería readRawBody()
-    const rawBody = await readRawBody(event)
+    let rawBody: string | undefined
+    try {
+      rawBody = await readRawBody(event)
+    } catch (e: any) {
+      console.error('Error leyendo raw body:', e?.message)
+      throw createError({ statusCode: 400, message: `Error leyendo body: ${e?.message}` })
+    }
 
     if (!rawBody) {
       console.error('Body vacío en webhook de Stripe')
