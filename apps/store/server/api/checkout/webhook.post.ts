@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const stripe = new Stripe(config.stripeSecretKey, {
-    apiVersion: '2023-10-16',
+    apiVersion: '2026-06-24.dahlia',
   })
 
   const resend = new Resend(config.resendApiKey || '')
@@ -106,30 +106,36 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const body = await readBody(event)
     const signature = event.node.req.headers['stripe-signature']
 
-    // Obtener raw body para verificación correcta de firma
+    if (!signature) {
+      console.error('No se recibió cabecera stripe-signature')
+      throw createError({ statusCode: 400, message: 'Falta cabecera stripe-signature' })
+    }
+
+    // ✅ Leer el RAW BODY UNA SOLA VEZ → es la fuente de verdad para la firma
+    // ⚠️ No usar readBody() aquí: consumiría el stream y rompería readRawBody()
     const rawBody = await readRawBody(event)
 
-    // Validar firma webhook con el raw body
+    if (!rawBody) {
+      console.error('Body vacío en webhook de Stripe')
+      throw createError({ statusCode: 400, message: 'Body vacío' })
+    }
+
+    // ✅ Validar firma webhook usando EL RAW BODY (tal cual lo recibió Stripe)
     let webhookEvent: Stripe.Event
     try {
       webhookEvent = stripe.webhooks.constructEvent(
-        rawBody || JSON.stringify(body),
+        rawBody,
         signature as string,
         config.stripeWebhookSecret
       )
-    } catch (err) {
-      console.error('Error verificando webhook:', err.message)
-      throw createError({ statusCode: 400, message: `Error de firma: ${err.message}` })
+    } catch (err: any) {
+      console.error('Error verificando webhook:', err?.message)
+      throw createError({ statusCode: 400, message: `Error de firma: ${err?.message}` })
     }
 
-    // Usar body parseado para el resto
-    const parsedBody = typeof body === 'string' ? JSON.parse(body) : body
-
-    // Manejar el evento
-    // Usar parsedBody para datos (rawBody solo para firma)
+    // ⚠️ Usar webhookEvent.data.object → ya viene parseado por Stripe
     const eventData = webhookEvent
 
     switch (eventData.type) {
@@ -147,12 +153,12 @@ export default defineEventHandler(async (event) => {
 
         if (order) {
           // Actualizar orden como pagada
-          await supabaseAdmin
+          const { error: updateError } = await supabaseAdmin
             .from('orders')
             .update({
               status: 'confirmed',
               payment_status: 'paid',
-              stripe_payment_intent_id: session.payment_intent as string,
+              stripe_payment_intent_id: (session.payment_intent as string) || order.stripe_payment_intent_id,
               customer_email: session.customer_details?.email || order.customer_email,
               customer_name: session.customer_details?.name || order.customer_name,
               customer_phone: session.customer_details?.phone || null,
@@ -162,28 +168,46 @@ export default defineEventHandler(async (event) => {
             })
             .eq('id', order.id)
 
+          if (updateError) {
+            console.error('Error actualizando orden:', updateError.message)
+            throw createError({ statusCode: 500, message: `Error actualizando orden: ${updateError.message}` })
+          }
+
           console.log(`✅ Orden ${order.order_number} pagada con éxito`)
 
-          // Enviar correo de confirmación
+          // Parsear items con seguridad (evitar romper el webhook si JSON es inválido)
+          let itemsForEmail = order.items || []
+          if (session.metadata?.items_json) {
+            try {
+              itemsForEmail = JSON.parse(session.metadata.items_json)
+            } catch {
+              // ignorar si no es JSON válido
+            }
+          }
+
+          // Enviar correo de confirmación (nunca debe detener el 2xx si falla)
           await sendConfirmationEmail({
             ...order,
             customer_email: session.customer_details?.email || order.customer_email,
             customer_name: session.customer_details?.name || order.customer_name,
             shipping_address: session.shipping_details || order.shipping_address,
             total: session.amount_total ? session.amount_total / 100 : order.total,
-            items: session.metadata?.items_json
-              ? JSON.parse(session.metadata.items_json)
-              : order.items,
+            items: itemsForEmail,
           })
         } else {
           // Crear nueva orden si no existe
-          const items = session.metadata?.items_json
-            ? JSON.parse(session.metadata.items_json)
-            : []
+          let items = []
+          if (session.metadata?.items_json) {
+            try {
+              items = JSON.parse(session.metadata.items_json)
+            } catch {
+              // ignorar si no es JSON válido
+            }
+          }
 
           const orderNumber = `PIT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`
 
-          await supabaseAdmin
+          const { error: insertError } = await supabaseAdmin
             .from('orders')
             .insert({
               order_number: orderNumber,
@@ -200,6 +224,11 @@ export default defineEventHandler(async (event) => {
               shipping_address: session.shipping_details || {},
               paid_at: new Date().toISOString(),
             })
+
+          if (insertError) {
+            console.error('Error creando orden:', insertError.message)
+            throw createError({ statusCode: 500, message: `Error creando orden: ${insertError.message}` })
+          }
 
           // Enviar correo de confirmación
           await sendConfirmationEmail({
@@ -258,9 +287,14 @@ export default defineEventHandler(async (event) => {
     }
 
     return { received: true }
-  } catch (e) {
-    if (e.statusCode) throw e
+  } catch (e: any) {
+    // 🔧 Errores de Stripe (firma inválida) → devolver 400 para que Stripe no reintente
+    if (e.statusCode === 400) {
+      throw e
+    }
+
+    // Cualquier otro error: loguear y devolver 500 para que Stripe reintente
     console.error('Error en webhook:', e)
-    throw createError({ statusCode: 500, message: e.message })
+    throw createError({ statusCode: 500, message: e.message || 'Error interno del webhook' })
   }
 })
