@@ -110,6 +110,105 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // 🔔 Helper para notificar al admin de un nuevo pedido
+  async function sendAdminNotification(order: any) {
+    if (!resend || !config.resendApiKey) {
+      console.warn('Resend no configurado, no se envió notificación al admin')
+      return
+    }
+
+    // Leer la config de correos de site_config (adminEmail configurado en el panel)
+    let adminEmail: string | null = null
+    try {
+      const { data: emailConfig } = await supabaseAdmin
+        .from('site_config')
+        .select('value')
+        .eq('key', 'email_config')
+        .limit(1)
+      adminEmail = emailConfig?.[0]?.value?.adminEmail || null
+    } catch (e) {
+      console.error('Error leyendo email_config:', e)
+    }
+
+    if (!adminEmail) {
+      console.warn('adminEmail no configurado en site_config, no se envió notificación al admin')
+      return
+    }
+
+    const itemsHtml = (order.items || []).map((item: any) =>
+      `<tr>
+        <td style="padding:8px 0;border-bottom:1px solid #e5e7eb;">${item.name || 'Producto'}</td>
+        <td style="padding:8px 0;border-bottom:1px solid #e5e7eb;text-align:center;">${item.quantity || 1}</td>
+        <td style="padding:8px 0;border-bottom:1px solid #e5e7eb;text-align:right;">$${((item.price || 0) / 100).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+      </tr>`
+    ).join('')
+
+    try {
+      await resend.emails.send({
+        from: 'PITAYA LAB <pedidos@pitayalab.com.mx>',
+        to: adminEmail,
+        subject: `🛒 Nuevo pedido - ${order.order_number} | PITAYA LAB`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+            <div style="text-align:center;padding:30px 0;background:linear-gradient(135deg,#7c2d12,#431407);border-radius:16px 16px 0 0;">
+              <h1 style="color:#fff;margin:0;font-size:24px;">🛒 ¡Nuevo pedido recibido!</h1>
+              <p style="color:#fdba74;margin:8px 0 0;">PITAYA LAB</p>
+            </div>
+            <div style="background:#fff;padding:30px;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 16px 16px;">
+              <p style="color:#374151;font-size:16px;margin:0 0 20px;">
+                Recibimos el pedido <strong style="color:#7c2d12;">${order.order_number}</strong> y requiere tu atención.
+              </p>
+
+              <div style="background:#f9fafb;border-radius:12px;padding:20px;margin:20px 0;">
+                <h3 style="color:#374151;font-size:14px;margin:0 0 10px;">👤 Cliente</h3>
+                <p style="color:#6b7280;font-size:13px;margin:0;">
+                  <strong>Nombre:</strong> ${order.customer_name || 'No capturado'}<br>
+                  <strong>Email:</strong> ${order.customer_email || 'No capturado'}<br>
+                  <strong>Teléfono:</strong> ${order.customer_phone || 'No capturado'}
+                </p>
+              </div>
+
+              <table style="width:100%;border-collapse:collapse;margin:20px 0;">
+                <thead>
+                  <tr style="background:#f9fafb;">
+                    <th style="padding:10px;text-align:left;font-size:12px;color:#6b7280;text-transform:uppercase;">Producto</th>
+                    <th style="padding:10px;text-align:center;font-size:12px;color:#6b7280;text-transform:uppercase;">Cant.</th>
+                    <th style="padding:10px;text-align:right;font-size:12px;color:#6b7280;text-transform:uppercase;">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${itemsHtml}
+                </tbody>
+              </table>
+
+              <div style="border-top:2px solid #7c2d12;padding-top:15px;margin-top:15px;">
+                <p style="margin:0;text-align:right;font-size:18px;font-weight:bold;color:#7c2d12;">
+                  Total: $${(order.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN
+                </p>
+              </div>
+
+              <div style="background:#f9fafb;border-radius:12px;padding:20px;margin:20px 0;">
+                <h3 style="color:#374151;font-size:14px;margin:0 0 10px;">🚚 Envío a:</h3>
+                <p style="color:#6b7280;font-size:13px;margin:0;">
+                  ${order.shipping_address?.address?.line1 || 'Dirección registrada en Stripe'},
+                  ${order.shipping_address?.address?.city || ''} ${order.shipping_address?.address?.state || ''}<br>
+                  CP: ${order.shipping_address?.address?.postal_code || ''}
+                </p>
+              </div>
+
+              <p style="color:#9ca3af;font-size:12px;text-align:center;margin:20px 0 0;">
+                Puedes ver el detalle del pedido en el panel de administración.
+              </p>
+            </div>
+          </div>
+        `,
+      })
+      console.log(`✅ Notificación enviada al admin (${adminEmail}) para orden ${order.order_number}`)
+    } catch (e) {
+      console.error('Error enviando notificación al admin:', e)
+    }
+  }
+
   try {
     const signature = event.node.req.headers['stripe-signature']
 
@@ -205,6 +304,17 @@ export default defineEventHandler(async (event) => {
             total: session.amount_total ? session.amount_total / 100 : order.total,
             items: itemsForEmail,
           })
+
+          // 🔔 Notificar al admin del pedido
+          await sendAdminNotification({
+            order_number: order.order_number,
+            customer_email: session.customer_details?.email || order.customer_email,
+            customer_name: session.customer_details?.name || order.customer_name,
+            customer_phone: session.customer_details?.phone || null,
+            shipping_address: session.shipping_details || order.shipping_address,
+            total: session.amount_total ? session.amount_total / 100 : order.total,
+            items: itemsForEmail,
+          })
         } else {
           // Crear nueva orden si no existe
           let items = []
@@ -246,6 +356,17 @@ export default defineEventHandler(async (event) => {
             order_number: orderNumber,
             customer_email: session.customer_details?.email || 'cliente@email.com',
             customer_name: session.customer_details?.name || 'Cliente',
+            shipping_address: session.shipping_details || {},
+            total: session.amount_total ? session.amount_total / 100 : 0,
+            items: items,
+          })
+
+          // 🔔 Notificar al admin del pedido
+          await sendAdminNotification({
+            order_number: orderNumber,
+            customer_email: session.customer_details?.email || 'cliente@email.com',
+            customer_name: session.customer_details?.name || 'Cliente',
+            customer_phone: session.customer_details?.phone || null,
             shipping_address: session.shipping_details || {},
             total: session.amount_total ? session.amount_total / 100 : 0,
             items: items,

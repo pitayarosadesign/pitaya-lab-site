@@ -628,10 +628,24 @@ async function saveEmailConfig() {
 async function testEmail() {
   testingEmail.value = true
   try {
-    // Llamar endpoint para probar correo
-    // Por ahora simulamos
-    await new Promise(r => setTimeout(r, 1000))
-    alert('✅ Correo de prueba enviado. Revisa tu bandeja de entrada.')
+    // Llamar endpoint real del store para enviar el correo de prueba
+    const target = email.adminEmail || email.fromEmail
+    const { public: runtimePublic } = useRuntimeConfig()
+    const storeUrl = (runtimePublic && runtimePublic.storeUrl) || 'https://www.pitayalab.com.mx'
+    const base = storeUrl.replace(/\/+$/, '')
+
+    const res = await fetch(base + '/api/admin/test-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: target }),
+    })
+    const data = await res.json()
+
+    if (data && data.sent) {
+      alert('✅ Correo de prueba enviado a ' + data.to + '. Revisa tu bandeja de entrada.')
+    } else {
+      alert('Error al enviar correo de prueba: ' + (data?.error || 'Respuesta inesperada del servidor'))
+    }
   } catch (e) {
     alert('Error al enviar correo de prueba: ' + e.message)
   } finally {
