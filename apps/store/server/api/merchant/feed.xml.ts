@@ -1,4 +1,5 @@
 /**
+ * 
  * 📤 PITAYA LAB - Google Merchant Center Feed
  * =============================================
  * Genera el feed XML de productos para Google Merchant Center
@@ -35,12 +36,21 @@ export default defineEventHandler(async (event) => {
 
     const BASE_URL = 'https://www.pitayalab.com.mx'
 
+    // 🛡️ Escapar caracteres XML especiales en campos que NO usan CDATA
+    const escapeXml = (str: string = '') =>
+      String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;')
+
     // Generar XML del feed
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`
     xml += `<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">\n`
     xml += `  <channel>\n`
     xml += `    <title>PITAYA LAB - Productos</title>\n`
-    xml += `    <link>${BASE_URL}</link>\n`
+    xml += `    <link>${escapeXml(BASE_URL)}</link>\n`
     xml += `    <description>Feed de productos PITAYA LAB para Google Merchant Center</description>\n`
 
     for (const product of products) {
@@ -56,34 +66,35 @@ export default defineEventHandler(async (event) => {
       const productUrl = `${BASE_URL}/product/${product.slug}`
 
       xml += `    <item>\n`
-      xml += `      <g:id>${product.sku || product.id}</g:id>\n`
+      xml += `      <g:id>${escapeXml(product.sku || product.id)}</g:id>\n`
       xml += `      <g:title><![CDATA[${product.name}${product.subtitle ? ' - ' + product.subtitle : ''}]]></g:title>\n`
       xml += `      <g:description><![CDATA[${product.long_description || product.description || product.name}]]></g:description>\n`
-      xml += `      <g:link>${productUrl}</g:link>\n`
-      xml += `      <g:image_link>${imageLink}</g:image_link>\n`
+      xml += `      <g:link>${escapeXml(productUrl)}</g:link>\n`
+      xml += `      <g:image_link>${escapeXml(imageLink)}</g:image_link>\n`
       const availability = product.stock > 0
         ? 'in_stock'
         : (product.allow_backorder ? 'preorder' : 'out_of_stock')
       xml += `      <g:availability>${availability}</g:availability>\n`
-      xml += `      <g:price>${product.price} MXN</g:price>\n`
+      xml += `      <g:price>${escapeXml(product.price)} MXN</g:price>\n`
 
       if (product.compare_at_price && product.compare_at_price > product.price) {
-        xml += `      <g:sale_price>${product.price} MXN</g:sale_price>\n`
+        xml += `      <g:sale_price>${escapeXml(product.price)} MXN</g:sale_price>\n`
       }
 
-      xml += `      <g:brand>${product.brand || 'PITAYA LAB'}</g:brand>\n`
-      xml += `      <g:condition>${product.google_condition || 'new'}</g:condition>\n`
+      xml += `      <g:brand>${escapeXml(product.brand || 'PITAYA LAB')}</g:brand>\n`
+      xml += `      <g:condition>${escapeXml(product.google_condition || 'new')}</g:condition>\n`
 
       if (product.gtin) {
-        xml += `      <g:gtin>${product.gtin}</g:gtin>\n`
+        xml += `      <g:gtin>${escapeXml(product.gtin)}</g:gtin>\n`
       }
 
       if (product.mpn) {
-        xml += `      <g:mpn>${product.mpn}</g:mpn>\n`
+
+        xml += `      <g:mpn>${escapeXml(product.mpn)}</g:mpn>\n`
       }
 
       if (product.google_product_category) {
-        xml += `      <g:google_product_category>${product.google_product_category}</g:google_product_category>\n`
+        xml += `      <g:google_product_category>${escapeXml(product.google_product_category)}</g:google_product_category>\n`
       }
 
       // Categoría personalizada
