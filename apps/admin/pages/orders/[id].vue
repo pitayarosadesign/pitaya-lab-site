@@ -324,18 +324,29 @@ async function sendTrackingNotification() {
   if (!order.value.tracking_number) return
   sendingNotification.value = true
   try {
-    // Llamar al API para enviar correo de notificación
-    const { error } = await supabase.functions.invoke('send-tracking-email', {
-      body: {
+    // Llamar endpoint del store para enviar el correo de seguimiento con la guía
+    const { public: runtimePublic } = useRuntimeConfig()
+    const storeUrl = (runtimePublic && runtimePublic.storeUrl) || 'https://www.pitayalab.com.mx'
+    const base = storeUrl.replace(/\/+$/, '')
+
+    const res = await fetch(base + '/api/admin/send-tracking-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         orderNumber: order.value.order_number,
         customerEmail: order.value.customer_email,
         customerName: order.value.customer_name,
         trackingNumber: order.value.tracking_number,
         trackingCarrier: order.value.tracking_carrier,
-      }
+      }),
     })
-    if (error) throw error
-    alert('✅ Notificación enviada al cliente')
+    const data = await res.json()
+
+    if (data && data.sent) {
+      alert('✅ Notificación con guía enviada al cliente')
+    } else {
+      alert('Error al enviar notificación: ' + (data?.error || 'Respuesta inesperada del servidor'))
+    }
   } catch (e) {
     alert('Error al enviar notificación: ' + e.message)
   } finally {
