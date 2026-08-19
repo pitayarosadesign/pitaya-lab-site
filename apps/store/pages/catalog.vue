@@ -281,10 +281,16 @@
                 <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
               </div>
 
-              <!-- Nombre y colección -->
+              <!-- Nombre, colección y notas -->
               <div class="p-3">
                 <p class="text-sm font-semibold text-earth-800 group-hover:text-primary-600 transition-colors truncate">{{ aroma.name }}</p>
-                <p class="text-[11px] text-earth-400 truncate">{{ aroma.categoryLabel }}</p>
+                <p class="text-[11px] text-earth-400 truncate mb-1">{{ aroma.categoryLabel }}</p>
+                <div v-if="aroma.notesList.length" class="space-y-0.5">
+                  <p v-for="note in aroma.notesList.slice(0, 2)" :key="note.label" class="text-[10px] leading-snug text-earth-500 truncate">
+                    <span class="font-semibold text-primary-600 uppercase">{{ note.label }}:</span>
+                    {{ note.values }}
+                  </p>
+                </div>
               </div>
             </button>
           </div>
@@ -579,18 +585,28 @@ async function loadAromas() {
   }
 }
 
-// Parsear notas aromáticas (SAL/COR/FONDO)
+// Parsear notas aromáticas (SAL/COR/FONDO o formato simple)
 function parseNotes(notes) {
   if (!notes) return []
   const raw = notes.split('/').map(n => n.trim()).filter(Boolean)
   const order = ['SAL', 'COR', 'FONDO']
-  return order
+  const ordered = order
     .map(label => {
       const found = raw.find(r => r.toUpperCase().startsWith(label))
       if (!found) return null
       return { label, values: found.replace(new RegExp(`^${label}\\.?\\s*`, 'i'), '') }
     })
     .filter(Boolean)
+
+  // Si hay notas en formato SAL/COR/FONDO, usarlas
+  if (ordered.length > 0) return ordered
+
+  // Fallback: si las notas están en formato simple, agruparlas en una sola entrada
+  if (raw.length > 0) {
+    return [{ label: 'Notas', values: raw.join(', ') }]
+  }
+
+  return []
 }
 
 // Productos filtrados (por categoría y/o fragancia)
