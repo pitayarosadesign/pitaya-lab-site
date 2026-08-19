@@ -39,6 +39,11 @@
             <p v-if="scent.experience" class="text-white/70 text-xs mt-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
               {{ scent.experience }}
             </p>
+            <div v-if="scent.notes" class="mt-2 space-y-0.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+              <p v-for="note in splitNotes(scent.notes)" :key="note" class="text-white/60 text-[11px] leading-snug">
+                {{ note }}
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -74,6 +79,11 @@ async function loadScents() {
   } catch (e) {
     console.warn('Error cargando aromas:', e.message)
   }
+}
+
+function splitNotes(notes) {
+  if (!notes) return []
+  return notes.split('/').map(n => n.trim()).filter(Boolean)
 }
 
 onMounted(loadScents)
