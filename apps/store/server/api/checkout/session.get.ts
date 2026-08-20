@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
   try {
     const { data: orders, error } = await supabaseAdmin
       .from('orders')
-      .select('order_number, status, total')
+      .select('order_number, status, total, customer_email')
       .eq('stripe_session_id', sessionId)
       .limit(1)
 
@@ -30,6 +30,7 @@ export default defineEventHandler(async (event) => {
           orderNumber: orders[0].order_number,
           status: orders[0].status,
           total: orders[0].total,
+          customerEmail: orders[0].customer_email,
         },
       }
     }
@@ -39,6 +40,7 @@ export default defineEventHandler(async (event) => {
         orderNumber: 'PIT-XXXX',
         status: 'pending',
         total: 0,
+        customerEmail: '',
       },
     }
   } catch (e) {
@@ -48,7 +50,9 @@ export default defineEventHandler(async (event) => {
         orderNumber: 'PIT-XXXX',
         status: 'unknown',
         total: 0,
+        customerEmail: '',
       },
     }
   }
 })
+

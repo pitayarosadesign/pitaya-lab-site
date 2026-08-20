@@ -78,6 +78,7 @@ const route = useRoute()
 
 // Obtener número de orden de la URL (session_id)
 const orderNumber = ref('PIT-XXXX')
+const customerEmail = ref('')
 
 onMounted(async () => {
   // Limpiar carrito
@@ -109,11 +110,50 @@ onMounted(async () => {
       if (data?.orderNumber) {
         orderNumber.value = data.orderNumber
       }
+      if (data?.customerEmail) {
+        customerEmail.value = data.customerEmail
+      }
     } catch (e) {
       console.warn('No se pudo obtener el número de orden')
     }
   }
+
+  // ⭐ Google Customer Reviews - Cargar widget de encuesta
+  loadGoogleCustomerReviews()
 })
+
+// ⭐ Google Customer Reviews
+const MERCHANT_ID = '5536205947'
+
+function loadGoogleCustomerReviews() {
+  if (typeof window === 'undefined') return
+
+  // Calcular fecha estimada de entrega (5 días hábiles desde hoy)
+  const estimatedDate = new Date()
+  estimatedDate.setDate(estimatedDate.getDate() + 5)
+  const estimatedDeliveryDate = estimatedDate.toISOString().split('T')[0]
+
+  // Definir renderOptIn global
+  window.renderOptIn = function() {
+    window.gapi.load('surveyoptin', function() {
+      window.gapi.surveyoptin.render({
+        "merchant_id": MERCHANT_ID,
+        "order_id": orderNumber.value,
+        "email": customerEmail.value,
+        "delivery_country": "MX",
+        "estimated_delivery_date": estimatedDeliveryDate,
+        "opt_in_style": "CENTER_DIALOG"
+      })
+    })
+  }
+
+  // Cargar el script de Google
+  const script = document.createElement('script')
+  script.src = 'https://apis.google.com/js/platform.js?onload=renderOptIn'
+  script.async = true
+  script.defer = true
+  document.head.appendChild(script)
+}
 
 useSeoMeta({
   title: 'Compra Exitosa | PITAYA LAB',
@@ -121,3 +161,4 @@ useSeoMeta({
   robots: 'noindex, nofollow',
 })
 </script>
+
