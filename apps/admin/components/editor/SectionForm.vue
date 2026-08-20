@@ -898,9 +898,9 @@ async function onMediaUpload(field, event) {
   try {
     const url = await uploadToStorage(file)
     if (url) {
-      // Reasignar el objeto content completo para forzar la reactividad de Vue,
-      // incluso si `section.content` viene "plano" desde la BD (no reactivo).
-      section.content = { ...section.content, [field]: url }
+      // Mutar el objeto content directamente (no reasignar) para que Vue
+      // detecte el cambio y actualice la vista previa y el guardado.
+      section.content[field] = url
     } else {
       alert('No se pudo subir el archivo')
     }
