@@ -30,6 +30,11 @@ import SectionImageText from './SectionImageText.vue'
 import SectionGallery from './SectionGallery.vue'
 import SectionHtml from './SectionHtml.vue'
 import SectionNewsletter from './SectionNewsletter.vue'
+import SectionB2BStats from './SectionB2BStats.vue'
+import SectionB2BAudience from './SectionB2BAudience.vue'
+import SectionB2BCalculator from './SectionB2BCalculator.vue'
+import SectionB2BRecuerdos from './SectionB2BRecuerdos.vue'
+import SectionB2BFaq from './SectionB2BFaq.vue'
 
 const props = defineProps({
   section: { type: Object, required: true },
@@ -52,7 +57,13 @@ const sectionComponent = computed(() => {
     gallery: SectionGallery,
     html: SectionHtml,
     newsletter: SectionNewsletter,
+    b2b_stats: SectionB2BStats,
+    b2b_audience: SectionB2BAudience,
+    b2b_calculator: SectionB2BCalculator,
+    b2b_recuerdos: SectionB2BRecuerdos,
+    b2b_faq: SectionB2BFaq,
   }
   return map[props.section.type] || null
 })
 </script>
+

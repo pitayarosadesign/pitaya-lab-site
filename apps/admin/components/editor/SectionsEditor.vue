@@ -180,6 +180,13 @@ const sectionTypes = [
   // Conversión & Marketing
   { value: 'cta', label: 'CTA', icon: '🚀', description: 'Llamada a la acción con botón', category: 'Conversión' },
   { value: 'newsletter', label: 'Newsletter', icon: '✉️', description: 'Formulario de suscripción', category: 'Conversión' },
+
+  // B2B (Mayoreo & Corporativo)
+  { value: 'b2b_stats', label: 'B2B Stats', icon: '📊', description: 'Estadísticas de confianza B2B', category: 'B2B' },
+  { value: 'b2b_audience', label: 'B2B Audiencia', icon: '🎯', description: 'Tarjetas de segmentos (mayoreo, eventos, etiquetado)', category: 'B2B' },
+  { value: 'b2b_calculator', label: 'B2B Calculadora', icon: '🧮', description: 'Calculadora de mayoreo', category: 'B2B' },
+  { value: 'b2b_recuerdos', label: 'B2B Recuerdos', icon: '💍', description: 'Cotizador de recuerdos para eventos', category: 'B2B' },
+  { value: 'b2b_faq', label: 'B2B FAQ', icon: '❓', description: 'Preguntas frecuentes B2B', category: 'B2B' },
 ]
 
 // Categorías con su orden e ícono para mostrarse en el modal
@@ -188,6 +195,7 @@ const sectionCategories = [
   { key: 'Contenido', label: 'Contenido', icon: '📝', hint: 'Construye narrativa de marca' },
   { key: 'Confianza', label: 'Prueba social', icon: '⭐', hint: 'Genera confianza y fidelidad' },
   { key: 'Conversión', label: 'Conversión', icon: '🚀', hint: 'Impulsa acciones de compra' },
+  { key: 'B2B', label: 'Mayoreo & Corporativo', icon: '🏢', hint: 'Secciones para la página B2B' },
 ]
 
 function sectionTypesByCategory(category) {
@@ -377,6 +385,88 @@ function getDefaultContent(type) {
     newsletter: {
       title: 'Newsletter',
       content: { title: 'Únete a nuestra comunidad', subtitle: '', description: '' },
+      settings: { enabled: true },
+    },
+    b2b_stats: {
+      title: 'B2B Stats',
+      content: {
+        stats: [
+          { value: '25–35%', label: 'Dto. por volumen B2B' },
+          { value: '30+', label: 'Recuerdos personalizados' },
+          { value: '100%', label: 'Botánico y biodegradable' },
+          { value: '≤15 d', label: 'Días hábiles entrega' },
+        ],
+      },
+      settings: { enabled: true },
+    },
+    b2b_audience: {
+      title: 'B2B Audiencia',
+      content: {
+        title: '¿Para quién es PITAYA LAB B2B?',
+        subtitle: 'Tres formas de trabajar juntos, según tu tipo de negocio o evento.',
+        cards: [
+          {
+            icon: '📦',
+            title: 'Mayoreo Comercial',
+            description: 'Para tiendas boutique, cafeterías de especialidad y distribuidores que revenden nuestra línea regular.',
+            points: ['🎯 Mínimo: 20 piezas surtidas', '💸 Hasta 35% dto.', '🔥 Margen de ganancia saludable'],
+            link: '#calculadora-mayoreo',
+            cta_text: 'Cotizar →',
+            highlight: false,
+          },
+          {
+            icon: '💍',
+            title: 'Recuerdos & Eventos',
+            description: 'Bodas, XV años, eventos corporativos. Recuerdos personalizados con tu diseño.',
+            points: ['💍 Mínimo: 30 piezas', '🏷️ Etiqueta 5×5 personalizada', '🎁 Kit premium opcional'],
+            link: '#cotizador-eventos',
+            cta_text: 'Arma tu recuerdo →',
+            highlight: true,
+          },
+          {
+            icon: '🏷️',
+            title: 'Etiquetado Privado',
+            description: 'Tu marca, nuestros productos. Personalizamos etiquetas con tu logotipo.',
+            points: ['🏷️ Diseño de etiquetas propio', '🔒 Exclusividad por zona', '🤝 Contacto directo'],
+            link: '#contacto',
+            cta_text: 'Hablemos →',
+            highlight: false,
+          },
+        ],
+      },
+      settings: { enabled: true },
+    },
+    b2b_calculator: {
+      title: 'B2B Calculadora',
+      content: {
+        eyebrow: 'Mayoreo Comercial',
+        title: 'Calculadora de Mayoreo',
+        subtitle: 'Cotiza tu pedido al instante. El descuento se aplica automáticamente según el volumen total.',
+      },
+      settings: { enabled: true },
+    },
+    b2b_recuerdos: {
+      title: 'B2B Recuerdos',
+      content: {
+        eyebrow: 'Recuerdos para Eventos',
+        title: 'Arma tu Recuerdo paso a paso',
+        subtitle: 'Elige tu envase, fragancia, diseño y cantidad. El precio se ajusta según el volumen.',
+      },
+      settings: { enabled: true },
+    },
+    b2b_faq: {
+      title: 'B2B FAQ',
+      content: {
+        title: 'Preguntas frecuentes B2B',
+        faqs: [
+          { q: '¿Cuál es el mínimo para mayoreo comercial?', a: 'A partir de 20 piezas surtidas. El descuento aumenta de 25% (20–49 pzas) a 30% (51–99 pzas) y 35% (100+ pzas).' },
+          { q: '¿Cuál es el mínimo para recuerdos personalizados?', a: 'A partir de 30 piezas del mismo diseño. Los precios unitarios bajan con el volumen.' },
+          { q: '¿Cuánto tiempo tarda un pedido personalizado?', a: 'Hasta 15 días hábiles, según demanda. Te avisamos con antelación la programación y entrega estimada por correo.' },
+          { q: '¿Puedo poner mi propia marca (etiquetado privado)?', a: 'Sí. Ofrecemos etiquetado privado con tu logotipo para que vendas las fragancias bajo tu propia marca.' },
+          { q: '¿Se pueden mezclar productos para el mayoreo?', a: 'Sí. Las 20–30 piezas mínimas pueden ser surtidas entre brumas, velas y aceites.' },
+          { q: '¿El envío está incluido en el mayoreo?', a: 'Los precios de mayoreo no incluyen IVA ni envío. El envío se cotiza por separado según volumen y destino.' },
+        ],
+      },
       settings: { enabled: true },
     },
   }

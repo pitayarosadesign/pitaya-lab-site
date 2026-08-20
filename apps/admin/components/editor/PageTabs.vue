@@ -33,6 +33,7 @@ const tabs = [
   { key: 'catalog', label: 'Catálogo', icon: '🛍️', to: '/site/catalog' },
   { key: 'about', label: 'Sobre Nosotros', icon: '📖', to: '/site/about' },
   { key: 'philosophy', label: 'Filosofía', icon: '🌿', to: '/site/philosophy' },
+  { key: 'b2b', label: 'Mayoreo B2B', icon: '🏢', to: '/site/b2b' },
   { key: 'faq', label: 'FAQ', icon: '❓', to: '/site/faq' },
   { key: 'contact', label: 'Contacto', icon: '✉️', to: '/site/contact' },
   { key: 'legal', label: 'Legal', icon: '📜', to: '/site/legal' },

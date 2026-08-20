@@ -663,6 +663,179 @@
       </div>
     </div>
 
+    <!-- B2B Stats -->
+    <div v-else-if="section.type === 'b2b_stats'">
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <label class="text-sm font-medium text-gray-700">Estadísticas</label>
+          <button
+            @click="section.content.stats = section.content.stats || []; section.content.stats.push({ value: '', label: '' })"
+            class="text-xs font-medium text-primary-600 hover:text-primary-700 px-3 py-1.5 rounded-lg border border-dashed border-primary-300 hover:bg-primary-50 transition-colors"
+          >
+            + Agregar stat
+          </button>
+        </div>
+        <div
+          v-for="(stat, index) in section.content.stats || []"
+          :key="index"
+          class="grid grid-cols-2 gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50"
+        >
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Valor</label>
+            <input v-model="stat.value" type="text" placeholder="25–35%" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Etiqueta</label>
+            <input v-model="stat.label" type="text" placeholder="Dto. por volumen" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+          </div>
+          <div class="col-span-2 flex justify-end">
+            <button @click="section.content.stats.splice(index, 1)" class="text-xs text-red-400 hover:text-red-600">Eliminar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- B2B Audiencia -->
+    <div v-else-if="section.type === 'b2b_audience'">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
+          <input v-model="section.content.title" type="text" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Subtítulo</label>
+          <input v-model="section.content.subtitle" type="text" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div class="flex items-center justify-between">
+          <label class="text-sm font-medium text-gray-700">Tarjetas</label>
+          <button
+            @click="section.content.cards = section.content.cards || []; section.content.cards.push({ icon: '📦', title: '', description: '', points: [], link: '', cta_text: 'Cotizar →', highlight: false })"
+            class="text-xs font-medium text-primary-600 hover:text-primary-700 px-3 py-1.5 rounded-lg border border-dashed border-primary-300 hover:bg-primary-50 transition-colors"
+          >
+            + Agregar tarjeta
+          </button>
+        </div>
+        <div
+          v-for="(card, index) in section.content.cards || []"
+          :key="index"
+          class="p-4 rounded-xl border border-gray-200 bg-gray-50/50 space-y-3"
+        >
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1">Ícono</label>
+              <input v-model="card.icon" type="text" placeholder="📦" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1">Título</label>
+              <input v-model="card.title" type="text" placeholder="Mayoreo Comercial" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Descripción</label>
+            <textarea v-model="card.description" rows="2" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Puntos (uno por línea)</label>
+            <textarea
+              :value="(card.points || []).join('\n')"
+              @input="card.points = $event.target.value.split('\n').filter(p => p.trim())"
+              rows="3"
+              class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm"
+            />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1">Enlace</label>
+              <input v-model="card.link" type="text" placeholder="#calculadora-mayoreo" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1">Texto del botón</label>
+              <input v-model="card.cta_text" type="text" placeholder="Cotizar →" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <label class="flex items-center gap-2 text-xs text-gray-600">
+              <input type="checkbox" v-model="card.highlight" class="text-primary-600" />
+              Destacar (borde ámbar)
+            </label>
+            <button @click="section.content.cards.splice(index, 1)" class="text-xs text-red-400 hover:text-red-600">Eliminar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- B2B Calculadora -->
+    <div v-else-if="section.type === 'b2b_calculator'">
+      <div class="grid grid-cols-1 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Etiqueta (eyebrow)</label>
+          <input v-model="section.content.eyebrow" type="text" placeholder="Mayoreo Comercial" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
+          <input v-model="section.content.title" type="text" placeholder="Calculadora de Mayoreo" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Subtítulo</label>
+          <textarea v-model="section.content.subtitle" rows="2" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+      </div>
+    </div>
+
+    <!-- B2B Recuerdos -->
+    <div v-else-if="section.type === 'b2b_recuerdos'">
+      <div class="grid grid-cols-1 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Etiqueta (eyebrow)</label>
+          <input v-model="section.content.eyebrow" type="text" placeholder="Recuerdos para Eventos" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
+          <input v-model="section.content.title" type="text" placeholder="Arma tu Recuerdo paso a paso" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Subtítulo</label>
+          <textarea v-model="section.content.subtitle" rows="2" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+      </div>
+    </div>
+
+    <!-- B2B FAQ -->
+    <div v-else-if="section.type === 'b2b_faq'">
+      <div class="space-y-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
+          <input v-model="section.content.title" type="text" placeholder="Preguntas frecuentes B2B" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div class="flex items-center justify-between">
+          <label class="text-sm font-medium text-gray-700">Preguntas</label>
+          <button
+            @click="section.content.faqs = section.content.faqs || []; section.content.faqs.push({ q: '', a: '' })"
+            class="text-xs font-medium text-primary-600 hover:text-primary-700 px-3 py-1.5 rounded-lg border border-dashed border-primary-300 hover:bg-primary-50 transition-colors"
+          >
+            + Agregar pregunta
+          </button>
+        </div>
+        <div
+          v-for="(faq, index) in section.content.faqs || []"
+          :key="index"
+          class="p-4 rounded-xl border border-gray-200 bg-gray-50/50 space-y-3"
+        >
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Pregunta</label>
+            <input v-model="faq.q" type="text" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Respuesta</label>
+            <textarea v-model="faq.a" rows="2" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+          </div>
+          <div class="flex justify-end">
+            <button @click="section.content.faqs.splice(index, 1)" class="text-xs text-red-400 hover:text-red-600">Eliminar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Botón guardar -->
     <div class="flex justify-end pt-2 border-t border-gray-100">
       <button
