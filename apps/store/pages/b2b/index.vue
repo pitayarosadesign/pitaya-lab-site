@@ -240,7 +240,8 @@
 </template>
 
 <script setup lang="ts">
-import { WHATSAPP_URL, useB2BConfig, DEFAULT_B2B } from '~/composables/useB2B'
+import { WHATSAPP_URL, DEFAULT_B2B } from '~/composables/useB2B'
+import { useB2BConfig } from '~/composables/useB2BConfig'
 
 useSeoMeta({
   title: 'Mayoreo & Corporativo B2B | PITAYA LAB',

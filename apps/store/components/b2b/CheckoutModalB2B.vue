@@ -123,6 +123,7 @@
 
 <script setup lang="ts">
 import { formatMXN, DEFAULT_B2B } from '~/composables/useB2B'
+import { useB2BConfig } from '~/composables/useB2BConfig'
 
 const props = defineProps<{
   open: boolean

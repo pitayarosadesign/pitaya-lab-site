@@ -269,7 +269,8 @@
 </template>
 
 <script setup lang="ts">
-import { getRecuerdoPricing, formatMXN, useB2BConfig, WHATSAPP_URL } from '~/composables/useB2B'
+import { getRecuerdoPricing, formatMXN, WHATSAPP_URL } from '~/composables/useB2B'
+import { useB2BConfig } from '~/composables/useB2BConfig'
 
 const emit = defineEmits<{
   (e: 'order', payload: any): void
