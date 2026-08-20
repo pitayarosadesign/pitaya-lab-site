@@ -1,5 +1,24 @@
 <template>
   <div class="min-h-screen bg-white">
+    <!-- Renderizado dinámico de secciones desde la base de datos -->
+    <div v-if="loading" class="py-40 flex items-center justify-center">
+      <div class="text-center">
+        <div class="w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-4"></div>
+        <p class="text-earth-500">Cargando...</p>
+      </div>
+    </div>
+
+    <div v-else-if="sections.length > 0">
+      <SectionRenderer
+        v-for="section in sections"
+        :key="section.id"
+        :section="section"
+        @order="onOrderRequested"
+      />
+    </div>
+
+    <!-- Fallback: si no hay secciones configuradas, mostrar el contenido estático -->
+    <div v-else>
     <!-- HERO -->
     <section class="relative overflow-hidden bg-gradient-to-br from-earth-900 via-primary-900 to-earth-900 text-white">
       <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle at 20% 30%, rgba(245,158,11,0.3), transparent 40%), radial-gradient(circle at 80% 70%, rgba(22,163,74,0.3), transparent 40%);"></div>
@@ -226,6 +245,8 @@
       </div>
     </section>
 
+    </div>
+
     <!-- Botón flotante WhatsApp -->
     <BotWhatsApp :message="'¡Hola PITAYA LAB! Me interesa su servicio B2B / Mayoreo.'" />
 
@@ -262,6 +283,35 @@ onMounted(async () => {
   }
 })
 
+// Cargar secciones dinámicas desde la base de datos
+const supabase = useNuxtApp().$supabase
+const sections = ref([])
+const loading = ref(true)
+
+async function loadSections() {
+  if (!supabase) {
+    loading.value = false
+    return
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('page_sections')
+      .select('*')
+      .eq('page', 'b2b')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
+
+    if (error) throw error
+    sections.value = data || []
+  } catch (e) {
+    console.warn('Error cargando secciones B2B, usando fallback:', e.message)
+    sections.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
 // Estado del checkout
 const checkoutOpen = ref(false)
 const pendingOrder = ref<any | null>(null)
@@ -285,4 +335,6 @@ const faqs = [
   { q: '¿Se pueden mezclar productos para el mayoreo?', a: 'Sí. Las 20–30 piezas mínimas pueden ser surtidas entre brumas, velas y aceites.' },
   { q: '¿El envío está incluido en el mayoreo?', a: 'Los precios de mayoreo no incluyen IVA ni envío. El envío se cotiza por separado según volumen y destino.' },
 ]
+
+onMounted(loadSections)
 </script>
