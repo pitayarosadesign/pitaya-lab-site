@@ -141,7 +141,7 @@
 </template>
 
 <script setup lang="ts">
-import { getWholesalePrice, formatMXN, RETAIL_PRICES, WHATSAPP_URL } from '~/composables/useB2B'
+import { getWholesalePrice, formatMXN, WHATSAPP_URL } from '~/composables/useB2B'
 
 const emit = defineEmits<{
   (e: 'order', payload: any): void
@@ -154,13 +154,57 @@ const tiers = [
   { min: 100, max: null, discount_percent: 35, label: 'Nivel 3', description: 'Socios comerciales grandes o compras recurrentes' },
 ]
 
-// Productos disponibles para mayoreo
-const products = reactive([
-  { key: 'bruma', label: 'Bruma Aromática', size: '225 ml', retailPrice: RETAIL_PRICES.bruma, qty: 0 },
-  { key: 'aceite', label: 'Aceite Aromático', size: '15 ml', retailPrice: RETAIL_PRICES.aceite, qty: 0 },
-  { key: 'velaClasica', label: 'Vela Clásica', size: '250g', retailPrice: RETAIL_PRICES.velaClasica, qty: 0 },
-  { key: 'velaMistica', label: 'Vela Mística', size: '350g', retailPrice: RETAIL_PRICES.velaMistica, qty: 0 },
-])
+// Fallback estático si no hay productos con mayoreo habilitado
+const FALLBACK_PRODUCTS = [
+  { key: 'bruma', label: 'Bruma Aromática', size: '225 ml', retailPrice: 299, qty: 0, wholesalePrice: null, wholesaleMinQty: 20 },
+  { key: 'aceite', label: 'Aceite Aromático', size: '15 ml', retailPrice: 249, qty: 0, wholesalePrice: null, wholesaleMinQty: 20 },
+  { key: 'velaClasica', label: 'Vela Clásica', size: '250g', retailPrice: 349, qty: 0, wholesalePrice: null, wholesaleMinQty: 20 },
+  { key: 'velaMistica', label: 'Vela Mística', size: '350g', retailPrice: 499, qty: 0, wholesalePrice: null, wholesaleMinQty: 20 },
+]
+
+// Productos disponibles para mayoreo (cargados desde Supabase)
+const products = ref([])
+const loadingProducts = ref(true)
+
+// Cargar productos con mayoreo habilitado desde la BD
+async function loadProducts() {
+  loadingProducts.value = true
+  try {
+    const supabase = useNuxtApp()?.$supabase
+    if (!supabase) {
+      products.value = FALLBACK_PRODUCTS.map(p => ({ ...p }))
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('products')
+      .select('id, sku, name, subtitle, price, wholesale_price, wholesale_min_qty, product_categories(name)')
+      .eq('is_active', true)
+      .eq('wholesale_enabled', true)
+      .order('sort_order', { ascending: true })
+
+    if (error) throw error
+
+    if (data && data.length > 0) {
+      products.value = data.map(p => ({
+        key: p.id,
+        label: p.name,
+        size: p.subtitle || p.product_categories?.name || '',
+        retailPrice: Number(p.price) || 0,
+        wholesalePrice: p.wholesale_price ? Number(p.wholesale_price) : null,
+        wholesaleMinQty: p.wholesale_min_qty || 20,
+        qty: 0,
+      }))
+    } else {
+      products.value = FALLBACK_PRODUCTS.map(p => ({ ...p }))
+    }
+  } catch (e) {
+    console.warn('Error cargando productos de mayoreo:', e.message)
+    products.value = FALLBACK_PRODUCTS.map(p => ({ ...p }))
+  } finally {
+    loadingProducts.value = false
+  }
+}
 
 // Cargar config de tiers desde Supabase si está disponible
 async function loadConfig() {
@@ -176,10 +220,12 @@ async function loadConfig() {
   }
 }
 
-onMounted(loadConfig)
+onMounted(async () => {
+  await Promise.all([loadProducts(), loadConfig()])
+})
 
 // Total piezas
-const totalPieces = computed(() => products.reduce((sum, p) => sum + p.qty, 0))
+const totalPieces = computed(() => products.value.reduce((sum, p) => sum + p.qty, 0))
 
 // Tier actual
 const currentTier = computed(() => {
@@ -189,7 +235,7 @@ const currentTier = computed(() => {
 
 // Subtotal retail
 const retailSubtotal = computed(() =>
-  products.reduce((sum, p) => sum + p.retailPrice * p.qty, 0)
+  products.value.reduce((sum, p) => sum + p.retailPrice * p.qty, 0)
 )
 
 // Total con descuento (aplicando tier al total consolidado)
@@ -209,15 +255,15 @@ function subTotalFor(prod) {
 
 // Controles
 function increment(key) {
-  const p = products.find(x => x.key === key)
+  const p = products.value.find(x => x.key === key)
   if (p) p.qty += 1
 }
 function decrement(key) {
-  const p = products.find(x => x.key === key)
+  const p = products.value.find(x => x.key === key)
   if (p && p.qty > 0) p.qty -= 1
 }
 function onQtyInput(key, event) {
-  const p = products.find(x => x.key === key)
+  const p = products.value.find(x => x.key === key)
   if (p) p.qty = Math.max(0, parseInt(event.target.value) || 0)
 }
 
@@ -225,7 +271,7 @@ function onQtyInput(key, event) {
 function buildOrderPayload() {
   return {
     type: 'wholesale',
-    items: products.filter(p => p.qty > 0).map(p => ({
+    items: products.value.filter(p => p.qty > 0).map(p => ({
       key: p.key,
       label: p.label,
       retailPrice: p.retailPrice,

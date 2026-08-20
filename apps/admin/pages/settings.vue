@@ -367,6 +367,110 @@
       </div>
 
       <!-- ============================== -->
+      <!-- 🏢 MAYOREO & CORPORATIVO -->
+      <!-- ============================== -->
+      <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+        <div class="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
+          <span class="text-2xl">🏢</span>
+          <div>
+            <h2 class="text-lg font-bold text-gray-900">Mayoreo & Corporativo (B2B)</h2>
+            <p class="text-sm text-gray-500">Configuración de la calculadora de mayoreo y recuerdos</p>
+          </div>
+        </div>
+        <div class="p-6 space-y-5">
+          <!-- Tiers de descuento -->
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-sm font-bold text-gray-800">Tiers de descuento</h3>
+              <button
+                @click="addTier"
+                class="text-xs font-medium text-primary-600 hover:text-primary-700 px-3 py-1.5 rounded-lg border border-dashed border-primary-300 hover:bg-primary-50 transition-colors"
+              >
+                + Agregar tier
+              </button>
+            </div>
+            <div class="space-y-3">
+              <div
+                v-for="(tier, index) in b2b.tiers"
+                :key="index"
+                class="grid grid-cols-2 md:grid-cols-5 gap-3 items-end p-4 rounded-xl border border-gray-200 bg-gray-50/50"
+              >
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1">Etiqueta</label>
+                  <input v-model="tier.label" type="text" placeholder="Nivel 1" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1">Mínimo (piezas)</label>
+                  <input v-model.number="tier.min" type="number" min="1" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1">Máximo (piezas)</label>
+                  <input v-model.number="tier.max" type="number" min="0" placeholder="∞" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1">Descuento (%)</label>
+                  <input v-model.number="tier.discount_percent" type="number" min="0" max="100" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+                </div>
+                <div class="flex items-center gap-2">
+                  <button
+                    @click="removeTier(index)"
+                    class="text-xs text-red-500 hover:text-red-700 px-3 py-2 rounded-lg border border-red-200 hover:bg-red-50 transition-colors"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">Los tiers definen los descuentos por volumen. El mínimo global se toma del primer tier.</p>
+          </div>
+
+          <!-- Configuración de recuerdos -->
+          <div class="border-t border-gray-100 pt-5">
+            <h3 class="text-sm font-bold text-gray-800 mb-3">Recuerdos & Eventos</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Mínimo de piezas</label>
+                <input v-model.number="b2b.recuerdos.minPieces" type="number" min="1" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Precio base por pieza ($)</label>
+                <input v-model.number="b2b.recuerdos.basePrice" type="number" min="0" step="0.01" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Kit premium ($)</label>
+                <input v-model.number="b2b.recuerdos.premiumKitPrice" type="number" min="0" step="0.01" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Contacto -->
+          <div class="border-t border-gray-100 pt-5">
+            <h3 class="text-sm font-bold text-gray-800 mb-3">Contacto</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp</label>
+                <input v-model="b2b.contacto.whatsapp" type="text" placeholder="+52 999 000 0000" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Correo</label>
+                <input v-model="b2b.contacto.email" type="email" placeholder="b2b@pitayalab.com.mx" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end pt-2 border-t border-gray-100">
+            <button
+              @click="saveB2BConfig"
+              :disabled="saving.b2b"
+              class="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              {{ saving.b2b ? 'Guardando...' : 'Guardar configuración B2B' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================== -->
       <!-- 🧾 CATÁLOGOS EXTERNOS -->
       <!-- ============================== -->
       <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
@@ -431,7 +535,7 @@ const supabase = useSupabase()
 const showApiKeyInput = ref(null)
 
 // Estados de guardado
-const saving = reactive({ shipping: false, apiKeys: false, email: false, showroom: false, catalogs: false })
+const saving = reactive({ shipping: false, apiKeys: false, email: false, showroom: false, catalogs: false, b2b: false })
 const testingEmail = ref(false)
 
 // Opciones de paqueterías
@@ -501,6 +605,32 @@ const catalogs = reactive({
   metaCatalogId: '',
 })
 
+// 🏢 Configuración B2B (Mayoreo & Corporativo)
+const b2b = reactive({
+  tiers: [
+    { min: 20, max: 49, discount_percent: 25, label: 'Nivel 1' },
+    { min: 51, max: 99, discount_percent: 30, label: 'Nivel 2' },
+    { min: 100, max: null, discount_percent: 35, label: 'Nivel 3' },
+  ],
+  recuerdos: {
+    minPieces: 30,
+    basePrice: 55,
+    premiumKitPrice: 15,
+  },
+  contacto: {
+    whatsapp: '',
+    email: '',
+  },
+})
+
+function addTier() {
+  b2b.tiers.push({ min: 20, max: null, discount_percent: 25, label: 'Nivel ' + (b2b.tiers.length + 1) })
+}
+
+function removeTier(index) {
+  b2b.tiers.splice(index, 1)
+}
+
 function maskKey(key) {
   if (!key) return 'No configurado'
   if (key.length < 8) return '••••'
@@ -537,6 +667,13 @@ onMounted(async () => {
             break
           case 'catalogs_config':
             Object.assign(catalogs, value)
+            break
+          case 'b2b_comercial':
+            if (value?.tiers) b2b.tiers = value.tiers
+            if (value?.recuerdos) Object.assign(b2b.recuerdos, value.recuerdos)
+            break
+          case 'b2b_contacto':
+            if (value) Object.assign(b2b.contacto, value)
             break
         }
       }
@@ -678,6 +815,23 @@ async function saveCatalogsConfig() {
     alert('Error: ' + e.message)
   } finally {
     saving.catalogs = false
+  }
+}
+
+async function saveB2BConfig() {
+  saving.b2b = true
+  try {
+    await saveSection('b2b_comercial', {
+      enabled: true,
+      tiers: b2b.tiers,
+      recuerdos: b2b.recuerdos,
+    })
+    await saveSection('b2b_contacto', { ...b2b.contacto })
+    alert('✅ Configuración B2B guardada')
+  } catch (e) {
+    alert('Error: ' + e.message)
+  } finally {
+    saving.b2b = false
   }
 }
 </script>
