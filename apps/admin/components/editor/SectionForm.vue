@@ -1139,10 +1139,24 @@ async function onMediaUpload(field, event) {
       }
       // AUTO-GUARD: persistir de inmediato el fondo/poster subido (hero) para
       // que la tienda refleje el cambio aunque el usuario no presione el botón
-      // "Guardar sección". Solo aplica a campos de media del hero.
+      // "Guardar sección". Se hace un fetch directo al endpoint de update con
+      // el content actualizado, para no depender del flujo del padre.
       if (field === 'media_url' || field === 'poster_url') {
-        await nextTick()
-        emit('save')
+        try {
+          await $fetch('/api/sections/update', {
+            method: 'PUT',
+            body: {
+              id: props.section.id,
+              title: props.section.title,
+              content: section.content,
+              settings: section.settings,
+            },
+          })
+          console.log('🖼️ Hero media auto-guardado:', field, section.content[field])
+        } catch (e) {
+          console.error('Error al auto-guardar hero media:', e)
+          alert('La imagen se subió pero hubo un error al guardarla: ' + e.message)
+        }
       }
     } else {
       alert('No se pudo subir el archivo')
