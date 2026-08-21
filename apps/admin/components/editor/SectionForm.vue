@@ -894,7 +894,7 @@ const props = defineProps({
   section: { type: Object, required: true },
 })
 
-defineEmits(['save'])
+const emit = defineEmits(['save'])
 
 // Referencia local a la prop. En `<script setup>` las props solo están
 // disponibles vía `props.section`, no como variable global. Este computed
@@ -1136,6 +1136,13 @@ async function onMediaUpload(field, event) {
       // tipo de fondo a 'image' para que la tienda la muestre correctamente.
       if (field === 'media_url' && file.type && file.type.startsWith('image/')) {
         section.content.media_type = 'image'
+      }
+      // AUTO-GUARD: persistir de inmediato el fondo/poster subido (hero) para
+      // que la tienda refleje el cambio aunque el usuario no presione el botón
+      // "Guardar sección". Solo aplica a campos de media del hero.
+      if (field === 'media_url' || field === 'poster_url') {
+        await nextTick()
+        emit('save')
       }
     } else {
       alert('No se pudo subir el archivo')
