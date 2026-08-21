@@ -125,8 +125,55 @@
               <input type="radio" value="carousel" v-model="section.content.media_type" class="text-primary-600" />
               <span class="text-sm">Carrusel</span>
             </label>
+            <label class="inline-flex items-center gap-2">
+              <input type="radio" value="none" v-model="section.content.media_type" class="text-primary-600" />
+              <span class="text-sm">Sin fondo (color)</span>
+            </label>
+    </div>
+
+          <p class="text-xs text-gray-400 mt-2 mb-3">
+            Si eliges una imagen de fondo, se conmuta automáticamente al modo "Imagen".
+          </p>
+
+          <!-- Campo de fondo de color / gradiente (cuando media_type='none') -->
+          <div v-if="section.content.media_type === 'none'" class="mt-3">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Color / gradiente de fondo</label>
+            <input
+              v-model="section.content.bg_color"
+              type="text"
+              class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm font-mono"
+              placeholder="bg-gradient-to-br from-earth-900 via-primary-900 to-earth-900"
+            />
+            <p class="text-[11px] text-gray-400 mt-1">Clase Tailwind de fondo. P. ej. <code>bg-gradient-to-br from-earth-900 via-primary-900 to-earth-900</code> o <code>bg-primary-900</code>.</p>
+    </div>
+
+          <!-- Overlay / gradiente de legibilidad (cuando hay media de fondo) -->
+          <div v-if="section.content.media_type !== 'none'" class="mt-3">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Overlay / gradiente de legibilidad</label>
+            <input
+              v-model="section.content.overlay_gradient"
+              type="text"
+              class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm font-mono"
+              placeholder="bg-gradient-to-r from-earth-950/70 via-earth-950/50 to-transparent"
+            />
+            <p class="text-[11px] text-gray-400 mt-1">Escribe <code>none</code> para desactivarlo, o una clase Tailwind de gradiente/overlay.</p>
+    </div>
+
+          <!-- Alineación del contenido -->
+          <div class="mt-3">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Alineación del contenido</label>
+            <div class="flex gap-4">
+              <label class="inline-flex items-center gap-2">
+                <input type="radio" value="left" v-model="section.content.text_align" class="text-primary-600" />
+                <span class="text-sm">Izquierda</span>
+              </label>
+              <label class="inline-flex items-center gap-2">
+                <input type="radio" value="center" v-model="section.content.text_align" class="text-primary-600" />
+                <span class="text-sm">Centro</span>
+              </label>
+            </div>
           </div>
-          <p class="text-xs text-gray-400 mt-2">
+          <p class="text-xs text-gray-400 mt-2 mb-3">
             Si eliges una imagen de fondo, se conmuta automáticamente al modo "Imagen".
           </p>
         </div>

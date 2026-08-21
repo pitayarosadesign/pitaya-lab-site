@@ -26,6 +26,9 @@
         cta_link="/catalog"
         cta_secondary_text="Tienda Amazon"
         cta_secondary_link="https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329"
+        media_type="video"
+        media_url="/images/brand/hero-video.mp4"
+        poster="/images/brand/hero-bruma.png"
       />
       <SectionProducts :content="{ title: 'Nuestros Productos', subtitle: 'Descubre', description: 'Velas de soya perfumadas, aceites aromáticos y brumas que transforman tu hogar en una experiencia sensorial única.', max_products: 4, show_view_all: true, view_all_text: 'Ver catálogo completo', view_all_link: '/catalog' }" />
       <SectionValues :content="{ title: '¿Por qué elegir PITAYA LAB?', subtitle: 'Nuestro Compromiso' }" />

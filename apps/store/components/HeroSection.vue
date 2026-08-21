@@ -1,6 +1,10 @@
 <template>
-  <section class="relative min-h-[85vh] flex items-center overflow-hidden">
-    <div class="absolute inset-0 w-full h-full">
+  <section
+    class="relative min-h-[85vh] flex items-center overflow-hidden"
+    :class="bgClasses"
+  >
+    <!-- Capa de media de fondo (video / imagen / carrusel) -->
+    <div v-if="hasBackgroundMedia" class="absolute inset-0 w-full h-full">
       <!-- Video de fondo (si está configurado) -->
       <video
         v-if="resolvedMediaType === 'video'"
@@ -51,33 +55,36 @@
           ></button>
         </div>
       </template>
-      <div class="absolute inset-0 bg-gradient-to-r from-earth-950/70 via-earth-950/50 to-transparent"></div>
+      <!-- Overlay / gradiente de legibilidad (configurable) -->
+      <div v-if="overlay_enabled" class="absolute inset-0" :class="overlayClass"></div>
     </div>
 
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full">
-      <div class="max-w-3xl">
+    <!-- Contenido -->
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full" :class="contentAlignmentClass">
+      <div :class="contentMaxWidthClass">
         <div
           v-if="badge"
-          class="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium mb-6 border border-white/10"
+          :class="['inline-flex items-center rounded-full text-sm font-medium mb-6', badgeClass]"
         >
-          <span class="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></span>
+          <span v-if="show_badge_dot" class="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></span>
           {{ badge }}
         </div>
 
-        <h1 class="text-4xl md:text-6xl lg:text-7xl font-serif font-bold text-white leading-tight mb-6">
+        <h1 :class="titleClass">
           {{ title }}
         </h1>
 
-        <p class="text-lg md:text-xl text-white/80 leading-relaxed mb-10 max-w-2xl drop-shadow-lg">
+        <p :class="subtitleClass">
           {{ subtitle }}
         </p>
 
-        <div class="flex flex-wrap gap-4">
+        <div class="flex flex-wrap gap-4" :class="ctaAlignClass">
           <NuxtLink
+            v-if="cta_text"
             :to="cta_link"
-            class="inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-full text-base font-semibold transition-all hover:shadow-xl hover:shadow-primary-500/30"
+            :class="primaryCtaClass"
           >
-            {{ cta_text || 'Explorar catálogo' }}
+            {{ cta_text }}
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
             </svg>
@@ -86,9 +93,9 @@
           <a
             v-if="cta_secondary_text"
             :href="cta_secondary_link"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/30 hover:bg-white/20 text-white px-8 py-4 rounded-full text-base font-semibold transition-all"
+            :target="isExternal(cta_secondary_link) ? '_blank' : undefined"
+            :rel="isExternal(cta_secondary_link) ? 'noopener noreferrer' : undefined"
+            :class="secondaryCtaClass"
           >
             {{ cta_secondary_text }}
           </a>
@@ -100,21 +107,67 @@
 
 <script setup>
 const props = defineProps({
-  title: { type: String, default: 'Fragancias que\nconectan\ncon la naturaleza' },
+  // Textos (el padre/editor decide los defaults)
+  title: { type: String, default: '' },
   subtitle: { type: String, default: '' },
-  badge: { type: String, default: '100% Natural · Biodegradable · Hecho en México' },
-  cta_text: { type: String, default: 'Explorar catálogo' },
+  badge: { type: String, default: '' },
+  cta_text: { type: String, default: '' },
   cta_link: { type: String, default: '/catalog' },
-  cta_secondary_text: { type: String, default: 'Tienda Amazon' },
-  cta_secondary_link: { type: String, default: 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329' },
-  media_type: { type: String, default: 'video' },
-  media_url: { type: String, default: '/images/brand/hero-video.mp4' },
-  poster: { type: String, default: '/images/brand/hero-bruma.png' },
+  cta_secondary_text: { type: String, default: '' },
+  cta_secondary_link: { type: String, default: '' },
+
+  // Media de fondo ('none' por defecto para NO heredar el video de la portada)
+  media_type: { type: String, default: 'none' },
+  media_url: { type: String, default: '' },
+  poster: { type: String, default: '' },
   slides: { type: Array, default: () => [] },
+
+  // Fondo de color sólido / degradado (cuando no hay media)
+  bg_color: { type: String, default: 'bg-gradient-to-br from-earth-900 via-primary-900 to-earth-900' },
+
+  // Overlay de legibilidad (desactivable con '' o 'none')
+  overlay_gradient: { type: String, default: 'bg-gradient-to-r from-earth-950/70 via-earth-950/50 to-transparent' },
+
+  // Alineación del contenido
+  text_align: { type: String, default: 'left' },
+  content_max_width: { type: String, default: 'max-w-3xl' },
+
+  // Estilos de texto / CTAs
+  badge_style: { type: String, default: 'bg-white/20 backdrop-blur-sm border border-white/10 text-white' },
+  title_style: { type: String, default: 'text-4xl md:text-6xl lg:text-7xl' },
+  subtitle_style: { type: String, default: 'text-lg md:text-xl' },
+  subtitle_color: { type: String, default: 'text-white/80' },
+  primary_cta_style: { type: String, default: 'bg-primary-500 hover:bg-primary-600 text-white hover:shadow-primary-500/30' },
+  secondary_cta_style: { type: String, default: 'bg-white/10 backdrop-blur-sm border border-white/30 hover:bg-white/20 text-white' },
+  show_badge_dot: { type: Boolean, default: true },
 })
 
-// Índice del slide actual del carrusel
 const currentSlide = ref(0)
+
+// Clases condicionales derivadas
+const hasBackgroundMedia = computed(() => {
+  if (props.media_type === 'none') return false
+  if (props.media_type === 'carousel') return Array.isArray(props.slides) && props.slides.length > 0
+  return Boolean(props.media_url)
+})
+
+const bgClasses = computed(() => (!hasBackgroundMedia.value ? props.bg_color : ''))
+const overlay_enabled = computed(() => {
+  if (!hasBackgroundMedia.value) return false
+  const g = props.overlay_gradient
+  return Boolean(g) && g !== 'none'
+})
+const overlayClass = computed(() => (overlay_enabled.value ? props.overlay_gradient : ''))
+
+const contentAlignmentClass = computed(() => (props.text_align === 'center' ? 'text-center' : ''))
+const contentMaxWidthClass = computed(() => (props.text_align === 'center' ? `mx-auto ${props.content_max_width}` : props.content_max_width))
+const ctaAlignClass = computed(() => (props.text_align === 'center' ? 'justify-center' : ''))
+
+const badgeClass = computed(() => `inline-flex items-center gap-2 px-4 py-2 ${props.badge_style}`)
+const titleClass = computed(() => `font-serif font-bold text-white leading-tight mb-6 ${props.title_style}`)
+const subtitleClass = computed(() => `leading-relaxed mb-10 max-w-2xl drop-shadow-lg ${props.subtitle_style} ${props.subtitle_color}`)
+const primaryCtaClass = computed(() => `inline-flex items-center gap-2 px-8 py-4 rounded-full text-base font-semibold transition-all hover:shadow-xl ${props.primary_cta_style}`)
+const secondaryCtaClass = computed(() => `inline-flex items-center gap-2 px-8 py-4 rounded-full text-base font-semibold transition-all ${props.secondary_cta_style}`)
 
 // Autoplay del carrusel
 let carouselTimer = null
@@ -148,33 +201,23 @@ watch(
 
 onBeforeUnmount(stopCarousel)
 
-// Determina si un enlace es externo (http/https) para abrirlo en pestaña nueva
 function isExternal(link) {
   return /^https?:\/\//i.test(link || '')
 }
 
-// Determina el tipo de media a mostrar. Si `media_type` es 'video' pero la URL
-// apunta a una imagen (p. ej. el admin subió una imagen sin cambiar el tipo),
-// inferimos el tipo real para que la imagen se muestre en lugar del video.
+// Determina el tipo de media real ('none' | 'image' | 'video' | 'carousel')
 const resolvedMediaType = computed(() => {
-  const type = props.media_type || (props.media_url ? inferType(props.media_url) : 'video')
-  // Si dice 'video' pero la URL es claramente una imagen, corregimos a 'image'
+  let type = props.media_type || (props.media_url ? inferType(props.media_url) : 'none')
+  if (type === 'carousel') return type
   if (type === 'video' && props.media_url && inferType(props.media_url) === 'image') {
     return 'image'
   }
+  if ((type === 'image' || type === 'video') && !props.media_url) return 'none'
   return type
 })
 
-// URL de media con fallback a los valores por defecto de la marca
-const mediaUrl = computed(() => {
-  if (props.media_url) return props.media_url
-  return resolvedMediaType.value === 'image'
-    ? '/images/brand/hero-bruma.png'
-    : '/images/brand/hero-video.mp4'
-})
-
-// URL del poster con fallback
-const poster = computed(() => props.poster || '/images/brand/hero-bruma.png')
+const mediaUrl = computed(() => props.media_url || '')
+const poster = computed(() => props.poster || '')
 
 function inferType(url) {
   const ext = (url || '').split('?')[0].split('.').pop()?.toLowerCase()
