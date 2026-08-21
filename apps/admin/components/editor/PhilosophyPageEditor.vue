@@ -13,8 +13,7 @@
       </div>
       <div class="p-6 space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Imagen del sello ecológico (URL)</label>
-          <input v-model="model.manifesto.image_url" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm font-mono" />
+          <EditorImageUrlField v-model="model.manifesto.image_url" label="Imagen del sello ecológico" />
         </div>
         <div>
           <div class="flex items-center justify-between mb-2">
@@ -56,8 +55,7 @@
             <input v-model="model.eco.title" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm" />
           </div>
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Imagen (URL)</label>
-            <input v-model="model.eco.image_url" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-mono" />
+            <EditorImageUrlField v-model="model.eco.image_url" label="Imagen (compromiso ecológico)" />
           </div>
           <div class="md:col-span-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">Texto introductorio</label>

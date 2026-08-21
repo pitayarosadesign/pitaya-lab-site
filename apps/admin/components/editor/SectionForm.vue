@@ -28,12 +28,20 @@
         ></video>
         <!-- Imagen -->
         <img
-          v-else-if="heroPreviewType === 'image' && section.content.media_url"
+          :key="section.content.media_url"
+          v-else-if="heroPreviewType === 'image' && section.content.media_url && !heroPreviewFailed"
           :src="section.content.media_url"
           alt="Vista previa del hero"
           class="w-full h-full object-cover"
-          @error="$event.target.style.opacity = 0.15"
+          @error="onPreviewImgError($event)"
         />
+        <div
+          v-else-if="heroPreviewType === 'image' && section.content.media_url && heroPreviewFailed"
+          class="w-full h-full flex flex-col items-center justify-center gap-2 bg-red-50 text-red-500"
+        >
+          <span class="text-3xl">⚠️</span>
+          <span class="text-xs px-4 text-center">No se pudo cargar la imagen. Revisa que la URL sea pública.</span>
+        </div>
         <!-- Carrusel -->
         <div v-else-if="heroPreviewType === 'carousel' && section.content.slides && section.content.slides.length" class="w-full h-full">
           <img
@@ -43,7 +51,7 @@
             :alt="'Slide ' + (i + 1)"
             class="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
             :class="i === heroPreviewSlide ? 'opacity-100' : 'opacity-0'"
-            @error="$event.target.style.opacity = 0.15"
+            @error="onPreviewImgError($event)"
           />
         </div>
         <!-- Placeholder si no hay media -->
@@ -117,6 +125,24 @@
               <input type="radio" value="carousel" v-model="section.content.media_type" class="text-primary-600" />
               <span class="text-sm">Carrusel</span>
             </label>
+          </div>
+          <p class="text-xs text-gray-400 mt-2">
+            Si eliges una imagen de fondo, se conmuta automáticamente al modo "Imagen".
+          </p>
+        </div>
+
+        <!-- Subir imagen de fondo (disponible en todo modo, comunica media_type a 'image') -->
+        <div class="md:col-span-2" v-if="section.content.media_type !== 'carousel'">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Imagen de fondo (fondo del hero)</label>
+          <div class="flex flex-wrap items-center gap-2">
+            <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" class="hidden" data-input-key="hero_bg" @change="onMediaUpload('media_url', $event)" />
+            <button
+              type="button"
+              @click="triggerMediaUpload('hero_bg')"
+              class="px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs text-gray-600 hover:bg-gray-100 transition-colors"
+              :disabled="uploadingField === 'media_url'"
+            >{{ uploadingField === 'media_url' ? 'Subiendo...' : '📷 Subir imagen de fondo' }}</button>
+            <span v-if="section.content.media_url" class="text-xs text-gray-400 truncate max-w-[280px]">{{ section.content.media_url }}</span>
           </div>
         </div>
 
@@ -218,7 +244,7 @@
 
             <!-- Preview grande de la slide -->
             <div class="w-full h-32 md:h-40 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 relative">
-              <img v-if="slide.image" :src="slide.image" class="w-full h-full object-cover" @error="$event.target.style.opacity = 0.15" />
+              <img v-if="slide.image" :src="slide.image" class="w-full h-full object-cover" @error="onPreviewImgError($event)" />
               <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-3xl">🖼️</div>
             </div>
 
@@ -549,7 +575,13 @@
           <label class="block text-sm font-medium text-gray-700 mb-1">URL de la imagen</label>
           <div class="flex flex-col md:flex-row items-start md:items-center gap-3">
             <div class="w-full md:w-40 h-28 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0">
-              <img v-if="section.content.image_url" :src="section.content.image_url" class="w-full h-full object-cover" @error="$event.target.style.opacity = 0.15" />
+              <img
+                :key="section.content.image_url"
+                v-if="section.content.image_url"
+                :src="section.content.image_url"
+                class="w-full h-full object-cover"
+                @error="onPreviewImgError($event)"
+              />
               <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-2xl">🖼️</div>
             </div>
             <div class="flex-1 space-y-2 w-full">
@@ -616,7 +648,13 @@
 
           <!-- Preview -->
           <div class="w-full h-32 md:h-40 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 relative">
-            <img v-if="image.url" :src="image.url" class="w-full h-full object-cover" @error="$event.target.style.opacity = 0.15" />
+            <img
+              :key="`${image.url}-${index}`"
+              v-if="image.url"
+              :src="image.url"
+              class="w-full h-full object-cover"
+              @error="onPreviewImgError($event)"
+            />
             <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-3xl">🖼️</div>
           </div>
 
@@ -883,6 +921,26 @@ const heroPreviewType = computed(() => {
 // Slide actual del carrusel en la vista previa
 const heroPreviewSlide = ref(0)
 
+// Indica si falló la carga de la imagen de fondo del hero en la vista previa
+// (para no ocultarla semi-invisible, sino mostrar un error claro al admin).
+const heroPreviewFailed = ref(false)
+
+// Handler de error de carga de imágenes en la vista previa del editor.
+// En lugar de atenuar la imagen a 15% de opacidad (que parece que "no se
+// previsualiza"), muestro una señal visible para diagnosticar cuando una URL
+// de optimización de imágenes no carga correctamente.
+function onPreviewImgError(event) {
+  // Marcar la imagen con error para avisar visualmente
+  event.target.classList.add('img-error')
+  heroPreviewFailed.value = true
+}
+
+// Reinicia el flag de error cuando cambia la URL del fondo
+watch(
+  () => section.content?.media_url,
+  () => { heroPreviewFailed.value = false }
+)
+
 // Autoplay del carrusel en la vista previa
 let heroPreviewTimer = null
 function startHeroPreviewCarousel() {
@@ -1074,6 +1132,11 @@ async function onMediaUpload(field, event) {
       // Mutar el objeto content directamente (no reasignar) para que Vue
       // detecte el cambio y actualice la vista previa y el guardado.
       section.content[field] = url
+      // Si se subió una imagen como fondo del hero (media_url), cambiar el
+      // tipo de fondo a 'image' para que la tienda la muestre correctamente.
+      if (field === 'media_url' && file.type && file.type.startsWith('image/')) {
+        section.content.media_type = 'image'
+      }
     } else {
       alert('No se pudo subir el archivo')
     }
@@ -1198,3 +1261,10 @@ function iconEmoji(icon) {
 
 onMounted(loadCollections)
 </script>
+
+<style scoped>
+/* Marca visual para imágenes que fallan al cargar en las vistas previas del editor */
+.img-error {
+  opacity: 0.15;
+}
+</style>

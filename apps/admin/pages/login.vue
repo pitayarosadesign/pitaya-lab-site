@@ -156,6 +156,9 @@ onMounted(async () => {
         console.error('Error al intercambiar código:', error.message)
         error.value = 'Error al iniciar sesión con el magic link. Intenta de nuevo.'
       } else if (data?.session) {
+        // Limpiar el code de la URL para evitar re-procesos al recargar
+        const cleanUrl = window.location.pathname + window.location.hash
+        window.history.replaceState({}, document.title, cleanUrl)
         await navigateTo('/dashboard')
       }
     }

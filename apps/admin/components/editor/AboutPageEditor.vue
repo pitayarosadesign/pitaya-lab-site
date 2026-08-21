@@ -21,14 +21,13 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
             <input v-model="model.story.title" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Imagen principal (URL)</label>
-            <input v-model="model.story.image_url" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm font-mono" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Imagen secundaria (URL)</label>
-            <input v-model="model.story.secondary_image_url" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm font-mono" />
-          </div>
+        </div>
+
+        <EditorImageUrlField v-model="model.story.image_url" label="Imagen principal" />
+
+        <EditorImageUrlField v-model="model.story.secondary_image_url" label="Imagen secundaria (superpuesta)" />
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Alt imagen principal</label>
             <input v-model="model.story.image_alt" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
@@ -38,7 +37,6 @@
             <input v-model="model.story.secondary_image_alt" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
           </div>
         </div>
-
         <div>
           <div class="flex items-center justify-between mb-2">
             <label class="block text-sm font-medium text-gray-700">Párrafos de la historia</label>
@@ -65,3 +63,4 @@ function addParagraph() {
   model.value.story.paragraphs.push('')
 }
 </script>
+
