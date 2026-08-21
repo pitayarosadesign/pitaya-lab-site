@@ -1,5 +1,5 @@
 <template>
-  <section class="py-16 md:py-20 bg-earth-50/50">
+  <section v-if="cards.length" class="py-16 md:py-20 bg-earth-50/50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 class="text-3xl md:text-4xl font-serif font-bold text-earth-900 text-center mb-2">{{ title }}</h2>
       <p class="text-center text-earth-500 mb-12 max-w-2xl mx-auto">{{ subtitle }}</p>
@@ -42,38 +42,25 @@ const props = defineProps({
 const title = computed(() => props.content?.title || '¿Para quién es PITAYA LAB B2B?')
 const subtitle = computed(() => props.content?.subtitle || 'Tres formas de trabajar juntos, según tu tipo de negocio o evento.')
 
+// Contenido por defecto desde site_config (editable en el panel admin)
+const defaultCards = ref([])
+const loadedDefaults = ref(false)
+
+async function loadDefaults() {
+  if (loadedDefaults.value) return
+  loadedDefaults.value = true
+  const defaults = await useSectionDefaults('b2b_audience', null)
+  if (defaults?.cards && Array.isArray(defaults.cards)) {
+    defaultCards.value = defaults.cards
+  }
+}
+
+onMounted(loadDefaults)
+
 const cards = computed(() => {
   const items = props.content?.cards || []
   if (items.length) return items
-  // Fallback por defecto
-  return [
-    {
-      icon: '📦',
-      title: 'Mayoreo Comercial',
-      description: 'Para tiendas boutique, cafeterías de especialidad y distribuidores que revenden nuestra línea regular. Descuento fijo por volumen sobre el precio público.',
-      points: ['🎯 Mínimo: 20 piezas surtidas', '💸 Hasta 35% dto.', '🔥 Margen de ganancia saludable para ti'],
-      link: '#calculadora-mayoreo',
-      cta_text: 'Cotizar →',
-      highlight: false,
-    },
-    {
-      icon: '💍',
-      title: 'Recuerdos & Eventos',
-      description: 'Bodas, XV años, eventos corporativos. Recuerdos personalizados con tu diseño o nuestras plantillas, en envases perfumero con tu fragancia insignia.',
-      points: ['💍 Mínimo: 30 piezas', '🏷️ Etiqueta 5×5 personalizada', '🎁 Kit premium opcional'],
-      link: '#cotizador-eventos',
-      cta_text: 'Arma tu recuerdo →',
-      highlight: true,
-    },
-    {
-      icon: '🏷️',
-      title: 'Etiquetado Privado',
-      description: 'Tu marca, nuestros productos. Personalizamos etiquetas con tu logotipo para que ofrezcas fragancias PITAYA LAB bajo tu propia marca.',
-      points: ['🏷️ Diseño de etiquetas propio', '🔒 Exclusividad por zona', '🤝 Contacto directo'],
-      link: '#contacto',
-      cta_text: 'Hablemos →',
-      highlight: false,
-    },
-  ]
+  // Fallback: contenido editable desde site_config (si no hay configuración, se oculta la sección)
+  return defaultCards.value
 })
 </script>

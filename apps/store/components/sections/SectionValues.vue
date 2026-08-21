@@ -42,16 +42,26 @@ const props = defineProps({
   settings: { type: Object, default: () => ({}) },
 })
 
+// Contenido por defecto desde site_config (editable en el panel admin)
+const defaultValues = ref([])
+const loadedDefaults = ref(false)
+
+async function loadDefaults() {
+  if (loadedDefaults.value) return
+  loadedDefaults.value = true
+  const defaults = await useSectionDefaults('values', null)
+  if (defaults?.values && Array.isArray(defaults.values)) {
+    defaultValues.value = defaults.values
+  }
+}
+
+onMounted(loadDefaults)
+
 const values = computed(() => {
   if (Array.isArray(props.content.values) && props.content.values.length > 0) {
     return props.content.values
   }
-  // Fallback a valores por defecto
-  return [
-    { icon: 'leaf', title: '100% Natural', description: 'Ingredientes botánicos biodegradables que cuidan de ti y del planeta.' },
-    { icon: 'shield', title: 'Hecho en México', description: 'Productos artesanales elaborados con amor y dedicación.' },
-    { icon: 'heart', title: 'Cruelty Free', description: 'Nunca testamos en animales. Solo amor y respeto.' },
-    { icon: 'sparkles', title: 'Calidad Premium', description: 'Fragancias de alta gama inspiradas en hoteles boutique.' },
-  ]
+  // Fallback: contenido editable desde site_config (si no hay configuración, se oculta la sección)
+  return defaultValues.value
 })
 </script>

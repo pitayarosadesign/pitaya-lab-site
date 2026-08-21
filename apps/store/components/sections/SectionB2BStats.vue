@@ -1,5 +1,5 @@
 <template>
-  <section class="bg-white border-b border-earth-100">
+  <section v-if="stats.length" class="bg-white border-b border-earth-100">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
         <div v-for="(stat, i) in stats" :key="i">
@@ -17,15 +17,25 @@ const props = defineProps({
   settings: { type: Object, default: () => ({}) },
 })
 
+// Contenido por defecto desde site_config (editable en el panel admin)
+const defaultStats = ref([])
+const loadedDefaults = ref(false)
+
+async function loadDefaults() {
+  if (loadedDefaults.value) return
+  loadedDefaults.value = true
+  const defaults = await useSectionDefaults('b2b_stats', null)
+  if (defaults?.stats && Array.isArray(defaults.stats)) {
+    defaultStats.value = defaults.stats
+  }
+}
+
+onMounted(loadDefaults)
+
 const stats = computed(() => {
   const items = props.content?.stats || []
   if (items.length) return items
-  // Fallback por defecto
-  return [
-    { value: '25–35%', label: 'Dto. por volumen B2B' },
-    { value: '30+', label: 'Recuerdos personalizados' },
-    { value: '100%', label: 'Botánico y biodegradable' },
-    { value: '≤15 d', label: 'Días hábiles entrega' },
-  ]
+  // Fallback: contenido editable desde site_config (si no hay configuración, se oculta la sección)
+  return defaultStats.value
 })
 </script>

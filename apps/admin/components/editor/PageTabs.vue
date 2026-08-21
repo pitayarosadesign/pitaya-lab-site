@@ -36,6 +36,7 @@ const tabs = [
   { key: 'b2b', label: 'Mayoreo B2B', icon: '🏢', to: '/site/b2b' },
   { key: 'faq', label: 'FAQ', icon: '❓', to: '/site/faq' },
   { key: 'contact', label: 'Contacto', icon: '✉️', to: '/site/contact' },
+  { key: 'contenido', label: 'Contenido', icon: '🧩', to: '/site/contenido' },
   { key: 'legal', label: 'Legal', icon: '📜', to: '/site/legal' },
 ]
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <section class="py-16 bg-gradient-to-b from-white to-primary-50/30">
+  <section v-if="features.length" class="py-16 bg-gradient-to-b from-white to-primary-50/30">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center mb-12">
         <span v-if="content.subtitle" class="text-primary-600 font-semibold text-sm uppercase tracking-wider">{{ content.subtitle }}</span>
@@ -54,14 +54,26 @@ const props = defineProps({
   settings: { type: Object, default: () => ({}) },
 })
 
+// Contenido por defecto desde site_config (editable en el panel admin)
+const defaultFeatures = ref([])
+const loadedDefaults = ref(false)
+
+async function loadDefaults() {
+  if (loadedDefaults.value) return
+  loadedDefaults.value = true
+  const defaults = await useSectionDefaults('trust', null)
+  if (defaults?.features && Array.isArray(defaults.features)) {
+    defaultFeatures.value = defaults.features
+  }
+}
+
+onMounted(loadDefaults)
+
 const features = computed(() => {
   if (Array.isArray(props.content.features) && props.content.features.length > 0) {
     return props.content.features
   }
-  return [
-    { icon: 'truck', title: 'Envío gratis', description: 'En todas tus compras mayores a $299 MXN' },
-    { icon: 'package', title: 'Costo simbólico', description: 'Compras menores a $299 solo $50 MXN de envío' },
-    { icon: 'clock', title: '3 a 5 días hábiles', description: 'Entregamos a todo México con mensajerías de prestigio' },
-  ]
+  // Fallback: contenido editable desde site_config (si no hay configuración, se oculta la sección)
+  return defaultFeatures.value
 })
 </script>
