@@ -4,9 +4,10 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const query = getQuery(event)
   const sessionId = query.session_id as string
+  const orderNumber = query.order as string
 
-  if (!sessionId) {
-    throw createError({ statusCode: 400, message: 'session_id es requerido' })
+  if (!sessionId && !orderNumber) {
+    throw createError({ statusCode: 400, message: 'session_id u order es requerido' })
   }
 
   const supabaseAdmin = createClient(
@@ -16,13 +17,27 @@ export default defineEventHandler(async (event) => {
   )
 
   try {
-    const { data: orders, error } = await supabaseAdmin
-      .from('orders')
-      .select('order_number, status, total, customer_email')
-      .eq('stripe_session_id', sessionId)
-      .limit(1)
+    let orders: any[] = []
 
-    if (error) throw error
+    if (sessionId) {
+      // Buscar por stripe_session_id (Stripe)
+      const { data, error } = await supabaseAdmin
+        .from('orders')
+        .select('order_number, status, total, customer_email')
+        .eq('stripe_session_id', sessionId)
+        .limit(1)
+      if (error) throw error
+      orders = data || []
+    } else if (orderNumber) {
+      // Buscar por order_number (Mercado Pago usa external_reference = order_number)
+      const { data, error } = await supabaseAdmin
+        .from('orders')
+        .select('order_number, status, total, customer_email')
+        .eq('order_number', orderNumber)
+        .limit(1)
+      if (error) throw error
+      orders = data || []
+    }
 
     if (orders?.[0]) {
       return {
@@ -55,4 +70,3 @@ export default defineEventHandler(async (event) => {
     }
   }
 })
-

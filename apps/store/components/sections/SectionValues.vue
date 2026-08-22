@@ -1,5 +1,6 @@
 <template>
-  <section class="py-20">
+
+  <section v-if="values.length" class="py-20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center mb-14">
         <span v-if="content.subtitle" class="text-amber-600 font-semibold text-sm uppercase tracking-wider">{{ content.subtitle }}</span>

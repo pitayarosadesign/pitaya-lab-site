@@ -89,11 +89,27 @@ const props = defineProps({
   settings: { type: Object, default: () => ({}) },
 })
 
+// Defaults desde site_config (editable en el panel admin)
+const defaultReviews = ref([])
+const loadedDefaults = ref(false)
+
+async function loadDefaults() {
+  if (loadedDefaults.value) return
+  loadedDefaults.value = true
+  const defaults = await useSectionDefaults('reviews', null)
+  if (defaults?.items && Array.isArray(defaults.items)) {
+    defaultReviews.value = defaults.items
+  }
+}
+
+onMounted(loadDefaults)
+
 const reviews = computed(() => {
   if (Array.isArray(props.content.items) && props.content.items.length > 0) {
     return props.content.items
   }
-  return []
+  // Fallback: contenido editable desde site_config
+  return defaultReviews.value
 })
 
 const reviewsContainer = ref(null)

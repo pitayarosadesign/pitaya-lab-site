@@ -105,6 +105,52 @@
         <button @click="add(config.faq.faqs, { q: '', a: '' })" class="inline-flex items-center gap-1.5 text-sm text-primary-600 hover:bg-primary-50 px-3 py-2 rounded-lg font-medium transition-colors">+ Agregar pregunta</button>
       </div>
     </EditorContentCard>
+
+    <!-- ⭐ Reseñas de clientes (SectionReviews) -->
+    <EditorContentCard title="⭐ Reseñas de clientes" desc="Testimonios que aparecen en la sección 'Reseñas'." :saving="saving.reviews" @save="save('reviews')">
+      <div class="space-y-3">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <input v-model="config.reviews.title" placeholder="Título (ej. Lo que dicen nuestros clientes)" class="px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+          <input v-model="config.reviews.subtitle" placeholder="Subtítulo (ej. Opiniones reales)" class="px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div v-for="(r, i) in config.reviews.items" :key="i" class="border border-gray-200 rounded-xl p-3 space-y-2 bg-gray-50">
+          <div class="grid grid-cols-2 gap-2">
+            <input v-model="r.author" placeholder="Autor (ej. María F.)" class="px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+            <input v-model="r.product" placeholder="Producto (ej. Bruma Solara)" class="px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-gray-400">Calificación:</label>
+            <select v-model="r.rating" class="px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm">
+              <option :value="5">5 ⭐⭐⭐⭐⭐</option>
+              <option :value="4">4 ⭐⭐⭐⭐</option>
+              <option :value="3">3 ⭐⭐⭐</option>
+              <option :value="2">2 ⭐⭐</option>
+              <option :value="1">1 ⭐</option>
+            </select>
+            <input v-model="r.image" placeholder="URL de imagen (opcional)" class="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+            <button @click="remove(config.reviews.items, i)" class="text-red-500 hover:text-red-700 text-xs flex-shrink-0">✕</button>
+          </div>
+          <textarea v-model="r.text" rows="2" placeholder="Texto de la reseña" class="px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm w-full"></textarea>
+        </div>
+        <button @click="add(config.reviews.items, { author: '', rating: 5, product: '', text: '', image: null })" class="inline-flex items-center gap-1.5 text-sm text-primary-600 hover:bg-primary-50 px-3 py-2 rounded-lg font-medium transition-colors">+ Agregar reseña</button>
+      </div>
+    </EditorContentCard>
+
+    <!-- 🚀 CTA Final (SectionCta) -->
+    <EditorContentCard title="🚀 CTA Final" desc="Llamada a la acción que aparece al final de la página." :saving="saving.cta" @save="save('cta')">
+      <div class="space-y-3">
+        <input v-model="config.cta.title" placeholder="Título (ej. ¿Listo para transformar tu hogar?)" class="px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm w-full" />
+        <textarea v-model="config.cta.description" rows="2" placeholder="Descripción" class="px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm w-full"></textarea>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <input v-model="config.cta.button_text" placeholder="Texto del botón (ej. Explorar catálogo)" class="px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+          <input v-model="config.cta.button_link" placeholder="Link del botón (ej. /catalog)" class="px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <input v-model="config.cta.button_secondary_text" placeholder="Texto botón secundario (opcional)" class="px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+          <input v-model="config.cta.button_secondary_link" placeholder="Link botón secundario (opcional)" class="px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+      </div>
+    </EditorContentCard>
   </div>
 </template>
 
@@ -113,7 +159,7 @@ useSeoMeta({ title: 'Contenido de secciones | PITAYA LAB' })
 
 const supabase = useSupabase()
 const supabaseAdmin = useSupabaseAdmin()
-const saving = reactive({ values: false, trust: false, stats: false, audience: false, faq: false })
+const saving = reactive({ values: false, trust: false, stats: false, audience: false, faq: false, reviews: false, cta: false })
 
 // Estructura editable replicada desde la migración 018
 const config = reactive({
@@ -122,6 +168,8 @@ const config = reactive({
   stats: [],           // b2b_stats
   audience: [],        // b2b_audience
   faq: { title: '', faqs: [] },  // b2b_faq
+  reviews: { title: '', subtitle: '', items: [] },  // section_reviews
+  cta: { title: '', description: '', button_text: '', button_link: '', button_secondary_text: '', button_secondary_link: '' },  // section_cta
 })
 
 // Mapeo local → clave de site_config
@@ -131,6 +179,8 @@ const SECTION_KEY = {
   stats: 'b2b_stats',
   audience: 'b2b_audience',
   faq: 'b2b_faq',
+  reviews: 'section_reviews',
+  cta: 'section_cta',
 }
 
 async function loadConfig() {
@@ -153,6 +203,19 @@ async function loadConfig() {
           case 'b2b_faq':
             config.faq.title = v.title || ''
             config.faq.faqs = v.faqs || []
+            break
+          case 'section_reviews':
+            config.reviews.title = v.title || ''
+            config.reviews.subtitle = v.subtitle || ''
+            config.reviews.items = v.items || []
+            break
+          case 'section_cta':
+            config.cta.title = v.title || ''
+            config.cta.description = v.description || ''
+            config.cta.button_text = v.button_text || ''
+            config.cta.button_link = v.button_link || ''
+            config.cta.button_secondary_text = v.button_secondary_text || ''
+            config.cta.button_secondary_link = v.button_secondary_link || ''
             break
         }
       }
@@ -200,6 +263,8 @@ async function save(key) {
         value = { cards: config.audience.map(({ pointsText, ...c }) => c) }
         break
       case 'faq': value = { title: config.faq.title, faqs: config.faq.faqs }; break
+      case 'reviews': value = { title: config.reviews.title, subtitle: config.reviews.subtitle, items: config.reviews.items }; break
+      case 'cta': value = { ...config.cta }; break
     }
     const { error } = await client
       .from('site_config')

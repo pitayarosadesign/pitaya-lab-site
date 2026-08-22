@@ -43,11 +43,14 @@ export default defineNuxtConfig({
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL || '',
       supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY || '',
       stripePublishableKey: process.env.NUXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '',
+      mercadoPagoPublicKey: process.env.NUXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY || '',
     },
     // 🔒 Variables privadas (solo servidor)
     supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY || '',
     stripeSecretKey: process.env.STRIPE_SECRET_KEY || '',
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+    mercadoPagoAccessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || '',
+    mercadoPagoWebhookSecret: process.env.MERCADOPAGO_WEBHOOK_SECRET || '',
     skydropxApiKey: process.env.SKYDROPX_API_KEY || '',
     resendApiKey: process.env.RESEND_API_KEY || '',
   },
@@ -80,6 +83,8 @@ export default defineNuxtConfig({
   routeRules: {
     '/api/checkout/webhook': { redirect: false, seo: { redirectToCanonical: false } },
     '/api/checkout/webhook/': { redirect: false, seo: { redirectToCanonical: false } },
+    '/api/checkout/mp/webhook': { redirect: false, seo: { redirectToCanonical: false } },
+    '/api/checkout/mp/webhook/': { redirect: false, seo: { redirectToCanonical: false } },
     // Alias para feeds
     '/sitemap.xml': { redirect: '/api/seo/sitemap.xml' },
     '/merchant-feed.xml': { redirect: '/api/merchant/feed.xml' },

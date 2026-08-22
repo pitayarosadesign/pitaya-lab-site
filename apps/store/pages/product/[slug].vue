@@ -156,6 +156,35 @@
               </span>
             </div>
 
+            <!-- 🏷️ Badges de confianza dinámicos -->
+            <div class="flex flex-wrap gap-2 mb-6">
+              <!-- 🔥 Stock bajo -->
+              <span v-if="currentStock > 0 && currentStock <= 5"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 border border-red-200 text-red-600 text-xs font-semibold animate-pulse">
+                🔥 ¡Solo quedan {{ currentStock }}!
+              </span>
+              <!-- 🆕 Producto nuevo -->
+              <span v-if="isNewProduct"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-600 text-xs font-semibold">
+                🆕 Nuevo
+              </span>
+              <!-- ⭐ Bestseller -->
+              <span v-if="isBestseller"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-600 text-xs font-semibold">
+                ⭐ Bestseller
+              </span>
+              <!-- 🎁 Envío gratis -->
+              <span v-if="product.freeShipping"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 border border-green-200 text-green-600 text-xs font-semibold">
+                🎁 Envío gratis
+              </span>
+              <!-- 💎 Artesanal -->
+              <span v-if="product.artisanal"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-50 border border-purple-200 text-purple-600 text-xs font-semibold">
+                💎 Hecho a mano
+              </span>
+            </div>
+
             <!-- Botones de acción -->
             <div class="space-y-3">
               <!-- Agregar al carrito -->
@@ -170,6 +199,53 @@
                 {{ buttonLabel }}
               </button>
 
+              <!-- 🔒 Confianza de pago -->
+              <div class="bg-earth-50/70 rounded-2xl p-4 border border-earth-100">
+                <!-- Pago seguro -->
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-semibold text-earth-800">Pago 100% seguro</p>
+                    <p class="text-xs text-earth-500">Tus datos están protegidos con cifrado SSL</p>
+                  </div>
+                </div>
+
+                <!-- Métodos de pago -->
+                <div class="flex flex-wrap items-center gap-1.5 mb-3">
+                  <span class="inline-flex items-center px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700">VISA</span>
+                  <span class="inline-flex items-center px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700">MasterCard</span>
+                  <span class="inline-flex items-center px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700">AMEX</span>
+                  <span class="inline-flex items-center px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700">SPEI</span>
+                  <span class="inline-flex items-center px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700">OXXO</span>
+                  <span class="inline-flex items-center px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700">MSI</span>
+                </div>
+
+                <!-- Garantías -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-3 border-t border-earth-100">
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                    </svg>
+                    <span class="text-[11px] text-earth-600">Envío a todo México</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    <span class="text-[11px] text-earth-600">Devoluciones fáciles</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                    <span class="text-[11px] text-earth-600">Compra protegida</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- Características -->
@@ -196,6 +272,64 @@
           </div>
         </div>
       </section>
+
+      <!-- 🎉 Toast de confirmación al agregar al carrito -->
+      <Teleport to="body">
+        <Transition
+          enter-from-class="opacity-0 translate-y-4"
+          enter-active-class="transition-all duration-300"
+          enter-to-class="opacity-100 translate-y-0"
+          leave-active-class="transition-all duration-200"
+          leave-from-class="opacity-100 translate-y-0"
+          leave-to-class="opacity-0 translate-y-4"
+        >
+          <div
+            v-if="showAddToast && toastProduct"
+            class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] w-[calc(100%-2rem)] max-w-md"
+          >
+            <div class="bg-white rounded-2xl shadow-2xl border border-earth-100 p-4 flex items-center gap-4">
+              <!-- Miniatura del producto -->
+              <div class="w-14 h-14 rounded-xl overflow-hidden bg-earth-50 flex-shrink-0">
+                <img
+                  v-if="toastProduct.image"
+                  :src="toastProduct.image"
+                  :alt="toastProduct.name"
+                  class="w-full h-full object-cover"
+                />
+                <div v-else class="w-full h-full flex items-center justify-center text-earth-300 text-xl">📦</div>
+              </div>
+
+              <!-- Info -->
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold text-green-600 flex items-center gap-1.5">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                  ¡Agregado al carrito!
+                </p>
+                <p class="text-xs text-earth-500 truncate">{{ toastProduct.name }}</p>
+                <p v-if="toastProduct.variant" class="text-[11px] text-earth-400">{{ toastProduct.variant.name }}</p>
+              </div>
+
+              <!-- Acciones -->
+              <div class="flex flex-col gap-1.5 flex-shrink-0">
+                <button
+                  @click="cart.openCart()"
+                  class="px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold rounded-lg transition-all whitespace-nowrap"
+                >
+                  Ver carrito
+                </button>
+                <button
+                  @click="showAddToast = false"
+                  class="px-3 py-1.5 text-earth-500 hover:text-earth-700 text-xs font-medium rounded-lg transition-all whitespace-nowrap"
+                >
+                  Seguir viendo
+                </button>
+              </div>
+            </div>
+          </div>
+        </Transition>
+      </Teleport>
 
       <!-- Productos relacionados -->
       <section v-if="relatedProducts.length > 0" class="bg-earth-50/50 py-16 mt-8">
@@ -225,12 +359,18 @@
 <script setup>
 const route = useRoute()
 const supabase = useNuxtApp().$supabase
+const cart = useCartStore()
 
 const product = ref(null)
 const loading = ref(true)
 const error = ref(false)
 const activeImageIndex = ref(0)
 const selectedVariant = ref(null)
+
+// 🎉 Toast de confirmación al agregar al carrito
+const showAddToast = ref(false)
+const toastProduct = ref(null)
+const toastTimer = ref(null)
 
 // ===== Galería combinada: imágenes del producto + imágenes de cada variante =====
 // Construye una lista unificada de todas las imágenes disponibles para que el
@@ -372,6 +512,25 @@ const isPurchasable = computed(() => {
   return !!product.value
 })
 
+// 🏷️ Badges de confianza
+// ¿Es un producto nuevo? (creado hace menos de 30 días)
+const isNewProduct = computed(() => {
+  if (!product.value?.created_at) return false
+  const created = new Date(product.value.created_at)
+  const now = new Date()
+  const daysDiff = (now - created) / (1000 * 60 * 60 * 24)
+  return daysDiff <= 30
+})
+
+// ¿Es un bestseller? (más de 50 ventas o marcado como tal)
+const isBestseller = computed(() => {
+  if (!product.value) return false
+  // Si el producto tiene un campo sales_count o is_bestseller
+  if (product.value.is_bestseller) return true
+  if (product.value.sales_count && product.value.sales_count >= 50) return true
+  return false
+})
+
 // Texto del botón según estado
 const buttonLabel = computed(() => {
   if (!product.value) return 'Agregar al carrito'
@@ -412,9 +571,13 @@ function addToCart() {
 
   cartStore.addItem(cartItem)
 
-  // Feedback visual
-  const nuxtApp = useNuxtApp()
-  nuxtApp.$toast?.success?.(`${product.value.name} agregado al carrito`)
+  // 🎉 Toast de confirmación con miniatura y acciones
+  showAddToast.value = true
+  toastProduct.value = cartItem
+  clearTimeout(toastTimer.value)
+  toastTimer.value = setTimeout(() => {
+    showAddToast.value = false
+  }, 3500)
 }
 
 // Cargar producto
@@ -550,5 +713,9 @@ useHead({
 
 onMounted(() => {
   loadProduct()
+})
+
+onUnmounted(() => {
+  clearTimeout(toastTimer.value)
 })
 </script>

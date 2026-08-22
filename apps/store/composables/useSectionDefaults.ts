@@ -29,6 +29,8 @@ const SECTION_SITE_KEYS = {
   values: 'section_values',
   trust: 'section_trust',
   reviews: 'section_reviews',
+  cta: 'section_cta',
+  hero: 'section_hero',
   'b2b_stats': 'b2b_stats',
   'b2b_audience': 'b2b_audience',
   'b2b_faq': 'b2b_faq',
@@ -81,3 +83,4 @@ export async function useSectionDefaults(type, fallback = null) {
   cache.set(key, fallback)
   return fallback
 }
+

@@ -87,6 +87,11 @@ onMounted(async () => {
   // Stripe puede pasar session_id como query param o como hash fragment
   let sessionId = route.query.session_id
 
+  // Mercado Pago pasa payment_id y status en la URL de retorno
+  const mpPaymentId = route.query.payment_id
+  const mpStatus = route.query.status
+  const provider = route.query.provider
+
   // También podemos recibir el orderNumber directo en la URL
   const orderFromUrl = route.query.order
 
@@ -101,6 +106,11 @@ onMounted(async () => {
 
   // Si tenemos orderNumber directo, usarlo inmediatamente
   if (orderFromUrl) {
+    orderNumber.value = orderFromUrl
+  }
+
+  // Para Mercado Pago, el orderNumber viene en la URL (external_reference)
+  if (provider === 'mercadopago' && orderFromUrl) {
     orderNumber.value = orderFromUrl
   }
 
