@@ -303,14 +303,11 @@
                   </div>
                 </div>
 
-                <!-- Métodos de pago -->
+                <!-- Métodos de pago (Stripe: tarjetas de crédito/débito) -->
                 <div class="flex flex-wrap items-center gap-1.5 mb-3">
                   <span class="inline-flex items-center px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700">VISA</span>
                   <span class="inline-flex items-center px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700">MasterCard</span>
                   <span class="inline-flex items-center px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700">AMEX</span>
-                  <span class="inline-flex items-center px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700">SPEI</span>
-                  <span class="inline-flex items-center px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700">OXXO</span>
-                  <span class="inline-flex items-center px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700">MSI</span>
                 </div>
 
                 <!-- Garantías -->

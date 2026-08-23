@@ -183,61 +183,26 @@
 
         <!-- Footer con total y checkout (STICKY - siempre visible) -->
         <div v-if="cart.hasItems" class="border-t border-earth-100 px-6 py-4 bg-white flex-shrink-0 pb-6 shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
-          <!-- ✅ Total + selector de pago compacto -->
-          <div class="flex items-center justify-between mb-3">
+          <!-- ✅ Total -->
+          <div class="flex items-center justify-between mb-2">
             <div>
               <span class="text-sm font-medium text-earth-500">Total</span>
               <p class="text-xl font-bold text-earth-900">${{ formatPrice(cart.totalPrice + shippingCost) }}</p>
             </div>
-            <!-- Selector de pago compacto (solo iconos) -->
-            <div v-if="availableProviders.length > 1" class="flex items-center gap-1.5">
-              <button
-                v-for="prov in availableProviders"
-                :key="prov.value"
-                @click="paymentProvider = prov.value"
-                :title="prov.label"
-                class="w-9 h-9 rounded-lg border-2 flex items-center justify-center transition-all"
-                :class="paymentProvider === prov.value
-                  ? prov.value === 'mercadopago'
-                    ? 'border-[#009EE3] bg-[#009EE3]/10 text-[#009EE3]'
-                    : 'border-primary-600 bg-primary-50 text-primary-700'
-                  : 'border-earth-200 bg-white text-earth-400 hover:border-earth-300'"
-              >
-                <svg v-if="prov.value === 'mercadopago'" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
-                </svg>
-                <svg v-else class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.5 8.5c-.1 1.5-1.1 2.4-2.7 2.9-.9.3-1.9.4-2.9.5v2.6c0 .9.5 1.4 1.4 1.4.8 0 1.3-.4 1.4-1.2h2.1c-.1 1.8-1.5 2.9-3.5 2.9-2.1 0-3.5-1.2-3.5-3.3V8.5c0-2.1 1.4-3.3 3.5-3.3 2 0 3.4 1.2 3.5 3.3h-2.1c-.1-.8-.6-1.2-1.4-1.2-.8 0-1.4.4-1.4 1.2v2.6c1 .1 2 .2 2.9-.5 1.6-.5 2.6-1.4 2.7-2.9h2.5z"/>
-                </svg>
-              </button>
-            </div>
           </div>
 
-          <!-- 🔒 Confianza compacta en una línea -->
-          <div class="flex items-center justify-center gap-3 mb-3 text-[11px] text-earth-500">
-            <span class="flex items-center gap-1">
-              <svg class="w-3.5 h-3.5 text-green-600" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
-              </svg>
-              Pago seguro
-            </span>
-            <span class="text-earth-200">|</span>
-            <span class="flex items-center gap-1">
-              <svg class="w-3.5 h-3.5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
-              </svg>
-              Envío a todo MX
-            </span>
-            <span class="text-earth-200">|</span>
-            <span class="flex items-center gap-1">
-              <svg class="w-3.5 h-3.5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-              </svg>
-              Devoluciones
+          <!-- 🔒 Pago seguro con Stripe -->
+          <div class="flex items-center justify-center gap-2 mb-3 text-[11px] text-earth-500">
+            <svg class="w-3.5 h-3.5 text-green-600 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+            </svg>
+            <span class="inline-flex items-center gap-1">
+              <span class="font-semibold text-[#635BFF]">Stripe</span>
+              : Pago 100% seguro con tarjeta de crédito o débito
             </span>
           </div>
 
-          <!-- Botón de pago SIEMPRE visible -->
+          <!-- Botón de pago con Stripe -->
           <button
             @click="handleCheckout"
             :disabled="checkoutLoading"
@@ -250,7 +215,7 @@
             <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
             </svg>
-            {{ checkoutLoading ? 'Procesando...' : 'Proceder al pago' }}
+            {{ checkoutLoading ? 'Procesando...' : 'Pagar con Stripe' }}
           </button>
 
           <!-- 🧾 Desglose detallado (colapsable) -->
@@ -325,31 +290,8 @@ const isMounted = ref(false)
 // Controla el desglose de la compra (subtotal/envío) colapsable en el footer
 const showPaymentDetails = ref(false)
 
-// 💳 Proveedor de pago seleccionado ('stripe' | 'mercadopago')
-const paymentProvider = ref('mercadopago')
-
-const config = useRuntimeConfig()
-
-// 💳 Configuración de métodos de pago (cargada desde site_config)
-const paymentConfig = reactive({
-  mercadopago: {
-    enabled: true,
-    trustMessage: 'Paga con tarjeta, SPEI o efectivo (OXXO) de forma segura',
-  },
-  stripe: {
-    enabled: true,
-    trustMessage: 'Pago 100% seguro con Stripe',
-  },
-  defaultProvider: 'mercadopago',
-})
-
-// Proveedores disponibles según la configuración
-const availableProviders = computed(() => {
-  const opts = []
-  if (paymentConfig.mercadopago.enabled) opts.push({ value: 'mercadopago', label: 'Mercado Pago' })
-  if (paymentConfig.stripe.enabled) opts.push({ value: 'stripe', label: 'Tarjeta' })
-  return opts
-})
+// 💳 Solo Stripe como proveedor de pago
+const paymentProvider = 'stripe'
 
 // Valores por defecto
 const FREE_SHIPPING_THRESHOLD = ref(200)
@@ -375,28 +317,10 @@ async function loadShippingConfig() {
   }
 }
 
-// Cargar configuración de métodos de pago desde site_config
-async function loadPaymentConfig() {
-  if (!import.meta.client) return
-  try {
-    const supabase = useNuxtApp()?.$supabase
-    if (!supabase) return
-    const { data, error } = await supabase
-      .from('site_config')
-      .select('value')
-      .eq('key', 'payment_config')
-      .single()
-    if (data?.value) {
-      if (data.value.mercadopago) Object.assign(paymentConfig.mercadopago, data.value.mercadopago)
-      if (data.value.stripe) Object.assign(paymentConfig.stripe, data.value.stripe)
-      if (data.value.defaultProvider) paymentConfig.defaultProvider = data.value.defaultProvider
-    }
-    // Establecer el proveedor por defecto
-    paymentProvider.value = paymentConfig.defaultProvider
-  } catch (e) {
-    console.warn('Usando configuración de pagos por defecto')
-  }
-}
+// Stripe es el único método de pago activo (Mercado Pago fue descontinuado)
+// Este espacio se deja disponible por si en el futuro se rehabilita la carga
+// de configuración de pagos desde site_config.
+
 
 // ---------- Upsell: productos sugeridos ----------
 const suggestedProducts = ref([])
@@ -458,7 +382,6 @@ watch(() => cart.isOpen, (open) => {
 onMounted(() => {
   isMounted.value = true
   loadShippingConfig()
-  loadPaymentConfig()
   loadSuggestedProducts()
 })
 
@@ -482,14 +405,8 @@ async function handleCheckout() {
   checkoutLoading.value = true
 
   try {
-    // Validar que el proveedor seleccionado esté activo
-    const activeProvider = availableProviders.value.find(p => p.value === paymentProvider.value)
-    const provider = activeProvider ? activeProvider.value : (availableProviders.value[0]?.value || 'stripe')
-
-    // Elegir el endpoint según el proveedor de pago seleccionado
-    const endpoint = provider === 'mercadopago'
-      ? '/api/checkout/mp/create'
-      : '/api/checkout/create'
+    // Stripe es el único proveedor de pago activo
+    const endpoint = '/api/checkout/create'
 
     const response = await $fetch(endpoint, {
       method: 'POST',
@@ -502,14 +419,16 @@ async function handleCheckout() {
     })
 
     if (response?.url) {
-      // Redirigir al checkout del proveedor (Stripe o Mercado Pago)
+      // Redirigir al checkout de Stripe
       window.location.href = response.url
     } else if (response?.error) {
       throw new Error(response.error)
     }
   } catch (e) {
     console.error('Error en checkout:', e)
-    alert('Error al procesar el pago. Intenta de nuevo.')
+    // Mostrar el mensaje específico del error (ej: credenciales o rechazo del proveedor)
+    const msg = e?.data?.message || e?.message || 'Ocurrió un error al procesar el pago. Intenta de nuevo.'
+    alert(msg)
   } finally {
     checkoutLoading.value = false
   }

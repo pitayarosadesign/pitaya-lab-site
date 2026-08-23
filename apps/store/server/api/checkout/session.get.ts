@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
       if (error) throw error
       orders = data || []
     } else if (orderNumber) {
-      // Buscar por order_number (Mercado Pago usa external_reference = order_number)
+      // Buscar por order_number
       const { data, error } = await supabaseAdmin
         .from('orders')
         .select('order_number, status, total, customer_email')

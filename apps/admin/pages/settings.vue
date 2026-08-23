@@ -245,80 +245,24 @@
           </div>
         </div>
         <div class="p-6 space-y-5">
-          <!-- Mercado Pago -->
-          <div class="rounded-xl border-2 p-4 transition-all"
-            :class="paymentConfig.mercadopago.enabled ? 'border-[#009EE3]/40 bg-[#009EE3]/5' : 'border-gray-200 bg-gray-50/50'">
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex items-start gap-3">
-                <div class="w-10 h-10 rounded-lg bg-[#009EE3]/10 flex items-center justify-center flex-shrink-0">
-                  <svg class="w-5 h-5 text-[#009EE3]" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
-                  </svg>
-                </div>
-                <div>
-                  <div class="flex items-center gap-2">
-                    <h3 class="text-sm font-bold text-gray-900">Mercado Pago</h3>
-                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#009EE3]/10 text-[#009EE3]">Recomendado</span>
-                  </div>
-                  <p class="text-xs text-gray-500 mt-0.5">Tarjetas, SPEI, OXXO y MSI. Ideal para México.</p>
-                </div>
-              </div>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" v-model="paymentConfig.mercadopago.enabled" class="sr-only peer">
-                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#009EE3]"></div>
-                <span class="ms-3 text-sm font-medium" :class="paymentConfig.mercadopago.enabled ? 'text-[#009EE3]' : 'text-gray-400'">
-                  {{ paymentConfig.mercadopago.enabled ? 'Activo' : 'Inactivo' }}
+          <!-- Stripe (único método de pago activo) -->
+          <div class="rounded-xl border-2 border-primary-400 bg-primary-50/50 p-4">
+            <div class="flex items-start gap-3">
+              <div class="w-16 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 shadow-sm">
+                <span class="inline-flex font-sans font-bold text-[#635BFF] text-sm leading-none tracking-tight">
+                  stripe
                 </span>
-              </label>
-            </div>
-
-            <div v-if="paymentConfig.mercadopago.enabled" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Métodos que acepta</label>
-                <div class="flex flex-wrap gap-2">
-                  <span v-for="m in ['Tarjetas', 'SPEI', 'OXXO', 'MSI']" :key="m"
-                    class="inline-flex items-center px-2.5 py-1 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700">
-                    {{ m }}
-                  </span>
-                </div>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Mensaje de confianza</label>
-                <input
-                  v-model="paymentConfig.mercadopago.trustMessage"
-                  type="text"
-                  class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-[#009EE3] outline-none transition-all text-sm"
-                  placeholder="Paga con tarjeta, SPEI o efectivo (OXXO) de forma segura"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Stripe -->
-          <div class="rounded-xl border-2 p-4 transition-all"
-            :class="paymentConfig.stripe.enabled ? 'border-primary-400 bg-primary-50/50' : 'border-gray-200 bg-gray-50/50'">
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex items-start gap-3">
-                <div class="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center flex-shrink-0">
-                  <svg class="w-5 h-5 text-primary-600" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.5 8.5c-.1 1.5-1.1 2.4-2.7 2.9-.9.3-1.9.4-2.9.5v2.6c0 .9.5 1.4 1.4 1.4.8 0 1.3-.4 1.4-1.2h2.1c-.1 1.8-1.5 2.9-3.5 2.9-2.1 0-3.5-1.2-3.5-3.3V8.5c0-2.1 1.4-3.3 3.5-3.3 2 0 3.4 1.2 3.5 3.3h-2.1c-.1-.8-.6-1.2-1.4-1.2-.8 0-1.4.4-1.4 1.2v2.6c1 .1 2 .2 2.9-.5 1.6-.5 2.6-1.4 2.7-2.9h2.5z"/>
-                  </svg>
-                </div>
-                <div>
-                  <h3 class="text-sm font-bold text-gray-900">Stripe</h3>
-                  <p class="text-xs text-gray-500 mt-0.5">Tarjetas de crédito/débito. Opción secundaria.</p>
-                </div>
-              </div>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" v-model="paymentConfig.stripe.enabled" class="sr-only peer">
-                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-                <span class="ms-3 text-sm font-medium" :class="paymentConfig.stripe.enabled ? 'text-primary-600' : 'text-gray-400'">
-                  {{ paymentConfig.stripe.enabled ? 'Activo' : 'Inactivo' }}
+                <h3 class="text-sm font-bold text-gray-900">Stripe</h3>
+                <p class="text-xs text-gray-500 mt-0.5">Tarjetas de crédito/débito. Método de pago activo.</p>
+                <span class="inline-flex items-center gap-1 mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary-100 text-primary-700">
+                  Activo
                 </span>
-              </label>
+              </div>
             </div>
 
-            <div v-if="paymentConfig.stripe.enabled" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Métodos que acepta</label>
                 <div class="flex flex-wrap gap-2">
@@ -330,48 +274,11 @@
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Mensaje de confianza</label>
-                <input
-                  v-model="paymentConfig.stripe.trustMessage"
-                  type="text"
-                  class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm"
-                  placeholder="Pago 100% seguro con Stripe"
-                />
+                <span class="text-sm text-gray-700">{{ paymentConfig.stripe.trustMessage }}</span>
               </div>
             </div>
-          </div>
 
-          <!-- Método predeterminado -->
-          <div class="rounded-xl border border-gray-200 p-4 bg-gray-50/50">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Método de pago predeterminado</label>
-            <div class="flex flex-wrap gap-3">
-              <label
-                v-for="opt in availablePaymentOptions"
-                :key="opt.value"
-                class="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 cursor-pointer transition-all"
-                :class="paymentConfig.defaultProvider === opt.value
-                  ? 'border-primary-400 bg-primary-50'
-                  : 'border-gray-200 bg-white hover:border-gray-300'"
-              >
-                <input
-                  type="radio"
-                  :value="opt.value"
-                  v-model="paymentConfig.defaultProvider"
-                  class="text-primary-600 focus:ring-primary-100"
-                />
-                <span class="text-sm font-medium text-gray-900">{{ opt.label }}</span>
-              </label>
-            </div>
-            <p class="text-xs text-gray-400 mt-2">El método predeterminado aparecerá seleccionado cuando el cliente abra el carrito.</p>
-          </div>
-
-          <div class="flex items-center justify-end pt-2 border-t border-gray-100">
-            <button
-              @click="savePaymentConfig"
-              :disabled="saving.payment"
-              class="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
-            >
-              {{ saving.payment ? 'Guardando...' : 'Guardar métodos de pago' }}
-            </button>
+            <p class="text-xs text-gray-400 mt-3">Mercado Pago fue descontinuado. Stripe es el único proveedor de pago activo.</p>
           </div>
         </div>
       </div>
@@ -629,6 +536,7 @@
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Google Merchant Center ID</label>
+              
               <input
                 v-model="catalogs.googleMerchantId"
                 type="text"
@@ -682,24 +590,12 @@ const showApiKeyInput = ref(null)
 const saving = reactive({ shipping: false, apiKeys: false, email: false, showroom: false, catalogs: false, b2b: false, payment: false })
 const testingEmail = ref(false)
 
-// 💳 Configuración de métodos de pago
+// 💳 Configuración de métodos de pago (solo Stripe activo)
 const paymentConfig = reactive({
-  mercadopago: {
-    enabled: true,
-    trustMessage: 'Paga con tarjeta, SPEI o efectivo (OXXO) de forma segura',
-  },
   stripe: {
     enabled: true,
     trustMessage: 'Pago 100% seguro con Stripe',
   },
-  defaultProvider: 'mercadopago',
-})
-
-const availablePaymentOptions = computed(() => {
-  const opts = []
-  if (paymentConfig.mercadopago.enabled) opts.push({ value: 'mercadopago', label: '💚 Mercado Pago' })
-  if (paymentConfig.stripe.enabled) opts.push({ value: 'stripe', label: '💳 Stripe' })
-  return opts
 })
 
 // Opciones de paqueterías
@@ -840,9 +736,7 @@ onMounted(async () => {
             if (value) Object.assign(b2b.contacto, value)
             break
           case 'payment_config':
-            if (value?.mercadopago) Object.assign(paymentConfig.mercadopago, value.mercadopago)
             if (value?.stripe) Object.assign(paymentConfig.stripe, value.stripe)
-            if (value?.defaultProvider) paymentConfig.defaultProvider = value.defaultProvider
             break
         }
       }
@@ -1007,24 +901,11 @@ async function saveB2BConfig() {
 async function savePaymentConfig() {
   saving.payment = true
   try {
-    // Validar que el defaultProvider esté activo
-    if (paymentConfig.defaultProvider === 'mercadopago' && !paymentConfig.mercadopago.enabled) {
-      paymentConfig.defaultProvider = 'stripe'
-    }
-    if (paymentConfig.defaultProvider === 'stripe' && !paymentConfig.stripe.enabled) {
-      paymentConfig.defaultProvider = 'mercadopago'
-    }
-
     await saveSection('payment_config', {
-      mercadopago: {
-        enabled: !!paymentConfig.mercadopago.enabled,
-        trustMessage: paymentConfig.mercadopago.trustMessage,
-      },
       stripe: {
-        enabled: !!paymentConfig.stripe.enabled,
+        enabled: true,
         trustMessage: paymentConfig.stripe.trustMessage,
       },
-      defaultProvider: paymentConfig.defaultProvider,
     })
     alert('✅ Métodos de pago guardados')
   } catch (e) {
