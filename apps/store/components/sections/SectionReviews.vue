@@ -96,9 +96,11 @@ const loadedDefaults = ref(false)
 async function loadDefaults() {
   if (loadedDefaults.value) return
   loadedDefaults.value = true
-  const defaults = await useSectionDefaults('reviews', null)
-  if (defaults?.items && Array.isArray(defaults.items)) {
-    defaultReviews.value = defaults.items
+  // Cargar todos los defaults de una sola vez (compartido entre secciones)
+  const defaults = await useSectionDefaultsShared()
+  const sectionDefaults = defaults?.reviews
+  if (sectionDefaults?.items && Array.isArray(sectionDefaults.items)) {
+    defaultReviews.value = sectionDefaults.items
   }
 }
 

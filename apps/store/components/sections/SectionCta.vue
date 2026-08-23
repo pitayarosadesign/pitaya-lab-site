@@ -59,9 +59,11 @@ const loadedDefaults = ref(false)
 async function loadDefaults() {
   if (loadedDefaults.value) return
   loadedDefaults.value = true
-  const defaults = await useSectionDefaults('cta', null)
-  if (defaults) {
-    defaultCta.value = defaults
+  // Cargar todos los defaults de una sola vez (compartido entre secciones)
+  const defaults = await useSectionDefaultsShared()
+  const sectionDefaults = defaults?.cta
+  if (sectionDefaults) {
+    defaultCta.value = sectionDefaults
   }
 }
 

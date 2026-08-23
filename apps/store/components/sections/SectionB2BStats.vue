@@ -24,9 +24,11 @@ const loadedDefaults = ref(false)
 async function loadDefaults() {
   if (loadedDefaults.value) return
   loadedDefaults.value = true
-  const defaults = await useSectionDefaults('b2b_stats', null)
-  if (defaults?.stats && Array.isArray(defaults.stats)) {
-    defaultStats.value = defaults.stats
+  // Cargar todos los defaults de una sola vez (compartido entre secciones)
+  const defaults = await useSectionDefaultsShared()
+  const sectionDefaults = defaults?.['b2b_stats']
+  if (sectionDefaults?.stats && Array.isArray(sectionDefaults.stats)) {
+    defaultStats.value = sectionDefaults.stats
   }
 }
 

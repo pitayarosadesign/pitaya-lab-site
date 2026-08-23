@@ -69,6 +69,26 @@
               </a>
             </li>
           </ul>
+
+          <!-- 🌍 Stripe Climate -->
+          <div class="mt-6 pt-6 border-t border-earth-800">
+            <a
+              href="https://climate.stripe.com/Ul0lzt"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group inline-flex items-center gap-2 text-sm text-earth-400 hover:text-primary-400 transition-colors"
+              aria-label="Stripe Climate - Contribuimos al 1% para el planeta"
+            >
+              <svg class="w-5 h-5 text-primary-500 group-hover:text-primary-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <span class="flex flex-col leading-tight">
+                <span class="font-medium text-earth-300 group-hover:text-primary-400 transition-colors">Stripe Climate</span>
+                <span class="text-xs text-earth-500">1% para el planeta</span>
+              </span>
+            </a>
+          </div>
+
           <p class="mt-6 text-xs text-earth-500">
             © {{ new Date().getFullYear() }} {{ brand.name }}. Todos los derechos reservados.
           </p>

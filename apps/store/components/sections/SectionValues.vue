@@ -50,9 +50,11 @@ const loadedDefaults = ref(false)
 async function loadDefaults() {
   if (loadedDefaults.value) return
   loadedDefaults.value = true
-  const defaults = await useSectionDefaults('values', null)
-  if (defaults?.values && Array.isArray(defaults.values)) {
-    defaultValues.value = defaults.values
+  // Cargar todos los defaults de una sola vez (compartido entre secciones)
+  const defaults = await useSectionDefaultsShared()
+  const sectionDefaults = defaults?.values
+  if (sectionDefaults?.values && Array.isArray(sectionDefaults.values)) {
+    defaultValues.value = sectionDefaults.values
   }
 }
 
@@ -66,3 +68,4 @@ const values = computed(() => {
   return defaultValues.value
 })
 </script>
+

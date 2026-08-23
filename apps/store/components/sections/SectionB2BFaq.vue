@@ -26,12 +26,14 @@ const loadedDefaults = ref(false)
 async function loadDefaults() {
   if (loadedDefaults.value) return
   loadedDefaults.value = true
-  const defaults = await useSectionDefaults('b2b_faq', null)
-  if (defaults?.faqs && Array.isArray(defaults.faqs)) {
-    defaultFaqs.value = defaults.faqs
+  // Cargar todos los defaults de una sola vez (compartido entre secciones)
+  const defaults = await useSectionDefaultsShared()
+  const sectionDefaults = defaults?.['b2b_faq']
+  if (sectionDefaults?.faqs && Array.isArray(sectionDefaults.faqs)) {
+    defaultFaqs.value = sectionDefaults.faqs
   }
-  if (defaults?.title) {
-    defaultTitle.value = defaults.title
+  if (sectionDefaults?.title) {
+    defaultTitle.value = sectionDefaults.title
   }
 }
 

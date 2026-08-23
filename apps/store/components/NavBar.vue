@@ -14,11 +14,6 @@
         <span>en compras mayores a</span>
         <span class="font-bold text-amber-300">${{ formatPrice(shippingBar.free_shipping_min) }} MXN</span>
         <span class="hidden sm:inline">• {{ shippingBar.couriers.join(', ') }}</span>
-        <span class="hidden sm:inline">|</span>
-        <span>Menores: solo</span>
-        <span class="font-bold text-amber-300">${{ formatPrice(shippingBar.shipping_fee) }}</span>
-        <span class="hidden xs:inline">|</span>
-        <span class="text-primary-200">{{ shippingBar.delivery_days }}</span>
       </p>
     </div>
     <div class="bg-white/90 backdrop-blur-md border-b border-earth-100">
