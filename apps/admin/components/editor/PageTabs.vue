@@ -31,6 +31,7 @@ function go(to) {
 const tabs = [
   { key: 'home', label: 'Portada', icon: '🏠', to: '/site' },
   { key: 'catalog', label: 'Catálogo', icon: '🛍️', to: '/site/catalog' },
+  { key: 'product', label: 'Producto', icon: '🏷️', to: '/site/product' },
   { key: 'about', label: 'Sobre Nosotros', icon: '📖', to: '/site/about' },
   { key: 'philosophy', label: 'Filosofía', icon: '🌿', to: '/site/philosophy' },
   { key: 'b2b', label: 'Mayoreo B2B', icon: '🏢', to: '/site/b2b' },

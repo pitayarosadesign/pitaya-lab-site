@@ -7,7 +7,7 @@
     <!-- Imagen del producto (link al detalle) -->
     <NuxtLink
       v-if="productSlug"
-      :to="`/product/${productSlug}`"
+      :to="productLink"
       class="relative overflow-hidden aspect-square bg-earth-50 block"
     >
       <img
@@ -34,7 +34,7 @@
       <!-- Nombre (link al detalle si tiene slug) -->
       <NuxtLink
         v-if="productSlug"
-        :to="`/product/${productSlug}`"
+        :to="productLink"
         class="text-lg font-serif font-bold text-earth-800 mb-2 line-clamp-2 hover:text-primary-600 transition-colors"
         itemprop="name"
       >
@@ -88,7 +88,7 @@
         <!-- Botón Ver detalle (outline) -->
         <NuxtLink
           v-if="productSlug"
-          :to="`/product/${productSlug}`"
+          :to="productLink"
           class="flex-1 inline-flex items-center justify-center gap-2 border-2 border-earth-200 hover:border-primary-300 text-earth-600 hover:text-primary-700 bg-white hover:bg-primary-50/50 px-4 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,9 +167,25 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
+  // Query opcional a añadir al enlace de detalle (ej. preselección de aroma)
+  linkQuery: {
+    type: Object,
+    default: () => null
+  },
 })
 
 const showToast = ref(false)
+
+// Enlace de detalle, añadiendo query si viene (ej. ?aroma=...)
+const productLink = computed(() => {
+  if (!props.linkQuery) return `/product/${props.productSlug}`
+  const qs = new URLSearchParams()
+  Object.keys(props.linkQuery).forEach(k => {
+    if (props.linkQuery[k] != null) qs.set(k, props.linkQuery[k])
+  })
+  const query = qs.toString()
+  return `/product/${props.productSlug}${query ? `?${query}` : ''}`
+})
 
 function formatPrice(price) {
   return Number(price).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })

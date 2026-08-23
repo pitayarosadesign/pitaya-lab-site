@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
 
     const { data: product, error } = await supabase
       .from('products')
-      .select('*, product_categories(name, slug), product_images(url, alt_text, sort_order, is_primary), product_variants(*, product_id)')
+      .select('*, product_categories(name, slug), product_images(url, alt_text, sort_order, is_primary), product_variants(*, product_id, fragrance_profile_id, fragrance_profiles(name, emoji, subtitle, slug, image_url, experience, notes, description, hotel_reference, collections(name, slug, icon)))')
       .eq('slug', cleanSlug)
       .eq('is_active', true)
       .single()
@@ -52,18 +52,40 @@ export default defineEventHandler(async (event) => {
           altText: img.alt_text,
           isPrimary: img.is_primary,
         })),
-        variants: variants.map(v => ({
-          id: v.id,
-          name: v.name,
-          sku: v.sku,
-          description: v.description,
-          imageUrl: v.image_url,
-          colorHex: v.color_hex,
-          price: v.price,
-          compareAtPrice: v.compare_at_price,
-          stock: v.stock,
-          isActive: v.is_active,
-        })),
+        variants: variants.map(v => {
+          const fp = v.fragrance_profiles
+          // Adjuntar datos del perfil aromático (notas, experiencia, emoji) si
+          // la variante está vinculada a un perfil de fragancia.
+          return {
+            id: v.id,
+            name: v.name,
+            sku: v.sku,
+            description: v.description,
+            imageUrl: v.image_url,
+            colorHex: v.color_hex,
+            price: v.price,
+            compareAtPrice: v.compare_at_price,
+            stock: v.stock,
+            isActive: v.is_active,
+            fragrance: fp ? {
+              id: fp.id,
+              name: fp.name,
+              emoji: fp.emoji || '',
+              subtitle: fp.subtitle || '',
+              slug: fp.slug,
+              image: fp.image_url || v.image_url || null,
+              experience: fp.experience || '',
+              notes: fp.notes || '',
+              hotelReference: fp.hotel_reference || '',
+              collection: fp.collections ? {
+                id: fp.collections.id,
+                name: fp.collections.name || '',
+                slug: fp.collections.slug || '',
+                icon: fp.collections.icon || '',
+              } : null,
+            } : null,
+          }
+        }),
         stock: product.stock,
         trackInventory: product.track_inventory,
         allowBackorder: product.allow_backorder,

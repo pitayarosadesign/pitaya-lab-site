@@ -40,8 +40,8 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <!-- Columna izquierda: Imágenes -->
           <div class="space-y-4">
-            <!-- Imagen principal -->
-            <div class="aspect-square rounded-3xl overflow-hidden bg-earth-50 shadow-sm border border-earth-100">
+            <!-- Imagen principal con sobrepuesto de notas del aroma -->
+            <div class="aspect-square rounded-3xl overflow-hidden bg-earth-50 shadow-sm border border-earth-100 relative">
               <img
                 v-if="activeImage"
                 :src="activeImage"
@@ -52,6 +52,65 @@
                 <svg class="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
+              </div>
+
+              <!-- 🌸 Sobre puesto de aroma: variante, colección, hotel y notas -->
+              <div
+                v-if="selectedFragrance && (selectedFragrance.name || selectedFragrance.notesList.length)"
+                class="absolute bottom-4 left-4 right-4"
+              >
+                <div class="bg-white/85 backdrop-blur-xl rounded-2xl shadow-2xl shadow-earth-900/10 border border-earth-100 overflow-hidden">
+                  <!-- Header: nombre del aroma + badges discretos -->
+                  <div class="px-5 pt-4 pb-3 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                      <span v-if="selectedFragrance.emoji" class="text-2xl leading-none flex-shrink-0 drop-shadow-sm">{{ selectedFragrance.emoji }}</span>
+                      <div class="min-w-0">
+                        <p class="text-sm font-serif font-bold text-earth-900 leading-tight truncate">{{ selectedFragrance.name }}</p>
+                        <p v-if="selectedFragrance.subtitle" class="text-[10px] text-earth-500 italic leading-tight truncate">{{ selectedFragrance.subtitle }}</p>
+                      </div>
+                    </div>
+                    <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                      <span
+                        v-if="selectedFragrance.collection"
+                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-earth-200 bg-earth-50/80 text-earth-600 text-[10px] font-medium tracking-wide"
+                        :title="`Colección ${selectedFragrance.collection.name}`"
+                      >
+                        {{ selectedFragrance.collection.icon || '🖇️' }}
+                        {{ selectedFragrance.collection.name }}
+                      </span>
+                      <span
+                        v-if="selectedFragrance.hotelReference"
+                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-amber-200 bg-amber-50/80 text-amber-700 text-[10px] font-medium"
+                        :title="'Hotel inspirado'"
+                      >
+                        ✨ {{ selectedFragrance.hotelReference }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Separador fino -->
+                  <div v-if="selectedFragrance.notesList.length" class="mx-5 border-t border-earth-100"></div>
+
+                  <!-- Cuerpo: notas aromáticas -->
+                  <div v-if="selectedFragrance.notesList.length" class="px-5 py-3">
+                    <!-- Notas estructuradas (SAL/COR/FONDO) -->
+                    <div v-if="selectedFragrance.notesList.length > 1" class="flex flex-wrap gap-1.5">
+                      <span
+                        v-for="note in selectedFragrance.notesList"
+                        :key="note.label"
+                        class="inline-flex items-baseline gap-1 px-2 py-1 rounded-lg border border-earth-100 bg-white/60"
+                      >
+                        <span class="text-[9px] font-semibold text-primary-600 uppercase tracking-wider">{{ note.label }}</span>
+                        <span class="text-[11px] text-earth-700 font-medium leading-snug">{{ note.values }}</span>
+                      </span>
+                    </div>
+                    <!-- Notas simples (texto libre) -->
+                    <div v-else class="flex items-baseline gap-1.5">
+                      <span class="text-[9px] font-semibold text-primary-600 uppercase tracking-wider flex-shrink-0">Notas</span>
+                      <span class="text-[11px] text-earth-700 font-medium leading-snug">{{ selectedFragrance.notesList[0].values }}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -134,6 +193,36 @@
                   {{ variant.name }}
                 </button>
               </div>
+
+              <!-- 🌸 Experiencia olfativa del aroma seleccionado (sincronizada con catálogo) -->
+              <div
+                v-if="selectedFragrance && (selectedFragrance.experience || selectedFragrance.description || selectedFragrance.subtitle)"
+                class="mt-4 p-5 rounded-2xl bg-earth-50/70 border border-earth-100"
+              >
+                <div class="flex flex-wrap items-center gap-2 mb-2">
+                  <span v-if="selectedFragrance.emoji" class="text-xl leading-none">{{ selectedFragrance.emoji }}</span>
+                  <p class="text-sm font-serif font-bold text-earth-900">{{ selectedFragrance.name }}</p>
+                  <span
+                    v-if="selectedFragrance.collection"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-earth-200 bg-white text-earth-600 text-[10px] font-medium"
+                  >
+                    {{ selectedFragrance.collection.icon || '🖇️' }}
+                    {{ selectedFragrance.collection.name }}
+                  </span>
+                  <span
+                    v-if="selectedFragrance.hotelReference"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-amber-200 bg-white text-amber-700 text-[10px] font-medium"
+                  >
+                    ✨ {{ selectedFragrance.hotelReference }}
+                  </span>
+                </div>
+                <p v-if="selectedFragrance.experience" class="text-sm text-earth-600 leading-relaxed">
+                  {{ selectedFragrance.experience }}
+                </p>
+                <p v-if="selectedFragrance.description" class="text-xs text-earth-500 leading-relaxed mt-1">
+                  {{ selectedFragrance.description }}
+                </p>
+              </div>
             </div>
 
             <!-- Stock y envío -->
@@ -141,12 +230,12 @@
               <!-- En stock -->
               <span v-if="currentStock > 0" class="flex items-center gap-1.5 text-green-600">
                 <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                En stock ({{ currentStock }} disponibles)
+                {{ productConfig.in_stock_label }} ({{ currentStock }} disponibles)
               </span>
               <!-- Sobre pedido (sin stock) -->
-              <span v-else class="flex items-center gap-1.5 text-amber-600">
+              <span v-if="currentStock <= 0" class="flex items-center gap-1.5 text-amber-600">
                 <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-                Preparación sobre pedido: se elabora artesanalmente en taller (3-4 días), puede tardar más según demanda
+                {{ productConfig.backorder_message }}
               </span>
               <span v-if="product.freeShipping" class="flex items-center gap-1.5 text-primary-600">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -161,7 +250,7 @@
               <!-- 🔥 Stock bajo -->
               <span v-if="currentStock > 0 && currentStock <= 5"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 border border-red-200 text-red-600 text-xs font-semibold animate-pulse">
-                🔥 ¡Solo quedan {{ currentStock }}!
+                🔥 {{ productConfig.low_stock_label.replace('X', currentStock) }}
               </span>
               <!-- 🆕 Producto nuevo -->
               <span v-if="isNewProduct"
@@ -361,11 +450,42 @@ const route = useRoute()
 const supabase = useNuxtApp().$supabase
 const cart = useCartStore()
 
+// Utilidades compartidas de fragancia (notas, experiencia).
+// Auto-importadas desde composables/useFragrance.ts:
+// const fragranceOfVariant = (v: any) => ...  → disponible como import automático
+
 const product = ref(null)
 const loading = ref(true)
 const error = ref(false)
 const activeImageIndex = ref(0)
 const selectedVariant = ref(null)
+
+// Configuración editable de la página de producto (desde site_config key "product_page").
+// Permite personalizar mensajes de stock / sobre pedido desde el panel admin.
+const productConfig = reactive({
+  backorder_message: 'Preparación sobre pedido: se elabora artesanalmente en taller (3-4 días), puede tardar más según demanda',
+  backorder_button_label: 'Agregar al carrito (sobre pedido)',
+  in_stock_label: 'En stock',
+  low_stock_label: '¡Solo quedan X!',
+})
+
+// Cargar configuración editable desde site_config
+async function loadProductConfig() {
+  try {
+    if (!supabase) return
+    const { data, error } = await supabase
+      .from('site_config')
+      .select('value')
+      .eq('key', 'product_page')
+      .single()
+    if (error) throw error
+    if (data?.value) {
+      Object.assign(productConfig, data.value)
+    }
+  } catch (e) {
+    console.warn('Usando configuración por defecto de la página de producto:', e.message)
+  }
+}
 
 // 🎉 Toast de confirmación al agregar al carrito
 const showAddToast = ref(false)
@@ -449,6 +569,30 @@ function selectVariant(variant) {
     if (idx !== -1) activeGalleryIndex.value = idx
   }
 }
+
+// ===== 🌸 Experiencia olfativa de la variante seleccionada =====
+// Deriva la información del perfil aromático vinculado (notas, experiencia,
+// emoji) para mostrarlas junto al selector de aroma. Las mismas notas que
+// aparecen en el catálogo ("Explora por aroma").
+const selectedFragrance = computed(() => {
+  if (!selectedVariant.value) return null
+  const frag = fragranceOfVariant(selectedVariant.value)
+  if (frag) return frag
+  // Fallback: si la variante no está vinculada a un perfil, derivar de su nombre
+  return {
+    id: selectedVariant.value.id,
+    name: selectedVariant.value.name,
+    emoji: '🌸',
+    subtitle: '',
+    description: '',
+    experience: '',
+    notes: '',
+    notesList: [],
+    hotelReference: '',
+    image: selectedVariant.value.imageUrl || null,
+    slug: '',
+  }
+})
 
 // Precio activo: prioriza el precio de la variante seleccionada
 const activePrice = computed(() => {
@@ -535,7 +679,7 @@ const isBestseller = computed(() => {
 const buttonLabel = computed(() => {
   if (!product.value) return 'Agregar al carrito'
   if (currentStock.value > 0) return 'Agregar al carrito'
-  return 'Agregar al carrito (sobre pedido)'
+  return productConfig.backorder_button_label || 'Agregar al carrito (sobre pedido)'
 })
 
 // Productos relacionados (misma categoría)
@@ -590,14 +734,32 @@ async function loadProduct() {
     const data = await $fetch(`/api/products/${route.params.slug}`)
     if (data?.product) {
       product.value = data.product
-      // Seleccionar la primera variante y mostrar su imagen si tiene
+      // Seleccionar la variante del aroma indicado en la URL (?aroma=...)
+      // si viene desde el catálogo; si no, la primera variante por defecto.
       if (data.product.variants?.length > 0) {
-        const first = data.product.variants[0]
-        selectedVariant.value = first
-        if (first?.imageUrl) {
+        const requestedAroma = route.query.aroma
+        let initial = data.product.variants[0]
+
+        if (requestedAroma) {
+          const requested = String(requestedAroma).toLowerCase()
+          const match = data.product.variants.find(v => {
+            const prog = v.fragrance
+            // Coincidir por slug del perfil o por nombre del aroma/variante
+            if (prog) {
+              if (prog.slug && prog.slug.toLowerCase() === requested) return true
+              if (prog.name && prog.name.toLowerCase() === requested) return true
+            }
+            if (v.name && v.name.toLowerCase() === requested) return true
+            return false
+          })
+          if (match) initial = match
+        }
+
+        selectedVariant.value = initial
+        if (initial?.imageUrl) {
           // Esperar a que se construya la galería para ubicar el índice
           await nextTick()
-          const idx = allGalleryImages.value.findIndex(img => img.key === `variant-${first.id}`)
+          const idx = allGalleryImages.value.findIndex(img => img.key === `variant-${initial.id}`)
           if (idx !== -1) activeGalleryIndex.value = idx
         }
       }
@@ -712,6 +874,7 @@ useHead({
 })
 
 onMounted(() => {
+  loadProductConfig()
   loadProduct()
 })
 

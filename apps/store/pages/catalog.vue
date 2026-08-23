@@ -113,13 +113,13 @@
               @change="onSelectChange"
               class="w-full appearance-none bg-white border border-earth-200 rounded-xl px-4 py-2.5 pr-10 text-sm text-earth-800 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-all cursor-pointer"
             >
-              <option :value="null">Todos los aromas</option>
+              <option :value="null">🌸 Todos los aromas</option>
               <option
                 v-for="aroma in allAromas"
                 :key="aroma.id"
                 :value="aroma.id"
               >
-                {{ aroma.name }}
+                {{ aroma.emoji || '🌸' }} {{ aroma.name }}
               </option>
             </select>
             <svg class="w-4 h-4 text-earth-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,34 +128,51 @@
           </div>
         </div>
 
-        <!-- Filtros de categoría -->
-        <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
-          <button
-            @click="activeCategory = 'all'"
-            :class="[
-              'px-5 py-2.5 rounded-full text-sm font-medium transition-all',
-              activeCategory === 'all'
-                ? 'bg-primary-600 text-white shadow-md'
-                : 'bg-earth-50 text-earth-600 hover:bg-earth-100'
-            ]"
-          >
-            Todos
-          </button>
-          <button
-            v-for="cat in categories"
-            :key="cat.id"
-            @click="activeCategory = cat.id"
-            :class="[
-              'px-5 py-2.5 rounded-full text-sm font-medium transition-all',
-              activeCategory === cat.id
-                ? 'bg-primary-600 text-white shadow-md'
-                : 'bg-earth-50 text-earth-600 hover:bg-earth-100'
-            ]"
-          >
-            {{ cat.label }}
-          </button>
+        <!-- Filtros de categoría (tipo de producto) con selectores cruzados -->
+        <div class="mt-6">
+          <!-- Selector de tipo de producto (pill tabs con iconos) -->
+          <div class="flex flex-wrap items-center justify-center gap-2 px-2 py-2 bg-earth-50 rounded-2xl border border-earth-200">
+            <button
+              @click="activeCategory = 'all'"
+              :class="[
+                'px-5 py-2.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5',
+                activeCategory === 'all'
+                  ? 'bg-primary-600 text-white shadow-md'
+                  : 'text-earth-600 hover:bg-white hover:shadow-sm'
+              ]"
+            >
+              <span class="text-base leading-none">🌸</span>
+              Todos
+              <span
+                class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                :class="activeCategory === 'all' ? 'bg-white/25 text-white' : 'bg-earth-200 text-earth-600'"
+              >
+                {{ categoryCounts.all || 0 }}
+              </span>
+            </button>
+            <button
+              v-for="cat in categories.slice(1)"
+              :key="cat.id"
+              @click="activeCategory = cat.id"
+              :class="[
+                'px-5 py-2.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5',
+                activeCategory === cat.id
+                  ? 'bg-primary-600 text-white shadow-md'
+                  : 'text-earth-600 hover:bg-white hover:shadow-sm'
+              ]"
+            >
+              <span class="text-base leading-none">{{ categoryIcon(cat.label) }}</span>
+              {{ cat.label }}
+              <span
+                class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                :class="activeCategory === cat.id ? 'bg-white/25 text-white' : 'bg-earth-200 text-earth-600'"
+              >
+                {{ categoryCounts[cat.id] || 0 }}
+              </span>
+            </button>
+          </div>
         </div>
-        </div>
+      </div>
       </div>
     </section>
 
@@ -200,6 +217,19 @@
                 </button>
               </div>
 
+              <!-- Disponible en varios formatos (cruza con el filtro de tipo) -->
+              <div v-if="selectedAromaTypes.length > 0" class="flex flex-wrap items-center gap-1.5 mb-4">
+                <span class="text-[11px] text-earth-500 font-medium uppercase tracking-wider">Disponible en:</span>
+                <span
+                  v-for="type in selectedAromaTypes"
+                  :key="type"
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-earth-50 border border-earth-200 text-[11px] font-semibold text-earth-600"
+                >
+                  {{ categoryIcon(type) }}
+                  {{ type }}
+                </span>
+              </div>
+
               <p v-if="selectedAroma.experience" class="text-earth-700 leading-relaxed mb-4">
                 {{ selectedAroma.experience }}
               </p>
@@ -228,7 +258,7 @@
                   <NuxtLink
                     v-for="product in filteredProducts"
                     :key="product.id"
-                    :to="`/product/${product.slug}`"
+                    :to="`/product/${product.slug}${selectedAroma?.slug ? '?aroma=' + selectedAroma.slug : ''}`"
                     class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-earth-50 hover:bg-primary-50 border border-earth-100 hover:border-primary-200 transition-all group"
                   >
                     <div class="w-8 h-8 rounded-lg overflow-hidden bg-earth-100 flex-shrink-0">
@@ -353,6 +383,7 @@
               :price="product.price"
               :product-id="product.id"
               :fragrances="product.fragrances"
+              :link-query="activeFragrance ? { aroma: selectedAroma?.slug || selectedAroma?.name } : null"
             />
           </div>
         </div>
@@ -548,6 +579,32 @@ const activeFragranceName = computed(() => {
   return selectedAroma.value?.name || ''
 })
 
+// Map: para cada aroma, en qué tipos de producto (categorías) está disponible.
+// Se calcula a partir de los productos cargados (cada uno trae sus fragancias
+// y su categorySlug). Respeta el modelo N:N (un aroma existe en varios formatos).
+const aromaTypesByFragrance = computed(() => {
+  const map = {}
+  products.value.forEach(p => {
+    if (!p.categorySlug) return
+    ;(p.fragrances || []).forEach(f => {
+      if (!map[f.id]) map[f.id] = new Set()
+      map[f.id].add(p.categoryLabel || p.category || p.categorySlug)
+    })
+  })
+  // Convertir Set -> array ordenado
+  const result = {}
+  Object.keys(map).forEach(id => {
+    result[id] = Array.from(map[id]).sort()
+  })
+  return result
+})
+
+// Tipos disponibles del aroma seleccionado (para mostrarlo en el panel)
+const selectedAromaTypes = computed(() => {
+  if (!selectedAroma.value) return []
+  return aromaTypesByFragrance.value[selectedAroma.value.id] || []
+})
+
 // Helper para obtener aroma por id
 function getScentById(id) {
   return aromas.value.find(s => s.id === id)
@@ -568,6 +625,8 @@ async function loadAromas() {
     aromas.value = (data || []).map(p => ({
       id: p.id,
       name: p.name,
+      slug: p.slug || '',
+      emoji: p.emoji || '🌸',
       description: p.experience || p.subtitle || p.description || '',
       image: p.image_url,
       subtitle: p.subtitle || '',
@@ -640,6 +699,17 @@ const filteredProducts = computed(() => {
   return result
 })
 
+// Número de productos por categoría (para el badge del filtro de tipo)
+const categoryCounts = computed(() => {
+  const counts = { all: products.value.length }
+  products.value.forEach(p => {
+    if (p.categorySlug) {
+      counts[p.categorySlug] = (counts[p.categorySlug] || 0) + 1
+    }
+  })
+  return counts
+})
+
 function resetFilters() {
   activeCategory.value = 'all'
   activeFragrance.value = null
@@ -687,6 +757,22 @@ function onSelectChange() {
 
 function formatPrice(price) {
   return Number(price).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+// Mapa de ícono por tipo de producto (para el filtro de categoría)
+function categoryIcon(label) {
+  const map = {
+    'velas': '🕯️',
+    'aceites': '💧',
+    'brumas': '🌫️',
+    'jabón': '🧼',
+    'jabones': '🧼',
+    'vela': '🕯️',
+    'aceite': '💧',
+    'bruma': '🌫️',
+  }
+  const key = String(label || '').toLowerCase()
+  return map[key] || '🛍️'
 }
 
 // Cargar categorías desde Supabase
