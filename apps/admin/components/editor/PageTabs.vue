@@ -39,6 +39,7 @@ const tabs = [
   { key: 'contact', label: 'Contacto', icon: '✉️', to: '/site/contact' },
   { key: 'contenido', label: 'Contenido', icon: '🧩', to: '/site/contenido' },
   { key: 'legal', label: 'Legal', icon: '📜', to: '/site/legal' },
+  { key: 'apariencia', label: 'Apariencia', icon: '🎨', to: '/site/apariencia' },
 ]
 </script>
 
