@@ -1087,6 +1087,17 @@ function triggerMediaUpload(inputKey) {
 }
 
 async function uploadToStorage(file) {
+  // Videos y archivos grandes: subir DIRECTAMENTE a Supabase Storage desde el
+  // cliente. Evita el límite de body HTTP del serverless de Vercel (~4.5 MB)
+  // que causa el error 413 al enviar un video en base64 dentro del JSON.
+  // El bucket 'product-images' acepta hasta 50 MB (file_size_limit configurado).
+  const isImage = file && typeof file.type === 'string' && file.type.startsWith('image/')
+  const BODY_LIMIT = 3.5 * 1024 * 1024 // ~3.5MB para dejar margen (base64 ≈ +33%)
+  if (!isImage || file.size > BODY_LIMIT) {
+    return await uploadDirectToStorage(file)
+  }
+
+  // Imágenes por debajo del límite: flujo actual con compresión + endpoint.
   // Comprimir/redimensionar la imagen en el cliente antes de enviarla, para
   // no exceder el límite de body de Vercel (~4.5 MB) que causa el error 413.
   // El endpoint recibe el archivo en base64 (≈33% más pesado que el binario),
@@ -1106,6 +1117,44 @@ async function uploadToStorage(file) {
     body: { file: { name: processed.name, data: base64 } },
   })
   return res?.success && res?.url ? res.url : null
+}
+
+// Sube un archivo directo a Supabase Storage usando el cliente del admin
+// (anon key). Es la vía robusta para videos y archivos grandes: el payload
+// va directo a la API de Supabase Storage, que acepta hasta 50 MB, en lugar
+// de pasar por el body del serverless (limitado ~4.5 MB).
+async function uploadDirectToStorage(file) {
+  if (!supabase) {
+    alert('No se pudo configurar la subida directa de archivos grandes.')
+    return null
+  }
+  try {
+    const isVideo = /(mp4|webm|mov)$/i.test(file.name)
+    const typePrefix = isVideo ? 'video' : 'image'
+    const timestamp = Date.now()
+    const sanitized = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').toLowerCase()
+    const filePath = `site-media/${typePrefix}-${timestamp}-${sanitized}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('product-images')
+      .upload(filePath, file, {
+        contentType: file.type || (isVideo ? 'video/mp4' : 'application/octet-stream'),
+        cacheControl: '31536000',
+        upsert: false,
+      })
+
+    if (uploadError) throw uploadError
+
+    const { data: publicUrl } = supabase.storage
+      .from('product-images')
+      .getPublicUrl(filePath)
+
+    return publicUrl.publicUrl
+  } catch (e) {
+    console.error('Error subiendo archivo directo a Supabase:', e)
+    alert('Error al subir el archivo: ' + (e.message || 'Error desconocido'))
+    return null
+  }
 }
 
 // Redimensiona y comprime una imagen si es demasiado grande, para mantener la
