@@ -25,7 +25,7 @@
     <EditorPageTabs active="apariencia" />
 
     <!-- Editor de paleta de colores -->
-    <ThemeEditor />
+    <EditorThemeEditor />
   </div>
 </template>
 
