@@ -1066,8 +1066,10 @@ function addSlide() {
 }
 
 // Cuando el tipo de fondo cambia a carrusel, inicializa el array de slides
+// Uso `?.` para tolerar que `section.content` pueda ser undefined en secciones
+// antiguas o recién creadas (evita TypeError al montar el componente).
 watch(
-  () => section.content.media_type,
+  () => section.content?.media_type,
   (val) => {
     if (val === 'carousel') ensureSlides()
   },

@@ -212,6 +212,21 @@ async function loadSections() {
   loading.value = true
   try {
     const res = await $fetch(`/api/sections/list?page=${props.page}`)
+    // Normalizar cada sección: garantizar que `content` y `settings` sean
+    // objetos. Algunas secciones antiguas pueden venir con content/settings
+    // null desde la BD, lo que rompía SectionForm (TypeError al leer .media_type).
+    ;(res?.sections || []).forEach((s) => {
+      const defaults = getDefaultContent(s.type)?.content || {}
+      if (!s.content || typeof s.content !== 'object' || Array.isArray(s.content)) {
+        s.content = { ...defaults }
+      } else {
+        // Merge con defaults para que nunca falten claves base
+        s.content = { ...defaults, ...s.content }
+      }
+      if (!s.settings || typeof s.settings !== 'object' || Array.isArray(s.settings)) {
+        s.settings = {}
+      }
+    })
     sections.value = res?.sections || []
   } catch (e) {
     console.error('Error cargando secciones:', e)
