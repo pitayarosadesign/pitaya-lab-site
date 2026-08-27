@@ -1,23 +1,28 @@
 <template>
   <div class="min-h-screen">
-    <!-- Header -->
-    <section class="relative py-24 bg-gradient-to-b from-primary-50 to-white overflow-hidden">
+    <!-- Header (configurable: ocultable y compacto según blocks.header en site_config) -->
+    <section
+      v-if="catalogConfig.blocks.header.enabled"
+      class="relative overflow-hidden bg-gradient-to-b from-primary-50 to-white"
+      :class="catalogConfig.blocks.header.compact ? 'py-8' : 'py-24'"
+    >
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="max-w-3xl mx-auto text-center">
-          <span class="text-primary-600 font-semibold text-sm uppercase tracking-wider">Catálogo</span>
-          <h1 class="text-4xl md:text-5xl font-serif font-bold text-earth-900 mt-3 mb-6">
-            Nuestros <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-amber-500">Productos</span>
+          <span class="text-primary-600 font-semibold text-sm uppercase tracking-wider">{{ catalogConfig.header.badge }}</span>
+          <h1 class="font-serif font-bold text-earth-900 mt-3 mb-6"
+            :class="catalogConfig.blocks.header.compact ? 'text-3xl md:text-4xl' : 'text-4xl md:text-5xl'"
+          >
+            {{ catalogConfig.header.title }} <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-amber-500">{{ catalogConfig.header.highlight }}</span>
           </h1>
-          <p class="text-lg text-earth-600 leading-relaxed">
-            Descubre nuestra colección completa de velas de soya, aceites aromáticos y brumas. 
-            Cada producto elaborado con ingredientes botánicos para cuidar de ti y del planeta.
+          <p v-if="!catalogConfig.blocks.header.compact" class="text-lg text-earth-600 leading-relaxed">
+            {{ catalogConfig.header.description }}
           </p>
         </div>
       </div>
     </section>
 
     <!-- 🔍 Filtros: barra compacta (colapsable en móvil) -->
-    <section class="bg-white border-b border-earth-100 sticky top-20 z-30 shadow-sm">
+    <section v-if="catalogConfig.blocks.filters.enabled" class="bg-white border-b border-earth-100 sticky top-20 z-30 shadow-sm">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Botón toggle (solo móvil) -->
         <div class="lg:hidden flex items-center justify-between py-2">
@@ -177,11 +182,10 @@
     </section>
 
     <!-- 🌸 Panel de experiencia olfativa -->
-    <section class="py-10 bg-gradient-to-b from-primary-50/50 to-white">
+    <section v-if="catalogConfig.blocks.olfactory.enabled" class="py-10 bg-gradient-to-b from-primary-50/50 to-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Cuando hay un aroma seleccionado: panel detallado -->
-        <div v-if="selectedAroma" class="bg-white rounded-3xl border border-earth-100 shadow-sm overflow-hidden">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-0">
+        <div v-if="selectedAroma" class="bg-white rounded-3xl border border-earth-100 shadow-sm overflow-hidden grid grid-cols-1 md:grid-cols-3 gap-0">
             <!-- Imagen del aroma -->
             <div class="md:col-span-1 relative min-h-[220px] bg-earth-100">
               <img
@@ -274,7 +278,6 @@
               </div>
             </div>
           </div>
-        </div>
 
         <!-- Cuando NO hay filtro: galería de todos los aromas -->
         <div v-else-if="aromas.length > 0">
@@ -329,7 +332,7 @@
     </section>
 
     <!-- Grid de productos -->
-    <section class="py-12">
+    <section v-if="catalogConfig.blocks.grid.enabled" class="py-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Cargando -->
         <div v-if="loading" class="text-center py-20">
@@ -391,7 +394,7 @@
     </section>
 
     <!-- 🎯 Guía de Aromas por Mood -->
-    <section v-if="catalogConfig.scent_guide.enabled" class="py-16 bg-gradient-to-b from-white to-primary-50/30">
+    <section v-if="catalogConfig.blocks.scent_guide.enabled" class="py-16 bg-gradient-to-b from-white to-primary-50/30">
       <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-10">
           <span class="text-primary-600 font-semibold text-sm uppercase tracking-wider">{{ catalogConfig.scent_guide.badge }}</span>
@@ -454,7 +457,7 @@
     </section>
 
     <!-- CTA Amazon -->
-    <section class="py-16 bg-gradient-to-r from-primary-900 to-earth-900">
+    <section v-if="catalogConfig.blocks.cta.enabled" class="py-16 bg-gradient-to-r from-primary-900 to-earth-900">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 class="text-3xl font-serif font-bold text-white mb-4">
           {{ catalogConfig.cta.title }}
@@ -496,6 +499,15 @@ const catalogConfig = reactive({
     highlight: 'Productos',
     description: 'Descubre nuestra colección completa de velas de soya, aceites aromáticos y brumas. Cada producto elaborado con ingredientes botánicos para cuidar de ti y del planeta.',
   },
+  // Control de visibilidad/estilo de cada bloque de la página (editable en admin)
+  blocks: {
+    header: { enabled: true, compact: false },
+    filters: { enabled: true },
+    olfactory: { enabled: true },
+    grid: { enabled: true },
+    scent_guide: { enabled: true },
+    cta: { enabled: true },
+  },
   scent_guide: {
     enabled: true,
     badge: 'Guía de Aromas',
@@ -524,8 +536,25 @@ async function loadCatalogConfig() {
     if (error) throw error
     if (data?.value) {
       Object.assign(catalogConfig.header, data.value.header)
+      if (data.value.blocks) {
+        // Merge de bloques con defaults (para tolerar configs existentes sin `blocks`)
+        Object.assign(catalogConfig.blocks,
+          typeof data.value.blocks === 'object' && data.value.blocks
+            ? data.value.blocks
+            : { header: { enabled: true, compact: false } }
+        )
+        // Normalizar cada bloque para que tengo enabled (default true)
+        Object.keys(catalogConfig.blocks).forEach((k) => {
+          const b = catalogConfig.blocks[k]
+          catalogConfig.blocks[k] = typeof b === 'object' && b ? { enabled: true, ...b } : { enabled: true }
+        })
+      }
       Object.assign(catalogConfig.scent_guide, data.value.scent_guide)
       Object.assign(catalogConfig.cta, data.value.cta)
+      // Mantener compatibilidad: scent_guide.enabled desde el top-level si no vino en blocks
+      if (data.value.scent_guide && typeof data.value.scent_guide.enabled === 'boolean') {
+        catalogConfig.blocks.scent_guide.enabled = data.value.scent_guide.enabled
+      }
     }
   } catch (e) {
     console.warn('Usando configuración por defecto del catálogo:', e.message)

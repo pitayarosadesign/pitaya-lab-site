@@ -44,6 +44,15 @@ const config = reactive({
     highlight: 'Productos',
     description: 'Descubre nuestra colección completa de velas de soya, aceites aromáticos y brumas. Cada producto elaborado con ingredientes botánicos para cuidar de ti y del planeta.',
   },
+  // Control de visibilidad/estilo de cada bloque de la página
+  blocks: {
+    header: { enabled: true, compact: false },
+    filters: { enabled: true },
+    olfactory: { enabled: true },
+    grid: { enabled: true },
+    scent_guide: { enabled: true },
+    cta: { enabled: true },
+  },
   scent_guide: {
     enabled: true,
     badge: 'Guía de Aromas',
@@ -65,8 +74,20 @@ async function loadConfig() {
     if (error) throw error
     if (data?.value) {
       Object.assign(config.header, data.value.header)
+      if (data.value.blocks && typeof data.value.blocks === 'object') {
+        Object.assign(config.blocks, data.value.blocks)
+        // Normalizar cada bloque para que tenga enabled (default true)
+        Object.keys(config.blocks).forEach((k) => {
+          const b = config.blocks[k]
+          config.blocks[k] = typeof b === 'object' && b ? { enabled: true, ...b } : { enabled: true }
+        })
+      }
       Object.assign(config.scent_guide, data.value.scent_guide)
       Object.assign(config.cta, data.value.cta)
+      // Compatibilidad: scent_guide.enabled top-level → blocks.scent_guide
+      if (data.value.scent_guide && typeof data.value.scent_guide.enabled === 'boolean') {
+        config.blocks.scent_guide.enabled = data.value.scent_guide.enabled
+      }
     }
   } catch (e) {
     console.error('Error cargando config de Catálogo:', e)
