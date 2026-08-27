@@ -57,7 +57,7 @@
 <script setup>
 useSeoMeta({ title: 'Clientes | Panel Administrativo | PITAYA LAB' })
 
-const supabase = useSupabase()
+const supabase = useSupabaseAdmin()
 const loading = ref(true)
 const customers = ref([])
 

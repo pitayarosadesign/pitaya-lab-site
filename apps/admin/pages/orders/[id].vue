@@ -220,7 +220,7 @@ ue <template>
 </template>
 
 <script setup>
-const supabase = useSupabase()
+const supabase = useSupabaseAdmin()
 const route = useRoute()
 
 const loading = ref(true)

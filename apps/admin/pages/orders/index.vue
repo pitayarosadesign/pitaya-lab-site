@@ -132,7 +132,7 @@
 </template>
 
 <script setup>
-const supabase = useSupabase()
+const supabase = useSupabaseAdmin()
 
 const loading = ref(true)
 const orders = ref([])

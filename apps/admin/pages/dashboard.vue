@@ -73,7 +73,7 @@ useSeoMeta({
   title: 'Dashboard | Panel Administrativo | PITAYA LAB'
 })
 
-const supabase = useSupabase()
+const supabase = useSupabaseAdmin()
 
 const summaryCards = ref([
   { icon: '📦', label: 'Productos', value: '...', change: null },

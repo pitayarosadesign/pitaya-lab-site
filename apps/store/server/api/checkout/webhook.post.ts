@@ -209,6 +209,60 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // Helper para crear/actualizar el cliente en la tabla customers
+  async function upsertCustomer(order: any) {
+    if (!supabaseAdmin) return
+    const email = order.customer_email
+    if (!email || email === 'pendiente@checkout.com' || email === 'cliente@email.com') return
+
+    const name = (order.customer_name || '').trim()
+    const nameParts = name.split(' ')
+    const first_name = nameParts[0] || ''
+    const last_name = nameParts.slice(1).join(' ') || ''
+
+    try {
+      // Buscar si el cliente ya existe
+      const { data: existing } = await supabaseAdmin
+        .from('customers')
+        .select('id, total_orders, total_spent')
+        .eq('email', email)
+        .limit(1)
+
+      if (existing?.[0]) {
+        // Actualizar cliente existente
+        await supabaseAdmin
+          .from('customers')
+          .update({
+            first_name: first_name || existing[0].first_name,
+            last_name: last_name || existing[0].last_name,
+            phone: order.customer_phone || existing[0].phone,
+            shipping_address: order.shipping_address || existing[0].shipping_address,
+            total_orders: (existing[0].total_orders || 0) + 1,
+            total_spent: (existing[0].total_spent || 0) + (order.total || 0),
+            last_order_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existing[0].id)
+      } else {
+        // Crear nuevo cliente
+        await supabaseAdmin
+          .from('customers')
+          .insert({
+            email,
+            first_name,
+            last_name,
+            phone: order.customer_phone || null,
+            shipping_address: order.shipping_address || {},
+            total_orders: 1,
+            total_spent: order.total || 0,
+            last_order_at: new Date().toISOString(),
+          })
+      }
+    } catch (e) {
+      console.error('Error upsertando cliente:', e)
+    }
+  }
+
   try {
     const signature = event.node.req.headers['stripe-signature']
 
@@ -285,6 +339,15 @@ export default defineEventHandler(async (event) => {
 
           console.log(`✅ Orden ${order.order_number} pagada con éxito`)
 
+          // Crear/actualizar el cliente en la tabla customers
+          await upsertCustomer({
+            customer_email: session.customer_details?.email || order.customer_email,
+            customer_name: session.customer_details?.name || order.customer_name,
+            customer_phone: session.customer_details?.phone || null,
+            shipping_address: session.shipping_details || order.shipping_address,
+            total: session.amount_total ? session.amount_total / 100 : order.total,
+          })
+
           // Parsear items con seguridad (evitar romper el webhook si JSON es inválido)
           let itemsForEmail = order.items || []
           if (session.metadata?.items_json) {
@@ -350,6 +413,15 @@ export default defineEventHandler(async (event) => {
             console.error('Error creando orden:', insertError.message)
             throw createError({ statusCode: 500, message: `Error creando orden: ${insertError.message}` })
           }
+
+          // Crear/actualizar el cliente en la tabla customers
+          await upsertCustomer({
+            customer_email: session.customer_details?.email || 'cliente@email.com',
+            customer_name: session.customer_details?.name || 'Cliente',
+            customer_phone: session.customer_details?.phone || null,
+            shipping_address: session.shipping_details || {},
+            total: session.amount_total ? session.amount_total / 100 : 0,
+          })
 
           // Enviar correo de confirmación
           await sendConfirmationEmail({
