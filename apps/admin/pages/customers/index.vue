@@ -57,18 +57,13 @@
 <script setup>
 useSeoMeta({ title: 'Clientes | Panel Administrativo | PITAYA LAB' })
 
-const supabase = useSupabaseAdmin()
 const loading = ref(true)
 const customers = ref([])
 
 onMounted(async () => {
   try {
-    const { data } = await supabase
-      .from('customers')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    if (data) customers.value = data
+    const res = await $fetch('/api/customers')
+    customers.value = res?.customers || []
   } catch (e) {
     console.error('Error cargando clientes:', e)
   } finally {

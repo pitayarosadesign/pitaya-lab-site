@@ -220,7 +220,6 @@ ue <template>
 </template>
 
 <script setup>
-const supabase = useSupabaseAdmin()
 const route = useRoute()
 
 const loading = ref(true)
@@ -260,12 +259,8 @@ const isB2B = computed(() =>
 
 onMounted(async () => {
   try {
-    const { data } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('id', route.params.id)
-      .single()
-
+    const res = await $fetch(`/api/orders/${route.params.id}`)
+    const data = res?.order
     order.value = data
     if (data?.tracking_carrier) trackingForm.carrier = data.tracking_carrier
     if (data?.tracking_number) trackingForm.trackingNumber = data.tracking_number
@@ -281,19 +276,16 @@ async function submitTracking() {
   savingTracking.value = true
 
   try {
-    const { error } = await supabase
-      .from('orders')
-      .update({
+    const res = await $fetch(`/api/orders/${order.value.id}`, {
+      method: 'PUT',
+      body: {
         tracking_carrier: trackingForm.carrier,
         tracking_number: trackingForm.trackingNumber,
         status: order.value.status === 'confirmed' ? 'shipped' : order.value.status,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', order.value.id)
+      },
+    })
 
-    if (error) throw error
-    order.value.tracking_carrier = trackingForm.carrier
-    order.value.tracking_number = trackingForm.trackingNumber
+    order.value = res?.order || order.value
     if (order.value.status === 'confirmed') order.value.status = 'shipped'
     alert('✅ Guía guardada correctamente')
   } catch (e) {
@@ -306,13 +298,12 @@ async function submitTracking() {
 async function changeStatus(status) {
   changingStatus.value = true
   try {
-    const { error } = await supabase
-      .from('orders')
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq('id', order.value.id)
+    const res = await $fetch(`/api/orders/${order.value.id}`, {
+      method: 'PUT',
+      body: { status },
+    })
 
-    if (error) throw error
-    order.value.status = status
+    order.value = res?.order || order.value
   } catch (e) {
     alert('Error al cambiar estado: ' + e.message)
   } finally {

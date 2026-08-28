@@ -132,8 +132,6 @@
 </template>
 
 <script setup>
-const supabase = useSupabaseAdmin()
-
 const loading = ref(true)
 const orders = ref([])
 const filterStatus = ref('')
@@ -151,13 +149,8 @@ const filteredOrders = computed(() => {
 
 onMounted(async () => {
   try {
-    const { data } = await supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(50)
-
-    orders.value = data || []
+    const res = await $fetch('/api/orders')
+    orders.value = res?.orders || []
   } catch (e) {
     console.error('Error cargando órdenes:', e)
   } finally {

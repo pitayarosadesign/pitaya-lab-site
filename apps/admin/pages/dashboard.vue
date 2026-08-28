@@ -73,8 +73,6 @@ useSeoMeta({
   title: 'Dashboard | Panel Administrativo | PITAYA LAB'
 })
 
-const supabase = useSupabaseAdmin()
-
 const summaryCards = ref([
   { icon: '📦', label: 'Productos', value: '...', change: null },
   { icon: '🛒', label: 'Órdenes del mes', value: '...', change: null },
@@ -86,45 +84,16 @@ const recentOrders = ref([])
 
 onMounted(async () => {
   try {
-    // Productos activos
-    const { count: productCount } = await supabase
-      .from('products')
-      .select('*', { count: 'exact', head: true })
-      .eq('is_active', true)
-
-    // Órdenes del mes actual
-    const startOfMonth = new Date()
-    startOfMonth.setDate(1)
-    startOfMonth.setHours(0, 0, 0, 0)
-
-    const { count: orderCount, data: monthOrders } = await supabase
-      .from('orders')
-      .select('total', { count: 'exact', head: false })
-      .gte('created_at', startOfMonth.toISOString())
-
-    // Clientes totales
-    const { count: customerCount } = await supabase
-      .from('customers')
-      .select('*', { count: 'exact', head: true })
-
-    // Calcular ventas del mes
-    const monthlySales = monthOrders?.reduce((sum, o) => sum + Number(o.total || 0), 0) || 0
-
-    // Órdenes recientes
-    const { data: orders } = await supabase
-      .from('orders')
-      .select('order_number, customer_name, total, status, created_at')
-      .order('created_at', { ascending: false })
-      .limit(5)
+    const res = await $fetch('/api/dashboard')
 
     summaryCards.value = [
-      { icon: '📦', label: 'Productos', value: String(productCount || 0), change: null },
-      { icon: '🛒', label: 'Órdenes del mes', value: String(orderCount || 0), change: null },
-      { icon: '💰', label: 'Ventas del mes', value: `$${monthlySales.toLocaleString('es-MX')} MXN`, change: null },
-      { icon: '👥', label: 'Clientes', value: String(customerCount || 0), change: null },
+      { icon: '📦', label: 'Productos', value: String(res?.productCount || 0), change: null },
+      { icon: '🛒', label: 'Órdenes del mes', value: String(res?.orderCount || 0), change: null },
+      { icon: '💰', label: 'Ventas del mes', value: `$${Number(res?.monthlySales || 0).toLocaleString('es-MX')} MXN`, change: null },
+      { icon: '👥', label: 'Clientes', value: String(res?.customerCount || 0), change: null },
     ]
 
-    recentOrders.value = orders || []
+    recentOrders.value = res?.recentOrders || []
   } catch (e) {
     console.error('Error cargando dashboard:', e)
   }
