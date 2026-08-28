@@ -18,33 +18,36 @@ export default defineEventHandler(async (event) => {
   const orderNumber = (body && body.orderNumber) || ''
   const trackingNumber = (body && body.trackingNumber) || ''
   const trackingCarrier = (body && body.trackingCarrier) || ''
+  const trackingUrlManual = (body && body.trackingUrl) || ''
 
   if (!customerEmail || !trackingNumber) {
     return { error: 'Faltan datos: customerEmail y trackingNumber son requeridos', sent: false }
   }
 
-  // Construir enlace de rastreo según la paquetería (Envía/paqueterías destino)
-  let trackingUrl = ''
-  const encoded = encodeURIComponent(trackingNumber)
-  switch ((trackingCarrier || '').toLowerCase()) {
-    case 'estafeta':
-      trackingUrl = `https://www.estafeta.com/rastreo?id=${encoded}`
-      break
-    case 'fedex':
-      trackingUrl = `https://www.fedex.com/fedextrack/?trknbr=${encoded}`
-      break
-    case 'dhl':
-      trackingUrl = `https://www.dhl.com/mx-es/home/tracking.html?tracking-id=${encoded}`
-      break
-    case 'redpack':
-      trackingUrl = `https://www.redpack.com.mx/rastreo/?tracking=${encoded}`
-      break
-    case 'paqueteexpress':
-      trackingUrl = `https://www.paqueteexpress.com/rastreo/?tracking=${encoded}`
-      break
-    default:
-      // genérico Envia.com
-      trackingUrl = `https://www.envia.com/es-mx/track/${encoded}`
+  // Usar el enlace manual si se proporciona; si no, generar según la paquetería
+  let trackingUrl = trackingUrlManual
+  if (!trackingUrl) {
+    const encoded = encodeURIComponent(trackingNumber)
+    switch ((trackingCarrier || '').toLowerCase()) {
+      case 'estafeta':
+        trackingUrl = `https://www.estafeta.com/rastreo?id=${encoded}`
+        break
+      case 'fedex':
+        trackingUrl = `https://www.fedex.com/fedextrack/?trknbr=${encoded}`
+        break
+      case 'dhl':
+        trackingUrl = `https://www.dhl.com/mx-es/home/tracking.html?tracking-id=${encoded}`
+        break
+      case 'redpack':
+        trackingUrl = `https://www.redpack.com.mx/rastreo/?tracking=${encoded}`
+        break
+      case 'paqueteexpress':
+        trackingUrl = `https://www.paqueteexpress.com/rastreo/?tracking=${encoded}`
+        break
+      default:
+        // genérico Envia.com
+        trackingUrl = `https://www.envia.com/es-mx/track/${encoded}`
+    }
   }
 
   // Leer config de correos de site_config para el remitente personalizado

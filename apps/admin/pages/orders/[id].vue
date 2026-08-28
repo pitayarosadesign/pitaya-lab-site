@@ -172,6 +172,17 @@ ue <template>
                 class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400"
               />
             </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">
+                Enlace de rastreo <span class="text-gray-400">(opcional)</span>
+              </label>
+              <input
+                v-model="trackingForm.trackingUrl"
+                type="url"
+                placeholder="https://... (si no se llena, se genera automáticamente según la paquetería)"
+                class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400"
+              />
+            </div>
             <div v-if="order.tracking_number">
               <button
                 type="button"
@@ -231,6 +242,7 @@ const order = ref(null)
 const trackingForm = reactive({
   carrier: '',
   trackingNumber: '',
+  trackingUrl: '',
 })
 
 const availableStatuses = [
@@ -264,6 +276,7 @@ onMounted(async () => {
     order.value = data
     if (data?.shipping_carrier) trackingForm.carrier = data.shipping_carrier
     if (data?.tracking_number) trackingForm.trackingNumber = data.tracking_number
+    if (data?.tracking_url) trackingForm.trackingUrl = data.tracking_url
   } catch (e) {
     console.error('Error cargando orden:', e)
   } finally {
@@ -281,6 +294,7 @@ async function submitTracking() {
       body: {
         shipping_carrier: trackingForm.carrier,
         tracking_number: trackingForm.trackingNumber,
+        tracking_url: trackingForm.trackingUrl || null,
         status: order.value.status === 'confirmed' ? 'shipped' : order.value.status,
       },
     })
@@ -324,6 +338,7 @@ async function sendTrackingNotification() {
         customerName: order.value.customer_name,
         trackingNumber: order.value.tracking_number,
         trackingCarrier: order.value.shipping_carrier,
+        trackingUrl: order.value.tracking_url || '',
       },
     })
 
