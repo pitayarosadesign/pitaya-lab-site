@@ -142,7 +142,7 @@ ue <template>
           
           <div v-if="order.tracking_number" class="mb-4">
             <p class="text-xs text-gray-500 uppercase font-medium">Paquetería</p>
-            <p class="text-sm font-medium text-gray-900">{{ order.tracking_carrier || '—' }}</p>
+            <p class="text-sm font-medium text-gray-900">{{ order.shipping_carrier || '—' }}</p>
             <p class="text-xs text-gray-500 uppercase font-medium mt-2">Número de guía</p>
             <p class="text-sm font-mono font-medium text-primary-600">{{ order.tracking_number }}</p>
           </div>
@@ -262,7 +262,7 @@ onMounted(async () => {
     const res = await $fetch(`/api/orders/${route.params.id}`)
     const data = res?.order
     order.value = data
-    if (data?.tracking_carrier) trackingForm.carrier = data.tracking_carrier
+    if (data?.shipping_carrier) trackingForm.carrier = data.shipping_carrier
     if (data?.tracking_number) trackingForm.trackingNumber = data.tracking_number
   } catch (e) {
     console.error('Error cargando orden:', e)
@@ -279,7 +279,7 @@ async function submitTracking() {
     const res = await $fetch(`/api/orders/${order.value.id}`, {
       method: 'PUT',
       body: {
-        tracking_carrier: trackingForm.carrier,
+        shipping_carrier: trackingForm.carrier,
         tracking_number: trackingForm.trackingNumber,
         status: order.value.status === 'confirmed' ? 'shipped' : order.value.status,
       },
@@ -328,7 +328,7 @@ async function sendTrackingNotification() {
         customerEmail: order.value.customer_email,
         customerName: order.value.customer_name,
         trackingNumber: order.value.tracking_number,
-        trackingCarrier: order.value.tracking_carrier,
+        trackingCarrier: order.value.shipping_carrier,
       }),
     })
     const data = await res.json()
