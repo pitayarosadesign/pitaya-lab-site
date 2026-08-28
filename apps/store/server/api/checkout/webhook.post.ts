@@ -389,7 +389,20 @@ export default defineEventHandler(async (event) => {
             }
           }
 
-          const orderNumber = `PIT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`
+          // Generar número de orden secuencial (PIT-XXXX)
+          const { data: lastOrder } = await supabaseAdmin
+            .from('orders')
+            .select('order_number')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single()
+
+          let nextNumber = 1001
+          if (lastOrder?.order_number) {
+            const lastNum = parseInt(lastOrder.order_number.replace('PIT-', ''), 10)
+            if (!isNaN(lastNum)) nextNumber = lastNum + 1
+          }
+          const orderNumber = `PIT-${nextNumber}`
 
           const { error: insertError } = await supabaseAdmin
             .from('orders')
@@ -485,6 +498,57 @@ export default defineEventHandler(async (event) => {
               updated_at: new Date().toISOString(),
             })
             .eq('id', failedOrders[0].id)
+        }
+        break
+      }
+
+      case 'charge.refunded': {
+        // 💸 Stripe reembolsó el cargo → marcar la orden como reembolsada
+        const charge = webhookEvent.data.object as Stripe.Charge
+        const paymentIntentId = charge.payment_intent as string
+
+        if (paymentIntentId) {
+          const { data: refundedOrders } = await supabaseAdmin
+            .from('orders')
+            .select('*')
+            .eq('stripe_payment_intent_id', paymentIntentId)
+            .limit(1)
+
+          if (refundedOrders?.[0]) {
+            await supabaseAdmin
+              .from('orders')
+              .update({
+                payment_status: 'refunded',
+                status: 'refunded',
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', refundedOrders[0].id)
+            console.log(`💸 Orden ${refundedOrders[0].order_number} reembolsada`)
+          }
+        }
+        break
+      }
+
+      case 'payment_intent.canceled': {
+        // ❌ El pago se canceló después de completarse → marcar la orden como cancelada
+        const paymentIntent = webhookEvent.data.object as Stripe.PaymentIntent
+
+        const { data: canceledOrders } = await supabaseAdmin
+          .from('orders')
+          .select('*')
+          .eq('stripe_payment_intent_id', paymentIntent.id)
+          .limit(1)
+
+        if (canceledOrders?.[0]) {
+          await supabaseAdmin
+            .from('orders')
+            .update({
+              status: 'cancelled',
+              payment_status: 'failed',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', canceledOrders[0].id)
+          console.log(`❌ Orden ${canceledOrders[0].order_number} cancelada`)
         }
         break
       }
