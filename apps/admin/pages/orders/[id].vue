@@ -315,23 +315,17 @@ async function sendTrackingNotification() {
   if (!order.value.tracking_number) return
   sendingNotification.value = true
   try {
-    // Llamar endpoint del store para enviar el correo de seguimiento con la guía
-    const { public: runtimePublic } = useRuntimeConfig()
-    const storeUrl = (runtimePublic && runtimePublic.storeUrl) || 'https://www.pitayalab.com.mx'
-    const base = storeUrl.replace(/\/+$/, '')
-
-    const res = await fetch(base + '/api/admin/send-tracking-email', {
+    // Llamar endpoint del admin que reenvía al store desde el servidor (sin CORS)
+    const data = await $fetch('/api/orders/send-tracking-email', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+      body: {
         orderNumber: order.value.order_number,
         customerEmail: order.value.customer_email,
         customerName: order.value.customer_name,
         trackingNumber: order.value.tracking_number,
         trackingCarrier: order.value.shipping_carrier,
-      }),
+      },
     })
-    const data = await res.json()
 
     if (data && data.sent) {
       alert('✅ Notificación con guía enviada al cliente')
