@@ -19,17 +19,27 @@ export default defineEventHandler(async (event) => {
 
     if (prodError) throw new Error(`Error products: ${prodError.message}`)
 
-    // Órdenes del mes actual
+    // Órdenes del mes actual (excluye pendientes y canceladas)
     const startOfMonth = new Date()
     startOfMonth.setDate(1)
     startOfMonth.setHours(0, 0, 0, 0)
 
-    const { count: orderCount, data: monthOrders, error: orderError } = await supabaseAdmin
+    const { count: orderCount, error: orderError } = await supabaseAdmin
       .from('orders')
-      .select('total', { count: 'exact', head: false })
+      .select('*', { count: 'exact', head: true })
       .gte('created_at', startOfMonth.toISOString())
+      .not('status', 'in', '("pending","cancelled")')
 
     if (orderError) throw new Error(`Error orders: ${orderError.message}`)
+
+    // Ventas del mes (solo órdenes pagadas)
+    const { data: paidOrders, error: paidError } = await supabaseAdmin
+      .from('orders')
+      .select('total')
+      .gte('created_at', startOfMonth.toISOString())
+      .eq('payment_status', 'paid')
+
+    if (paidError) throw new Error(`Error paid orders: ${paidError.message}`)
 
     // Clientes totales
     const { count: customerCount, error: custError } = await supabaseAdmin
@@ -38,8 +48,8 @@ export default defineEventHandler(async (event) => {
 
     if (custError) throw new Error(`Error customers: ${custError.message}`)
 
-    // Calcular ventas del mes
-    const monthlySales = (monthOrders || []).reduce((sum, o) => sum + Number(o.total || 0), 0) || 0
+    // Calcular ventas del mes (solo pagadas)
+    const monthlySales = (paidOrders || []).reduce((sum, o) => sum + Number(o.total || 0), 0) || 0
 
     // Órdenes recientes
     const { data: recentOrders, error: recentError } = await supabaseAdmin
