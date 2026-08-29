@@ -89,9 +89,15 @@ const props = defineProps({
   settings: { type: Object, default: () => ({}) },
 })
 
+// Cliente Supabase público (anon). Con RLS solo lee las reseñas aprobadas.
+const supabase = useNuxtApp().$supabase
+
 // Defaults desde site_config (editable en el panel admin)
 const defaultReviews = ref([])
 const loadedDefaults = ref(false)
+// Reseñas de clientes aprobadas (tabla `reviews`)
+const clientReviews = ref([])
+const loadedClient = ref(false)
 
 async function loadDefaults() {
   if (loadedDefaults.value) return
@@ -104,14 +110,47 @@ async function loadDefaults() {
   }
 }
 
-onMounted(loadDefaults)
+// Carga las reseñas de clientes APROBADAS desde la tabla `reviews`
+async function loadClientReviews() {
+  if (loadedClient.value) return
+  if (!supabase) return
+  loadedClient.value = true
+  try {
+    const { data } = await supabase
+      .from('reviews')
+      .select('name, product, rating, comment, image_url, created_at')
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false })
+      .limit(12)
+
+    if (data && data.length) {
+      clientReviews.value = data.map(r => ({
+        author: r.name,
+        product: r.product,
+        rating: r.rating,
+        text: r.comment,
+        image: r.image_url,
+        created_at: r.created_at,
+        source: 'client',
+      }))
+    }
+  } catch (e) {
+    console.warn('Error cargando reseñas aprobadas:', e.message)
+  }
+}
+
+onMounted(() => {
+  loadDefaults()
+  loadClientReviews()
+})
 
 const reviews = computed(() => {
-  if (Array.isArray(props.content.items) && props.content.items.length > 0) {
-    return props.content.items
-  }
-  // Fallback: contenido editable desde site_config
-  return defaultReviews.value
+  // Combinar: reseñas manuales (editadas) + reseñas aprobadas de clientes
+  const manual = Array.isArray(props.content.items) ? props.content.items
+    : (defaultReviews.value.length ? defaultReviews.value : [])
+
+  const combined = [...clientReviews.value, ...manual]
+  return combined.length ? combined : defaultReviews.value
 })
 
 const reviewsContainer = ref(null)

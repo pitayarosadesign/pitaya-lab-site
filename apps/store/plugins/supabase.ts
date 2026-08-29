@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 
+
 // Plugin universal de Supabase para el store.
 // Funciona tanto en SSR como en el cliente, permitiendo que las secciones
 // se rendericen en el servidor (mejor SEO y sin hydration mismatches).

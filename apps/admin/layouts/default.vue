@@ -100,6 +100,7 @@ const navItems = [
   { icon: '📦', label: 'Inventario', to: '/inventory' },
   { icon: '🏪', label: 'Showroom', to: '/commerce' },
   { icon: '🏷️', label: 'Cupones', to: '/coupons' },
+  { icon: '💬', label: 'Reseñas', to: '/reviews' },
   { icon: '🎨', label: 'Editar Sitio Web', to: '/site' },
   { icon: '📈', label: 'Analíticas', to: '/analytics' },
   { icon: '📡', label: 'Catálogos', to: '/catalog-feeds' },

@@ -218,6 +218,18 @@ ue <template>
               {{ st.label }}
             </button>
           </div>
+
+          <!-- Botón de notificar entrega (solo cuando está entregada) -->
+          <button
+            v-if="order.status === 'delivered'"
+            type="button"
+            @click="sendDeliveredNotification"
+            :disabled="sendingDelivered"
+            class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-2 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            <span v-if="sendingDelivered" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+            {{ sendingDelivered ? 'Enviando...' : '🎉 📧 Notificar entrega + reseña' }}
+          </button>
         </div>
       </div>
     </div>
@@ -237,6 +249,7 @@ const loading = ref(true)
 const savingTracking = ref(false)
 const changingStatus = ref(false)
 const sendingNotification = ref(false)
+const sendingDelivered = ref(false)
 const order = ref(null)
 
 const trackingForm = reactive({
@@ -351,6 +364,32 @@ async function sendTrackingNotification() {
     alert('Error al enviar notificación: ' + e.message)
   } finally {
     sendingNotification.value = false
+  }
+}
+
+async function sendDeliveredNotification() {
+  if (!order.value.customer_email) return
+  sendingDelivered.value = true
+  try {
+    // Llamar endpoint del admin que reenvía al store desde el servidor (sin CORS)
+    const data = await $fetch('/api/orders/send-delivered-email', {
+      method: 'POST',
+      body: {
+        orderNumber: order.value.order_number,
+        customerEmail: order.value.customer_email,
+        customerName: order.value.customer_name,
+      },
+    })
+
+    if (data && data.sent) {
+      alert('✅ Notificación de entrega + enlace de reseña enviados al cliente')
+    } else {
+      alert('Error al enviar notificación: ' + (data?.error || 'Respuesta inesperada del servidor'))
+    }
+  } catch (e) {
+    alert('Error al enviar notificación: ' + e.message)
+  } finally {
+    sendingDelivered.value = false
   }
 }
 

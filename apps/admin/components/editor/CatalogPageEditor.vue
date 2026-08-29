@@ -159,6 +159,7 @@
 const model = defineModel({ type: Object, required: true })
 
 // Garantizar que model.blocks exista siempre (para configs antiguas sin `blocks`)
+
 if (!model.value.blocks || typeof model.value.blocks !== 'object') {
   model.value.blocks = {
     header: { enabled: true, compact: false },
