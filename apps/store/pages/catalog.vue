@@ -329,7 +329,7 @@
         </div>
 
         <!-- Sin resultados -->
-        <div v-else-if="!loading && filteredProducts.length === 0" class="text-center py-20">
+        <div v-if="!loading && filteredProducts.length === 0" class="text-center py-20">
           <p class="text-5xl mb-4">🌸</p>
           <p class="text-earth-600 text-lg mb-2">No encontramos productos con esos filtros.</p>
           <p class="text-earth-400 text-sm mb-6">Prueba con otra fragancia o categoría.</p>
@@ -342,7 +342,7 @@
         </div>
 
         <!-- Grid -->
-        <div v-else-if="!loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div v-if="!loading && filteredProducts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           <div
             v-for="product in filteredProducts"
             :key="product.id"
