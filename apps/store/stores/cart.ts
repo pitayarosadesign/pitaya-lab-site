@@ -17,6 +17,11 @@ export interface CartItem {
     name: string
   } | null
   quantity: number
+  /** true = sobre pedido (sin stock, se prepara en taller) */
+  backorder?: boolean
+  /** meta opcional de preparación / envío para estimados por ítem */
+  prepDaysMin?: number
+  prepDaysMax?: number
 }
 
 export interface CartState {
@@ -136,3 +141,4 @@ export const useCartStore = defineStore('cart', {
     },
   },
 })
+
