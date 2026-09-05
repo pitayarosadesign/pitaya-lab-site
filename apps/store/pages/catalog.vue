@@ -24,33 +24,42 @@
     <!-- 🔍 Filtros: barra compacta (colapsable en móvil) -->
     <section v-if="catalogConfig.blocks.filters.enabled" class="bg-white border-b border-earth-100 sticky top-20 z-30 shadow-sm">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Botón toggle (solo móvil) -->
-        <div class="lg:hidden flex items-center justify-between py-2">
+        <!-- Botón toggle compacto (visible en todas las resoluciones) -->
+        <div class="flex items-center justify-between py-2">
           <button
             @click="filtersOpen = !filtersOpen"
-            class="flex items-center gap-2 w-full text-left text-earth-800 font-semibold text-sm"
+            class="inline-flex items-center gap-2 text-earth-800 font-semibold text-sm hover:text-primary-700 transition-colors"
             aria-expanded="filtersOpen"
           >
             <svg class="w-5 h-5 text-primary-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
             </svg>
-            Filtros
-            <span v-if="hasActiveFilters" class="w-2 h-2 rounded-full bg-primary-600 ml-1"></span>
+            {{ filtersOpen ? 'Ocultar filtros' : 'Filtrar y explorar aromas' }}
+            <span
+              v-if="activeFilterCount > 0"
+              class="min-w-[18px] h-[18px] px-1 inline-flex items-center justify-center rounded-full bg-primary-600 text-white text-[11px] font-bold"
+            >{{ activeFilterCount }}</span>
           </button>
-          <svg
-            class="w-5 h-5 text-earth-400 transition-transform flex-shrink-0"
-            :class="filtersOpen ? 'rotate-180' : ''"
-            fill="none" stroke="currentColor" viewBox="0 0 24 24"
-          >
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-          </svg>
+          <div class="flex items-center gap-3">
+            <button
+              v-if="hasActiveFilters"
+              @click="resetFilters"
+              class="text-sm text-primary-600 hover:text-primary-700 font-medium underline flex-shrink-0"
+            >
+              Limpiar todo
+            </button>
+            <svg
+              class="w-5 h-5 text-earth-400 transition-transform flex-shrink-0"
+              :class="filtersOpen ? 'rotate-180' : ''"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </div>
         </div>
 
-        <!-- Panel de filtros (colapsable en móvil, siempre visible en desktop) -->
-        <div
-          class="pb-4 lg:pb-6"
-          :class="filtersOpen ? 'block' : 'hidden lg:block'"
-        >
+        <!-- Panel de filtros y aromas (colapsable: oculto cuando está cerrado, en cualquier resolución) -->
+        <div class="pb-4 lg:pb-6" :class="filtersOpen ? 'block' : 'hidden'">
         <!-- Buscador de aroma -->
         <div class="relative">
           <div class="flex items-center gap-3 bg-earth-50 rounded-2xl px-4 py-3 border border-earth-200 focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-100 transition-all">
@@ -175,6 +184,63 @@
                 {{ categoryCounts[cat.id] || 0 }}
               </span>
             </button>
+          </div>
+        </div>
+
+        <!-- 🎨 Facetas: colección olfativa + inspiración/hotel (dentro del panel, compactas) -->
+        <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+          <!-- Colección olfativa -->
+          <div v-if="familyOptions.length">
+            <p class="text-xs font-bold uppercase tracking-wider text-earth-500 mb-2">⊛ Colección olfativa</p>
+            <div class="flex flex-wrap gap-1.5">
+              <button
+                @click="activeFamily = 'all'"
+                :class="[
+                  'px-3 py-1.5 rounded-full text-xs font-medium border transition-all',
+                  activeFamily === 'all'
+                    ? 'bg-earth-900 text-white border-earth-900'
+                    : 'bg-white text-earth-600 border-earth-200 hover:border-primary-300 hover:text-primary-700'
+                ]"
+              >Todas ({{ products.length }})</button>
+              <button
+                v-for="fam in familyOptions"
+                :key="fam.key"
+                @click="activeFamily = (activeFamily === fam.key ? 'all' : fam.key)"
+                :class="[
+                  'px-3 py-1.5 rounded-full text-xs font-medium border transition-all',
+                  activeFamily === fam.key
+                    ? 'bg-primary-600 text-white border-primary-600'
+                    : 'bg-white text-earth-600 border-earth-200 hover:border-primary-300 hover:text-primary-700'
+                ]"
+              >{{ fam.label }} ({{ fam.count }})</button>
+            </div>
+          </div>
+
+          <!-- Inspiración / hotel de referencia -->
+          <div v-if="hotelOptions.length">
+            <p class="text-xs font-bold uppercase tracking-wider text-earth-500 mb-2">⭐ Inspirado en</p>
+            <div class="flex flex-wrap gap-1.5">
+              <button
+                @click="activeHotel = 'all'"
+                :class="[
+                  'px-3 py-1.5 rounded-full text-xs font-medium border transition-all',
+                  activeHotel === 'all'
+                    ? 'bg-earth-900 text-white border-earth-900'
+                    : 'bg-white text-earth-600 border-earth-200 hover:border-amber-400 hover:text-amber-700'
+                ]"
+              >Todos ({{ products.length }})</button>
+              <button
+                v-for="hot in hotelOptions"
+                :key="hot.key"
+                @click="activeHotel = (activeHotel === hot.key ? 'all' : hot.key)"
+                :class="[
+                  'px-3 py-1.5 rounded-full text-xs font-medium border transition-all',
+                  activeHotel === hot.key
+                    ? 'bg-amber-600 text-white border-amber-600'
+                    : 'bg-white text-earth-600 border-earth-200 hover:border-amber-400 hover:text-amber-700'
+                ]"
+              >✨ {{ hot.label }} ({{ hot.count }})</button>
+            </div>
           </div>
         </div>
       </div>
@@ -568,17 +634,29 @@ const categories = ref([
 
 const activeCategory = ref('all')
 const activeFragrance = ref(null)
+// 🎨 Facetas transversales (colección olfativa / inspiración de hotel)
+const activeFamily = ref('all') // slug de colección
+const activeHotel = ref('all')  // hotel_reference (normalizado)
 const searchQuery = ref('')
 const showSuggestions = ref(false)
 const loading = ref(true)
 
-// Estado del panel de filtros (colapsable en móvil)
+// Estado del panel de filtros (colapsable dentro de la barra, en cualquier viewport)
 const filtersOpen = ref(false)
 
-// Indica si hay algún filtro activo (para mostrar el punto indicador en móvil)
-const hasActiveFilters = computed(() => {
-  return activeCategory.value !== 'all' || !!activeFragrance.value || !!searchQuery.value.trim()
+// Nº de filtros activos visibles en el badge del botón "Filtrar y explorar"
+const activeFilterCount = computed(() => {
+  let n = 0
+  if (activeCategory.value !== 'all') n++
+  if (activeFragrance.value) n++
+  if (activeFamily.value !== 'all') n++
+  if (activeHotel.value !== 'all') n++
+  if (searchQuery.value.trim()) n++
+  return n
 })
+
+// Indica si hay algún filtro activo (para el punto indicador en móvil)
+const hasActiveFilters = computed(() => activeFilterCount.value > 0)
 
 // Productos desde API
 const products = ref([])
@@ -725,6 +803,16 @@ const filteredProducts = computed(() => {
     })
   }
 
+  // 🔎 Filtro por colección olfativa (alguno de sus aromas en esa familia)
+  if (activeFamily.value !== 'all') {
+    result = result.filter(p => productAttrKeys(p).cats.includes(activeFamily.value))
+  }
+
+  // 🔎 Filtro por inspiración/hotel (alguno de sus aromas con esa referencia)
+  if (activeHotel.value !== 'all') {
+    result = result.filter(p => productAttrKeys(p).hotels.includes(activeHotel.value.toLowerCase()))
+  }
+
   return result
 })
 
@@ -739,9 +827,65 @@ const categoryCounts = computed(() => {
   return counts
 })
 
+// ===== 🎨 Facetas: Familia olfativa (colección) e Inspiración (hotel) =====
+// Mapa aroma.id -> { category(categoryLabel + slug), hotel_reference }
+const aromaMetaById = computed(() => {
+  const m = {}
+  aromas.value.forEach(a => {
+    m[a.id] = { category: a.categoryLabel, categoryKey: a.category, hotel: a.hotel_reference }
+  })
+  return m
+})
+
+// Atributos de faceta de un producto (para sus fragancias vinculadas)
+function productAttrKeys(p) {
+  const cats = new Set()
+  const hotels = new Set()
+  ;(p.fragrances || []).forEach(f => {
+    const meta = aromaMetaById.value[f.id] || {}
+    if (meta.categoryKey) cats.add(meta.categoryKey)
+    if (meta.hotel) hotels.add(String(meta.hotel).toLowerCase())
+  })
+  return { cats: Array.from(cats), hotels: Array.from(hotels) }
+}
+
+// Opciones faceta "Colección": aromas que tienen colección, con conteos
+const familyOptions = computed(() => {
+  const seen = {}
+  aromas.value
+    .filter(a => a.category)
+    .forEach(a => {
+      seen[a.category] = { key: a.category, label: a.categoryLabel || a.category, icon: '⊛' }
+    })
+  const list = Object.values(seen)
+  list.sort((a, b) => (a.label || '').localeCompare(b.label || ''))
+  return list.map(o => ({
+    ...o,
+    count: products.value.filter(p => productAttrKeys(p).cats.includes(o.key)).length,
+  }))
+})
+
+// Opciones faceta "Inspiración/hotel": aromas con hotel_reference
+const hotelOptions = computed(() => {
+  const seen = {}
+  aromas.value.forEach(a => {
+    if (a.hotel_reference) {
+      const key = String(a.hotel_reference).trim()
+      if (key && !seen[key]) seen[key] = { key, label: key }
+    }
+  })
+  const list = Object.values(seen).sort((a, b) => (a.label || '').localeCompare(b.label || ''))
+  return list.map(o => ({
+    ...o,
+    count: products.value.filter(p => productAttrKeys(p).hotels.includes(o.key.toLowerCase())).length,
+  }))
+})
+
 function resetFilters() {
   activeCategory.value = 'all'
   activeFragrance.value = null
+  activeFamily.value = 'all'
+  activeHotel.value = 'all'
   searchQuery.value = ''
   showSuggestions.value = false
 }
@@ -763,6 +907,8 @@ function onSearchInput() {
 
 function selectAroma(aroma) {
   activeFragrance.value = aroma.id
+  activeFamily.value = 'all'
+  activeHotel.value = 'all'
   searchQuery.value = aroma.name
   showSuggestions.value = false
 }
@@ -778,6 +924,10 @@ function onSelectChange() {
   if (activeFragrance.value) {
     const aroma = aromas.value.find(a => a.id === activeFragrance.value)
     searchQuery.value = aroma?.name || ''
+    if (aroma) {
+      activeFamily.value = 'all'
+      activeHotel.value = 'all'
+    }
   } else {
     searchQuery.value = ''
   }
