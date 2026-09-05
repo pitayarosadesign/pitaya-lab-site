@@ -94,7 +94,6 @@ const navItems = [
   { icon: '📊', label: 'Dashboard', to: '/dashboard' },
   { icon: '📦', label: 'Productos', to: '/products' },
   { icon: '🌸', label: 'Colecciones', to: '/colecciones' },
-  { icon: '🧬', label: 'Familias olfativas', to: '/olfactive' },
   { icon: '🧴', label: 'Envases Recuerdos', to: '/recuerdo-envases' },
   { icon: '🛒', label: 'Órdenes', to: '/orders' },
   { icon: '👥', label: 'Clientes', to: '/customers' },

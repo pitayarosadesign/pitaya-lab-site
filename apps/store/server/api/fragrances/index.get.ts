@@ -88,6 +88,9 @@ export default defineEventHandler(async (event) => {
         image_url: pr.image_url,
         emoji: pr.emoji,
         short_desc: pr.short_desc,
+        // Clasificación limpia por aroma desde admin
+        family: pr.olfactive_family || null,
+        collectionTag: pr.collection_tag || null,
         collection: pr.collections
           ? { id: pr.collections.id, slug: pr.collections.slug, name: pr.collections.name, icon: pr.collections.icon }
           : null,

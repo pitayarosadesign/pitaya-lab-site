@@ -77,7 +77,7 @@
             @click="activeCategory = 'all'"
             class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-earth-50 border border-earth-200 text-earth-700 text-[11px] font-medium hover:border-primary-300 hover:text-primary-700 transition-colors"
           >
-            {{ categoryIcon(activeCategoryName) }} <span class="font-semibold">{{ activeCategoryName }}</span>
+            {{ activeCategoryName }}
             <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
           <button
@@ -470,7 +470,7 @@
 
             <!-- 🎯 Sección: Tipo de producto (formato/presentación) -->
             <section v-if="categories.length > 1">
-              <h3 class="text-xs font-bold uppercase tracking-wider text-earth-500 mb-2 flex items-center gap-1.5">🧭 Tipo de producto</h3>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-earth-500 mb-2">Tipo de producto</h3>
               <div class="grid grid-cols-2 gap-2">
                 <button
                   :class="[
@@ -481,7 +481,6 @@
                   ]"
                   @click="activeCategory = 'all'"
                 >
-                  <span class="text-lg leading-none">🌸</span>
                   <span class="flex-1 text-sm font-medium">Todos</span>
                   <span class="text-[11px] text-earth-400 font-semibold">{{ categoryCounts.all || 0 }}</span>
                 </button>
@@ -496,7 +495,6 @@
                   ]"
                   @click="activeCategory = (activeCategory === cat.id ? 'all' : cat.id)"
                 >
-                  <span class="text-lg leading-none">{{ categoryIcon(cat.label) }}</span>
                   <span class="flex-1 text-sm font-medium">{{ cat.label }}</span>
                   <span class="text-[11px] text-earth-400 font-semibold">{{ categoryCounts[cat.id] || 0 }}</span>
                 </button>
