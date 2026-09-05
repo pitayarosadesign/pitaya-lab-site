@@ -21,7 +21,24 @@
       </div>
     </section>
 
-    <!-- 🔍 Filtros: barra compacta (colapsable en móvil) -->
+    <!-- 🔍 Filtros del catálogo
+         ─────────────────────────────────────────────────────────────────────────────
+         NOTA DE MANTENIMIENTO (importante leer antes de editar):
+         • ESTA BARRA/DRAWER NO es "contenido CMS". Es LÓGICA DE CÓDIGO ligada al
+           DOM de esta página. No se debe refactorizar como "sección editable del editor".
+         • Los valores de las facetas (formato / aroma / colección / inspiración)
+           se DERIVAN automáticamente de las tablas de la BD vía las options/
+           computeds de abajo (categories, familyOptions, hotelOptions, aromas).
+           Por eso, al cambiar en el admin una categoría, colección o perfil
+           aromático, estos filtros se actualizan solos: NO hay doble fuente de
+           verdad y no hace falta duplicar nada aquí.
+         • Lo editable desde admin en esta página ES: el flag `blocks.filters.enabled`
+           (mostrar/ocultar) y las etiquetas de los bloques, vía site_config >
+           catalog_page > blocks. Todo lo demás es presentación de código.
+         • Si a futuro se quieren FACETAS nuevas configurables (precio, certification,
+           etc.), ahí SÍ conviene extraer esto a un componente genérico `FacetFilters.vue`
+           que reciba config; ese refactor requiere DONDE esté la necesidad real.
+         ───────────────────────────────────────────────────────────────────────────── -->
     <section v-if="catalogConfig.blocks.filters.enabled" class="bg-white border-b border-earth-100 sticky top-20 z-30 shadow-sm">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- 📌 Fila 1: píldoras de FORMATO siempre visibles (decisión primaria, scroll en móvil) -->
