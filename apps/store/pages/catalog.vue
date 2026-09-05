@@ -280,6 +280,27 @@
       </div>
     </section>
 
+    <!-- 🌸 Puente de descubrimiento → Guía (visible cuando el bloque olfativo NO está incrustado) -->
+    <section
+      v-if="!loading && !catalogConfig.blocks.olfactory.enabled && aromas.length > 0"
+      class="pt-10 pb-2"
+    >
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-earth-100 bg-earth-50/40 px-5 py-4">
+          <div>
+            <p class="text-[11px] font-semibold text-earth-500 uppercase tracking-wider">¿Buscas por fragancia?</p>
+            <p class="text-sm text-earth-600 mt-0.5">Explora cada aroma por su personalidad y descubre en qué formato llevarla.</p>
+          </div>
+          <NuxtLink
+            to="/fragrancias"
+            class="inline-flex items-center gap-2 rounded-full bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold px-5 py-2.5 transition-colors whitespace-nowrap"
+          >
+            🌸 Ir a la Guía de Fragancias
+          </NuxtLink>
+        </div>
+      </div>
+    </section>
+
     <!-- Grid de productos -->
     <section v-if="catalogConfig.blocks.grid.enabled" class="py-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -638,13 +659,17 @@ const catalogConfig = reactive({
   blocks: {
     header: { enabled: true, compact: false },
     filters: { enabled: true },
-    olfactory: { enabled: true },
+    // Los bloques editoriales (galería de aromas e "guía por mood") se desactivan
+    // por defecto: el catálogo debe mostrar PRODUCTOS. El descubrimiento por
+    // fragancia vive en /fragrancias. Puedes reactivarlos desde el panel admin
+    // (site_config > catalog_page.blocks) si un layout lo necesita incrustado.
+    olfactory: { enabled: false },
     grid: { enabled: true },
-    scent_guide: { enabled: true },
+    scent_guide: { enabled: false },
     cta: { enabled: true },
   },
   scent_guide: {
-    enabled: true,
+    enabled: false,
     badge: 'Guía de Aromas',
     title: 'Encuentra tu aroma ideal',
     description: 'Cada aroma de PITAYA LAB está diseñado para una experiencia única. Elige según tu mood y el momento.',
