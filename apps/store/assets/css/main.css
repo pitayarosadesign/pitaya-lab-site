@@ -117,3 +117,13 @@ body {
   background: var(--color-earth-400);
 }
 
+/* Ocultar la barra de scroll en filas horizontales (p. ej. píldoras de filtro)
+   manteniendo el scroll en móvil */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

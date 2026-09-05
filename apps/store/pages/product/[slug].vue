@@ -38,10 +38,9 @@
       <!-- Contenido principal -->
       <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          <!-- Columna izquierda: Imágenes -->
+          <!-- Columna izquierda: Galería del PRODUCTO (independiente del aroma seleccionado) -->
           <div class="space-y-4">
-            <!-- Imagen principal con sobrepuesto de notas del aroma -->
-            <div class="aspect-square rounded-3xl overflow-hidden bg-earth-50 shadow-sm border border-earth-100 relative">
+            <div class="aspect-square rounded-3xl overflow-hidden bg-earth-50 shadow-sm border border-earth-100">
               <img
                 v-if="activeImage"
                 :src="activeImage"
@@ -53,81 +52,18 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
               </div>
-
-              <!-- 🌸 Sobre puesto de aroma: variante, colección, hotel y notas -->
-              <div
-                v-if="selectedFragrance && (selectedFragrance.name || selectedFragrance.notesList.length)"
-                class="absolute bottom-4 left-4 right-4"
-              >
-                <div class="bg-white/85 backdrop-blur-xl rounded-2xl shadow-2xl shadow-earth-900/10 border border-earth-100 overflow-hidden">
-                  <!-- Header: nombre del aroma + badges discretos -->
-                  <div class="px-5 pt-4 pb-3 flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-2.5 min-w-0">
-                      <span v-if="selectedFragrance.emoji" class="text-2xl leading-none flex-shrink-0 drop-shadow-sm">{{ selectedFragrance.emoji }}</span>
-                      <div class="min-w-0">
-                        <p class="text-sm font-serif font-bold text-earth-900 leading-tight truncate">{{ selectedFragrance.name }}</p>
-                        <p v-if="selectedFragrance.subtitle" class="text-[10px] text-earth-500 italic leading-tight truncate">{{ selectedFragrance.subtitle }}</p>
-                      </div>
-                    </div>
-                    <div class="flex flex-col items-end gap-1 flex-shrink-0">
-                      <span
-                        v-if="selectedFragrance.collection"
-                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-earth-200 bg-earth-50/80 text-earth-600 text-[10px] font-medium tracking-wide"
-                        :title="`Colección ${selectedFragrance.collection.name}`"
-                      >
-                        {{ selectedFragrance.collection.icon || '🖇️' }}
-                        {{ selectedFragrance.collection.name }}
-                      </span>
-                      <span
-                        v-if="selectedFragrance.hotelReference"
-                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-amber-200 bg-amber-50/80 text-amber-700 text-[10px] font-medium"
-                        :title="'Hotel inspirado'"
-                      >
-                        ✨ {{ selectedFragrance.hotelReference }}
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- Separador fino -->
-                  <div v-if="selectedFragrance.notesList.length" class="mx-5 border-t border-earth-100"></div>
-
-                  <!-- Cuerpo: notas aromáticas -->
-                  <div v-if="selectedFragrance.notesList.length" class="px-5 py-3">
-                    <!-- Notas estructuradas (SAL/COR/FONDO) -->
-                    <div v-if="selectedFragrance.notesList.length > 1" class="flex flex-wrap gap-1.5">
-                      <span
-                        v-for="note in selectedFragrance.notesList"
-                        :key="note.label"
-                        class="inline-flex items-baseline gap-1 px-2 py-1 rounded-lg border border-earth-100 bg-white/60"
-                      >
-                        <span class="text-[9px] font-semibold text-primary-600 uppercase tracking-wider">{{ note.label }}</span>
-                        <span class="text-[11px] text-earth-700 font-medium leading-snug">{{ note.values }}</span>
-                      </span>
-                    </div>
-                    <!-- Notas simples (texto libre) -->
-                    <div v-else class="flex items-baseline gap-1.5">
-                      <span class="text-[9px] font-semibold text-primary-600 uppercase tracking-wider flex-shrink-0">Notas</span>
-                      <span class="text-[11px] text-earth-700 font-medium leading-snug">{{ selectedFragrance.notesList[0].values }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
 
-            <!-- Thumbnails: imágenes del producto + imágenes de cada variante -->
-            <div v-if="allGalleryImages.length > 1" class="flex gap-3 overflow-x-auto pb-2">
+            <!-- Thumbnails: SOLO imágenes reales del producto físico (sin interferir con el aroma) -->
+            <div v-if="productGalleryImages.length > 1" class="flex gap-3 overflow-x-auto pb-2">
               <button
-                v-for="(img, index) in allGalleryImages"
+                v-for="(img, index) in productGalleryImages"
                 :key="img.key"
                 @click="selectGalleryImage(index)"
-                class="w-20 h-20 rounded-xl overflow-hidden border-2 flex-shrink-0 transition-all relative"
+                class="w-20 h-20 rounded-xl overflow-hidden border-2 flex-shrink-0 transition-all"
                 :class="activeGalleryIndex === index ? 'border-primary-500 shadow-md' : 'border-earth-200 hover:border-earth-300'"
               >
                 <img :src="img.url" :alt="img.alt || product.name" class="w-full h-full object-cover" />
-                <!-- Etiqueta si es imagen de una variante -->
-                <span v-if="img.variantName" class="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[9px] py-0.5 text-center truncate">
-                  {{ img.variantName }}
-                </span>
               </button>
             </div>
           </div>
@@ -179,7 +115,19 @@
 
             <!-- Variantes (Aromas) -->
             <div v-if="product.variants && product.variants.length > 0" class="mb-6">
-              <h3 class="text-sm font-semibold text-earth-700 mb-3">Elige tu aroma:</h3>
+              <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
+                <h3 class="text-sm font-semibold text-earth-700">Elige tu aroma:</h3>
+                <NuxtLink
+                  to="/fragrancias"
+                  class="text-[11px] font-medium text-primary-600 hover:text-primary-700 inline-flex items-center gap-1"
+                  title="Descubre cada fragancia y en qué productos está disponible"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                  </svg>
+                  Guía de fragancias
+                </NuxtLink>
+              </div>
               <div class="flex flex-wrap gap-2">
                 <button
                   v-for="variant in product.variants"
@@ -194,34 +142,65 @@
                 </button>
               </div>
 
-              <!-- 🌸 Experiencia olfativa del aroma seleccionado (sincronizada con catálogo) -->
+              <!-- 🌸 Tarjeta contextual del aroma seleccionado
+                   Contenido editorial propio del aroma (no una imagen dentro de la
+                   galería del producto). La galería de la izquierda NO cambia. -->
               <div
-                v-if="selectedFragrance && (selectedFragrance.experience || selectedFragrance.description || selectedFragrance.subtitle)"
-                class="mt-4 p-5 rounded-2xl bg-earth-50/70 border border-earth-100"
+                v-if="selectedFragrance"
+                class="mt-5 rounded-2xl border border-earth-100 bg-earth-50/50 overflow-hidden"
               >
-                <div class="flex flex-wrap items-center gap-2 mb-2">
-                  <span v-if="selectedFragrance.emoji" class="text-xl leading-none">{{ selectedFragrance.emoji }}</span>
-                  <p class="text-sm font-serif font-bold text-earth-900">{{ selectedFragrance.name }}</p>
+                <div class="flex items-stretch p-4 gap-4">
+                  <!-- Miniatura del aroma (propia, NO en la galería del producto) -->
+                  <div class="w-24 h-24 rounded-xl overflow-hidden bg-earth-100 flex-shrink-0 shrink-0">
+                    <img
+                      v-if="selectedFragrance.image"
+                      :src="selectedFragrance.image"
+                      :alt="selectedFragrance.name || 'Aroma'"
+                      class="w-full h-full object-cover"
+                    />
+                    <div v-else class="w-full h-full flex items-center justify-center text-3xl">
+                      {{ selectedFragrance.emoji || '🌸' }}
+                    </div>
+                  </div>
+
+                  <!-- Información del aroma -->
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center flex-wrap gap-1.5 mb-1">
+                      <span v-if="selectedFragrance.emoji" class="text-lg leading-none">{{ selectedFragrance.emoji }}</span>
+                      <p class="text-base font-serif font-bold text-earth-900 truncate">{{ selectedFragrance.name }}</p>
+                      <span
+                        v-if="selectedFragrance.collection"
+                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-earth-200 bg-white text-earth-600 text-[10px] font-medium"
+                      >
+                        {{ selectedFragrance.collection.name }}
+                      </span>
+                      <span
+                        v-if="selectedFragrance.hotelReference"
+                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-amber-200 bg-white text-amber-700 text-[10px] font-medium"
+                      >
+                        ✨ {{ selectedFragrance.hotelReference }}
+                      </span>
+                    </div>
+                    <p v-if="selectedFragrance.experience" class="text-sm text-earth-600 leading-relaxed">
+                      {{ selectedFragrance.experience }}
+                    </p>
+                    <p v-if="selectedFragrance.description" class="text-xs text-earth-500 leading-relaxed mt-1">
+                      {{ selectedFragrance.description }}
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Notas aromáticas estructuradas (SAL / COR / FONDO) -->
+                <div v-if="selectedFragrance.notesList && selectedFragrance.notesList.length" class="px-4 pb-4 flex flex-wrap gap-1.5">
                   <span
-                    v-if="selectedFragrance.collection"
-                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-earth-200 bg-white text-earth-600 text-[10px] font-medium"
+                    v-for="note in selectedFragrance.notesList"
+                    :key="note.label"
+                    class="inline-flex items-baseline gap-1 px-2 py-1 rounded-lg border border-earth-100 bg-white/70"
                   >
-                    {{ selectedFragrance.collection.icon || '🖇️' }}
-                    {{ selectedFragrance.collection.name }}
-                  </span>
-                  <span
-                    v-if="selectedFragrance.hotelReference"
-                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-amber-200 bg-white text-amber-700 text-[10px] font-medium"
-                  >
-                    ✨ {{ selectedFragrance.hotelReference }}
+                    <span class="text-[9px] font-semibold text-primary-600 uppercase tracking-wider">{{ note.label }}</span>
+                    <span class="text-[11px] text-earth-700 font-medium">{{ note.values }}</span>
                   </span>
                 </div>
-                <p v-if="selectedFragrance.experience" class="text-sm text-earth-600 leading-relaxed">
-                  {{ selectedFragrance.experience }}
-                </p>
-                <p v-if="selectedFragrance.description" class="text-xs text-earth-500 leading-relaxed mt-1">
-                  {{ selectedFragrance.description }}
-                </p>
               </div>
             </div>
 
@@ -478,7 +457,6 @@ const cart = useCartStore()
 const product = ref(null)
 const loading = ref(true)
 const error = ref(false)
-const activeImageIndex = ref(0)
 const selectedVariant = ref(null)
 
 // Configuración editable de la página de producto (desde site_config key "product_page").
@@ -513,82 +491,51 @@ const showAddToast = ref(false)
 const toastProduct = ref(null)
 const toastTimer = ref(null)
 
-// ===== Galería combinada: imágenes del producto + imágenes de cada variante =====
-// Construye una lista unificada de todas las imágenes disponibles para que el
-// usuario pueda deslizar entre las del producto y las de cada aroma.
-const allGalleryImages = computed(() => {
+// ===== Galería del PRODUCTO físico (independiente del aroma) =====
+// Únicamente las imágenes reales del producto (presentación/envase/escenas).
+// El aroma NO aporta imágenes aquí: su propio material gráfico se muestra en la
+// tarjeta contextual del aroma (columna derecha), sin contaminar esta galería.
+const productGalleryImages = computed(() => {
   if (!product.value) return []
   const list = []
-
-  // Imágenes generales del producto
-  if (product.value.images && product.value.images.length > 0) {
-    product.value.images.forEach((img, i) => {
+  const images = (product.value.images || []).filter(Boolean)
+  if (images.length > 0) {
+    images.forEach((img, i) => {
       list.push({
         key: `product-${img.id || i}`,
         url: img.url,
         alt: img.altText || product.value.name,
-        variantName: null,
       })
     })
   } else if (product.value.image) {
-    list.push({
-      key: 'product-main',
-      url: product.value.image,
-      alt: product.value.name,
-      variantName: null,
-    })
+    list.push({ key: 'product-main', url: product.value.image, alt: product.value.name })
   }
-
-  // Imágenes de cada variante (aroma) que tengan imagen propia
-  if (product.value.variants && product.value.variants.length > 0) {
-    product.value.variants.forEach(v => {
-      if (v.imageUrl) {
-        list.push({
-          key: `variant-${v.id}`,
-          url: v.imageUrl,
-          alt: `${product.value.name} – ${v.name}`,
-          variantName: v.name,
-        })
-      }
-    })
-  }
-
   return list
 })
 
-// Índice activo en la galería combinada
+// Índice activo en la galería del producto
 const activeGalleryIndex = ref(0)
 
-// Imagen activa: la del índice activo de la galería combinada
-const activeImage = computed(() => {
-  const img = allGalleryImages.value[activeGalleryIndex.value]
-  return img?.url || product.value?.image || null
-})
+// Imagen activa: imagen del PRODUCTO en activo (NUNCA cambia con el aroma)
+const activeImage = computed(() =>
+  productGalleryImages.value[activeGalleryIndex.value]?.url || product.value?.image || null
+)
 
 // Alt de la imagen activa
-const activeImageAlt = computed(() => {
-  const img = allGalleryImages.value[activeGalleryIndex.value]
-  return img?.alt || product.value?.name || ''
-})
+const activeImageAlt = computed(() =>
+  productGalleryImages.value[activeGalleryIndex.value]?.alt || product.value?.name || ''
+)
 
-// Al seleccionar una imagen de la galería, actualizar el índice y, si es de una
-// variante, seleccionar esa variante.
+// Al seleccionar una imagen de la galería (solo índice; no toca la variante)
 function selectGalleryImage(index) {
-  activeGalleryIndex.value = index
-  const img = allGalleryImages.value[index]
-  if (img?.variantName && product.value?.variants) {
-    const v = product.value.variants.find(x => x.name === img.variantName)
-    if (v) selectedVariant.value = v
-  }
+  if (productGalleryImages.value[index]) activeGalleryIndex.value = index
 }
 
-// Al seleccionar una variante, mostrar su imagen en la galería (si tiene).
+// Al seleccionar una variante (aroma), NO se altera la galería del producto:
+// únicamente se actualiza la variante seleccionada y con ella el contenido
+// contextual del aroma (tarjeta + precio/stock/carro).
 function selectVariant(variant) {
   selectedVariant.value = variant
-  if (variant?.imageUrl) {
-    const idx = allGalleryImages.value.findIndex(img => img.key === `variant-${variant.id}`)
-    if (idx !== -1) activeGalleryIndex.value = idx
-  }
 }
 
 // ===== 🌸 Experiencia olfativa de la variante seleccionada =====
@@ -791,12 +738,8 @@ async function loadProduct() {
         }
 
         selectedVariant.value = initial
-        if (initial?.imageUrl) {
-          // Esperar a que se construya la galería para ubicar el índice
-          await nextTick()
-          const idx = allGalleryImages.value.findIndex(img => img.key === `variant-${initial.id}`)
-          if (idx !== -1) activeGalleryIndex.value = idx
-        }
+        // Nota: la galería muestra siempre las imágenes del PRODUCTO físico.
+        // La selección de aroma NO cambia la imagen principal (como pide el diseño UX).
       }
       // Cargar relacionados
       await loadRelatedProducts(data.product.categorySlug, data.product.id)

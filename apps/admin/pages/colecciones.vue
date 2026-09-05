@@ -285,6 +285,27 @@
             <p class="text-xs text-gray-400 mt-1">Opcional. Si este aroma es "Hoteles & Spa", indica el/los hotel(es) de inspiración.</p>
           </div>
 
+          <!-- Familia olfativa (4 grandes) -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Familia olfativa</label>
+            <select
+              v-model="profileForm.olfactive_family"
+              class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm bg-white"
+            >
+              <option value="">— Sin clasificar —</option>
+              <option v-for="f in olfactiveFamilies" :key="f.value" :value="f.value">{{ f.label }}</option>
+            </select>
+            <p class="text-xs text-gray-400 mt-1">Agrupación principal (Floral · Oriental · Amaderada · Cítrica). La verá el cliente en la Guía.</p>
+          </div>
+
+          <!-- Colección / temporada (libre, por aroma) -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Colección / temporada</label>
+            <input v-model="profileForm.collection_tag" type="text" placeholder="Ej. Navidad, Otoño-Invierno…"
+              class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+            <p class="text-xs text-gray-400 mt-1">Etiqueta editorial opcional que pones tú por aroma (campaña/temporada).</p>
+          </div>
+
           <!-- Activo -->
           <label class="flex items-center gap-2">
             <input v-model="profileForm.is_active" type="checkbox" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
@@ -340,6 +361,8 @@ const profileForm = reactive({
   experience: '',
   notes: '',
   hotel_reference: '',
+  olfactive_family: '',
+  collection_tag: '',
   emoji: '🌸',
   image_url: '',
   imagePreview: null,
@@ -474,6 +497,8 @@ function resetProfileForm() {
   profileForm.experience = ''
   profileForm.notes = ''
   profileForm.hotel_reference = ''
+  profileForm.olfactive_family = ''
+  profileForm.collection_tag = ''
   profileForm.emoji = '🌸'
   profileForm.image_url = ''
   profileForm.imagePreview = null
@@ -500,6 +525,8 @@ function openProfileEdit(profile) {
   profileForm.experience = profile.experience || ''
   profileForm.notes = profile.notes || ''
   profileForm.hotel_reference = profile.hotel_reference || ''
+  profileForm.olfactive_family = profile.olfactive_family || ''
+  profileForm.collection_tag = profile.collection_tag || ''
   profileForm.emoji = profile.emoji || '🌸'
   profileForm.image_url = profile.image_url || ''
   profileForm.imagePreview = profile.image_url || null
@@ -535,6 +562,8 @@ async function handleProfileSave() {
       experience: profileForm.experience,
       notes: profileForm.notes,
       hotel_reference: profileForm.hotel_reference,
+      olfactive_family: profileForm.olfactive_family || null,
+      collection_tag: profileForm.collection_tag || null,
       emoji: profileForm.emoji,
       image_url: imageUrl,
       is_active: profileForm.is_active,
