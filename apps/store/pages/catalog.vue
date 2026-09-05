@@ -24,226 +24,92 @@
     <!-- 🔍 Filtros: barra compacta (colapsable en móvil) -->
     <section v-if="catalogConfig.blocks.filters.enabled" class="bg-white border-b border-earth-100 sticky top-20 z-30 shadow-sm">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Botón toggle compacto (visible en todas las resoluciones) -->
-        <div class="flex items-center justify-between py-2">
+        <!-- 📌 Fila 1: píldoras de FORMATO siempre visibles (decisión primaria, scroll en móvil) -->
+        <div class="flex items-center gap-2 py-2 border-b border-earth-100 overflow-x-auto no-scrollbar">
           <button
-            @click="filtersOpen = !filtersOpen"
-            class="inline-flex items-center gap-2 text-earth-800 font-semibold text-sm hover:text-primary-700 transition-colors"
-            aria-expanded="filtersOpen"
+            @click="activeCategory = 'all'"
+            :class="[
+              'flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all',
+              activeCategory === 'all'
+                ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
+                : 'bg-white text-earth-600 border-earth-200 hover:border-primary-300 hover:text-primary-700'
+            ]"
           >
-            <svg class="w-5 h-5 text-primary-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-            </svg>
-            {{ filtersOpen ? 'Ocultar filtros' : 'Filtrar y explorar aromas' }}
-            <span
-              v-if="activeFilterCount > 0"
-              class="min-w-[18px] h-[18px] px-1 inline-flex items-center justify-center rounded-full bg-primary-600 text-white text-[11px] font-bold"
-            >{{ activeFilterCount }}</span>
+            <span class="text-sm leading-none">🌸</span>
+            Todos
+            <span class="text-[10px] font-bold opacity-75">{{ categoryCounts.all || 0 }}</span>
           </button>
-          <div class="flex items-center gap-3">
+          <button
+            v-for="cat in categories.slice(1)"
+            :key="cat.id"
+            @click="activeCategory = cat.id"
+            :class="[
+              'flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all',
+              activeCategory === cat.id
+                ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
+                : 'bg-white text-earth-600 border-earth-200 hover:border-primary-300 hover:text-primary-700'
+            ]"
+          >
+            <span class="text-sm leading-none">{{ categoryIcon(cat.label) }}</span>
+            {{ cat.label }}
+            <span class="text-[10px] font-bold opacity-75">{{ categoryCounts[cat.id] || 0 }}</span>
+          </button>
+        </div>
+
+        <!-- 📌 Fila 2: chips activos + botón "Filtrar" que abre el drawer de facetas -->
+        <div class="py-1.5 flex items-center gap-2 flex-wrap">
+          <!-- Chips removibles de filtros activos (aroma/colección/inspiración) -->
+          <div v-if="activeFilterCount > (activeCategory !== 'all' ? 1 : 0)" class="flex items-center gap-1.5 flex-wrap flex-1 min-w-0">
+            <button
+              v-if="activeFragrance"
+              @click="clearAromaSelection()"
+              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary-50 border border-primary-100 text-primary-700 text-[11px] font-medium hover:bg-primary-100 transition-colors"
+            >
+              🌸 <span class="font-semibold">{{ shortName(activeFragranceName || '') }}</span>
+              <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <button
+              v-if="activeFamily !== 'all'"
+              @click="activeFamily = 'all'"
+              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary-50 border border-primary-100 text-primary-700 text-[11px] font-medium hover:bg-primary-100 transition-colors"
+            >
+              ⊛ <span class="font-semibold truncate max-w-[140px]">{{ shortName(activeFamilyLabel || '') }}</span>
+              <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <button
+              v-if="activeHotel !== 'all'"
+              @click="activeHotel = 'all'"
+              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-100 text-amber-700 text-[11px] font-medium hover:bg-amber-100 transition-colors"
+            >
+              ⭐ <span class="font-semibold truncate max-w-[140px]">{{ shortName(activeHotelLabel || '') }}</span>
+              <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Acciones derecha -->
+          <div class="ml-auto flex items-center gap-2 flex-shrink-0">
             <button
               v-if="hasActiveFilters"
               @click="resetFilters"
-              class="text-sm text-primary-600 hover:text-primary-700 font-medium underline flex-shrink-0"
+              class="text-xs text-earth-500 hover:text-primary-600 font-medium underline underline-offset-2 flex-shrink-0"
             >
               Limpiar todo
             </button>
-            <svg
-              class="w-5 h-5 text-earth-400 transition-transform flex-shrink-0"
-              :class="filtersOpen ? 'rotate-180' : ''"
-              fill="none" stroke="currentColor" viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-            </svg>
-          </div>
-        </div>
-
-        <!-- Panel de filtros y aromas (colapsable: oculto cuando está cerrado, en cualquier resolución) -->
-        <div class="pb-4 lg:pb-6" :class="filtersOpen ? 'block' : 'hidden'">
-        <!-- Buscador de aroma -->
-        <div class="relative">
-          <div class="flex items-center gap-3 bg-earth-50 rounded-2xl px-4 py-3 border border-earth-200 focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-100 transition-all">
-            <svg class="w-5 h-5 text-earth-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Busca un aroma... (ej. Xcaret, Vidanta, Sándalo)"
-              class="flex-1 bg-transparent outline-none text-earth-800 placeholder-earth-400 text-sm"
-              @focus="showSuggestions = true"
-              @input="onSearchInput"
-              @keydown.enter="selectFirstSuggestion"
-              @keydown.esc="showSuggestions = false"
-            />
             <button
-              v-if="searchQuery"
-              @click="clearSearch"
-              class="w-7 h-7 rounded-full bg-earth-200 hover:bg-earth-300 flex items-center justify-center text-earth-500 transition-colors flex-shrink-0"
+              @click="filtersOpen = true"
+              class="inline-flex items-center gap-2 rounded-full bg-earth-900 hover:bg-earth-800 text-white text-xs font-semibold px-4 py-2 transition-colors shadow-sm"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
               </svg>
-            </button>
-          </div>
-
-          <!-- Sugerencias de autocompletado -->
-          <div
-            v-if="showSuggestions && filteredAromas.length > 0"
-            class="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-earth-100 overflow-hidden z-40"
-          >
-            <button
-              v-for="aroma in filteredAromas"
-              :key="aroma.id"
-              @click="selectAroma(aroma)"
-              class="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary-50/50 transition-colors text-left"
-            >
-              <div class="w-10 h-10 rounded-lg overflow-hidden bg-earth-100 flex-shrink-0">
-                <img
-                  v-if="aroma.image"
-                  :src="aroma.image"
-                  :alt="aroma.name"
-                  class="w-full h-full object-cover"
-                />
-                <div v-else class="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-amber-100 text-earth-400 text-sm font-semibold">
-                  {{ aroma.name.charAt(0) }}
-                </div>
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-earth-800">{{ aroma.name }}</p>
-                <p class="text-xs text-earth-400 truncate">{{ aroma.categoryLabel }}</p>
-              </div>
-              <span class="text-xs text-primary-600 font-medium flex-shrink-0">Ver productos →</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Selector desplegable de aromas -->
-        <div class="mt-4 flex items-center justify-center gap-3">
-          <label class="text-sm font-medium text-earth-600 flex-shrink-0">O elige un aroma:</label>
-          <div class="relative flex-1 max-w-xs">
-            <select
-              v-model="activeFragrance"
-              @change="onSelectChange"
-              class="w-full appearance-none bg-white border border-earth-200 rounded-xl px-4 py-2.5 pr-10 text-sm text-earth-800 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-all cursor-pointer"
-            >
-              <option :value="null">🌸 Todos los aromas</option>
-              <option
-                v-for="aroma in allAromas"
-                :key="aroma.id"
-                :value="aroma.id"
-              >
-                {{ aroma.emoji || '🌸' }} {{ aroma.name }}
-              </option>
-            </select>
-            <svg class="w-4 h-4 text-earth-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-            </svg>
-          </div>
-        </div>
-
-        <!-- Filtros de categoría (tipo de producto) con selectores cruzados -->
-        <div class="mt-6">
-          <!-- Selector de tipo de producto (pill tabs con iconos) -->
-          <div class="flex flex-wrap items-center justify-center gap-2 px-2 py-2 bg-earth-50 rounded-2xl border border-earth-200">
-            <button
-              @click="activeCategory = 'all'"
-              :class="[
-                'px-5 py-2.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5',
-                activeCategory === 'all'
-                  ? 'bg-primary-600 text-white shadow-md'
-                  : 'text-earth-600 hover:bg-white hover:shadow-sm'
-              ]"
-            >
-              <span class="text-base leading-none">🌸</span>
-              Todos
+              Filtrar
               <span
-                class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                :class="activeCategory === 'all' ? 'bg-white/25 text-white' : 'bg-earth-200 text-earth-600'"
-              >
-                {{ categoryCounts.all || 0 }}
-              </span>
-            </button>
-            <button
-              v-for="cat in categories.slice(1)"
-              :key="cat.id"
-              @click="activeCategory = cat.id"
-              :class="[
-                'px-5 py-2.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5',
-                activeCategory === cat.id
-                  ? 'bg-primary-600 text-white shadow-md'
-                  : 'text-earth-600 hover:bg-white hover:shadow-sm'
-              ]"
-            >
-              <span class="text-base leading-none">{{ categoryIcon(cat.label) }}</span>
-              {{ cat.label }}
-              <span
-                class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                :class="activeCategory === cat.id ? 'bg-white/25 text-white' : 'bg-earth-200 text-earth-600'"
-              >
-                {{ categoryCounts[cat.id] || 0 }}
-              </span>
+                v-if="activeFilterCount > (activeCategory !== 'all' ? 1 : 0)"
+                class="min-w-[18px] h-[18px] px-1 inline-flex items-center justify-center rounded-full bg-white/25 text-white text-[10px] font-bold"
+              >{{ activeFilterCount - (activeCategory !== 'all' ? 1 : 0) }}</span>
             </button>
           </div>
         </div>
-
-        <!-- 🎨 Facetas: colección olfativa + inspiración/hotel (dentro del panel, compactas) -->
-        <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5">
-          <!-- Colección olfativa -->
-          <div v-if="familyOptions.length">
-            <p class="text-xs font-bold uppercase tracking-wider text-earth-500 mb-2">⊛ Colección olfativa</p>
-            <div class="flex flex-wrap gap-1.5">
-              <button
-                @click="activeFamily = 'all'"
-                :class="[
-                  'px-3 py-1.5 rounded-full text-xs font-medium border transition-all',
-                  activeFamily === 'all'
-                    ? 'bg-earth-900 text-white border-earth-900'
-                    : 'bg-white text-earth-600 border-earth-200 hover:border-primary-300 hover:text-primary-700'
-                ]"
-              >Todas ({{ products.length }})</button>
-              <button
-                v-for="fam in familyOptions"
-                :key="fam.key"
-                @click="activeFamily = (activeFamily === fam.key ? 'all' : fam.key)"
-                :class="[
-                  'px-3 py-1.5 rounded-full text-xs font-medium border transition-all',
-                  activeFamily === fam.key
-                    ? 'bg-primary-600 text-white border-primary-600'
-                    : 'bg-white text-earth-600 border-earth-200 hover:border-primary-300 hover:text-primary-700'
-                ]"
-              >{{ fam.label }} ({{ fam.count }})</button>
-            </div>
-          </div>
-
-          <!-- Inspiración / hotel de referencia -->
-          <div v-if="hotelOptions.length">
-            <p class="text-xs font-bold uppercase tracking-wider text-earth-500 mb-2">⭐ Inspirado en</p>
-            <div class="flex flex-wrap gap-1.5">
-              <button
-                @click="activeHotel = 'all'"
-                :class="[
-                  'px-3 py-1.5 rounded-full text-xs font-medium border transition-all',
-                  activeHotel === 'all'
-                    ? 'bg-earth-900 text-white border-earth-900'
-                    : 'bg-white text-earth-600 border-earth-200 hover:border-amber-400 hover:text-amber-700'
-                ]"
-              >Todos ({{ products.length }})</button>
-              <button
-                v-for="hot in hotelOptions"
-                :key="hot.key"
-                @click="activeHotel = (activeHotel === hot.key ? 'all' : hot.key)"
-                :class="[
-                  'px-3 py-1.5 rounded-full text-xs font-medium border transition-all',
-                  activeHotel === hot.key
-                    ? 'bg-amber-600 text-white border-amber-600'
-                    : 'bg-white text-earth-600 border-earth-200 hover:border-amber-400 hover:text-amber-700'
-                ]"
-              >✨ {{ hot.label }} ({{ hot.count }})</button>
-            </div>
-          </div>
-        </div>
-      </div>
       </div>
     </section>
 
@@ -544,6 +410,192 @@
         </a>
       </div>
     </section>
+
+    <!-- 🎛️ DRAWER DE FILTROS (facets) — overlay y deslizante, patrón CartSidebar -->
+    <Teleport to="body">
+      <!-- Overlay -->
+      <div
+        class="fixed inset-0 z-[70] bg-black/40 backdrop-blur-sm transition-opacity duration-300"
+        :class="filtersOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+        @click="filtersOpen = false"
+      ></div>
+
+      <!-- Drawer sidebar -->
+      <aside
+        aria-label="Filtros del catálogo"
+        aria-hidden="filtersOpen"
+        class="fixed top-0 right-0 z-[70] h-full w-full max-w-md bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-out"
+        :class="filtersOpen ? 'translate-x-0' : 'translate-x-full'"
+      >
+          <!-- ⚡ Encabezado -->
+          <div class="flex items-center justify-between px-5 py-4 border-b border-earth-100 bg-earth-50/40">
+            <div>
+              <h2 class="font-serif font-bold text-lg text-earth-900">Filtrar productos</h2>
+              <p class="text-xs text-earth-400 mt-0.5">Refina por aroma, colección e inspiración</p>
+            </div>
+            <button
+              @click="filtersOpen = false"
+              class="w-9 h-9 rounded-full bg-white border border-earth-100 hover:bg-earth-50 flex items-center justify-center text-earth-500 hover:text-earth-700 transition-colors shadow-sm"
+              :aria-label="'Cerrar filtros'"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- ⚡ Contenido scrollable -->
+          <div class="flex-1 overflow-y-auto px-5 py-4 space-y-6">
+            <!-- Resumen de selección actual -->
+            <div v-if="hasActiveFilters" class="flex flex-wrap items-center gap-1.5">
+              <span class="text-[11px] text-earth-400 font-medium mr-1">Activos:</span>
+              <span v-for="chip in drawerFilterChips" :key="chip.key" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-50 border border-primary-100 text-[11px] font-semibold text-primary-700">
+                {{ chip.label }}
+              </span>
+            </div>
+
+            <!-- 🎯 Sección: Aroma -->
+            <section>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-earth-500 mb-2 flex items-center gap-1.5">🌸 Aroma</h3>
+              <!-- Buscador -->
+              <div class="relative mb-2">
+                <div class="flex items-center gap-2 bg-earth-50 rounded-xl px-3 py-2 border border-earth-200 focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-100 transition-all">
+                  <svg class="w-4 h-4 text-earth-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                  <input
+                    v-model="searchQuery"
+                    type="text"
+                    placeholder="Busca un aroma..."
+                    class="flex-1 bg-transparent outline-none text-earth-800 placeholder-earth-400 text-sm"
+                    @input="showSuggestions = true"
+                    @keydown.esc="showSuggestions = false"
+                  />
+                  <button v-if="searchQuery" @click="clearSearch" class="text-earth-400 hover:text-earth-600 transition-colors" :aria-label="'Limpiar búsqueda'">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
+                <!-- Sugerencias -->
+                <div v-if="showSuggestions && filteredAromas.length > 0" class="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-xl border border-earth-100 z-10 overflow-hidden">
+                  <button
+                    v-for="aroma in filteredAromas"
+                    :key="aroma.id"
+                    @click="pickAromaFromDrawer(aroma)"
+                    class="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-primary-50/50 text-left transition-colors"
+                  >
+                    <span class="text-base">{{ aroma.emoji || '🌸' }}</span>
+                    <span class="text-sm font-medium text-earth-800 flex-1 truncate">{{ aroma.name }}</span>
+                    <span class="text-[10px] text-earth-400">{{ aroma.categoryLabel }}</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Lista rápida (scroll) -->
+              <div class="max-h-52 overflow-y-auto rounded-xl border border-earth-100 space-y-0.5 p-1">
+                <button
+                  @click="activeFragrance = null; searchQuery = ''; showSuggestions = false"
+                  class="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left transition-colors"
+                  :class="activeFragrance === null ? 'bg-primary-50' : 'hover:bg-earth-50'"
+                >
+                  <span class="w-4 flex-shrink-0 text-primary-600">
+                    <svg v-if="activeFragrance === null" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+                  </span>
+                  <span class="text-sm font-medium text-earth-800">Todos los aromas</span>
+                </button>
+                <button
+                  v-for="aroma in aromas"
+                  :key="aroma.id"
+                  @click="activeFragrance = aroma.id; searchQuery = aroma.name; showSuggestions = false"
+                  class="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left transition-colors"
+                  :class="activeFragrance === aroma.id ? 'bg-primary-50' : 'hover:bg-earth-50'"
+                >
+                  <span class="w-4 flex-shrink-0 text-primary-600">
+                    <svg v-if="activeFragrance === aroma.id" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+                  </span>
+                  <span class="text-sm flex-1 truncate" :class="activeFragrance === aroma.id ? 'font-semibold text-primary-700' : 'text-earth-700'">
+                    {{ aroma.emoji || '🌸' }} {{ aroma.name }}
+                  </span>
+                  <span class="text-[10px] text-earth-300 flex-shrink-0">{{ aroma.categoryLabel }}</span>
+                </button>
+              </div>
+            </section>
+
+            <!-- 🎯 Sección: Colección olfativa -->
+            <section v-if="familyOptions.length">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-earth-500 mb-2 flex items-center gap-1.5">⊛ Colección olfativa</h3>
+              <div class="space-y-0.5">
+                <button
+                  @click="activeFamily = 'all'"
+                  class="w-full flex items-center justify-between px-2.5 py-2 rounded-lg transition-colors"
+                  :class="activeFamily === 'all' ? 'bg-primary-50' : 'hover:bg-earth-50'"
+                >
+                  <span class="text-sm flex items-center gap-2">
+                    <span class="w-4 text-primary-600"><svg v-if="activeFamily === 'all'" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>
+                    Todas
+                  </span>
+                  <span class="text-xs text-earth-400">{{ products.length }}</span>
+                </button>
+                <button
+                  v-for="fam in familyOptions"
+                  :key="fam.key"
+                  @click="activeFamily = (activeFamily === fam.key ? 'all' : fam.key)"
+                  class="w-full flex items-center justify-between px-2.5 py-2 rounded-lg transition-colors"
+                  :class="activeFamily === fam.key ? 'bg-primary-50' : 'hover:bg-earth-50'"
+                >
+                  <span class="text-sm flex items-center gap-2" :class="activeFamily === fam.key ? 'font-semibold text-primary-700' : 'text-earth-700'">
+                    <span class="w-4 text-primary-600"><svg v-if="activeFamily === fam.key" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>
+                    {{ fam.label }}
+                  </span>
+                  <span class="text-xs text-earth-400">{{ fam.count }}</span>
+                </button>
+              </div>
+            </section>
+
+            <!-- 🎯 Sección: Inspiración / hotel -->
+            <section v-if="hotelOptions.length">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-earth-500 mb-2 flex items-center gap-1.5">⭐ Inspirado en</h3>
+              <div class="space-y-0.5">
+                <button
+                  @click="activeHotel = 'all'"
+                  class="w-full flex items-center justify-between px-2.5 py-2 rounded-lg transition-colors"
+                  :class="activeHotel === 'all' ? 'bg-amber-50' : 'hover:bg-earth-50'"
+                >
+                  <span class="text-sm flex items-center gap-2">
+                    <span class="w-4 text-amber-500"><svg v-if="activeHotel === 'all'" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>
+                    Todos
+                  </span>
+                  <span class="text-xs text-earth-400">{{ products.length }}</span>
+                </button>
+                <button
+                  v-for="hot in hotelOptions"
+                  :key="hot.key"
+                  @click="activeHotel = (activeHotel === hot.key ? 'all' : hot.key)"
+                  class="w-full flex items-center justify-between px-2.5 py-2 rounded-lg transition-colors"
+                  :class="activeHotel === hot.key ? 'bg-amber-50' : 'hover:bg-earth-50'"
+                >
+                  <span class="text-sm flex items-center gap-2" :class="activeHotel === hot.key ? 'font-semibold text-amber-700' : 'text-earth-700'">
+                    <span class="w-4 text-amber-500"><svg v-if="activeHotel === hot.key" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>
+                    ✨ {{ hot.label }}
+                  </span>
+                  <span class="text-xs text-earth-400">{{ hot.count }}</span>
+                </button>
+              </div>
+            </section>
+          </div>
+
+          <!-- ⚡ Footer: total resultados + acciones -->
+          <div class="border-t border-earth-100 px-5 py-4 bg-white flex-shrink-0 flex items-center gap-2">
+            <button
+              @click="resetFilters"
+              class="text-sm text-earth-500 hover:text-primary-600 font-medium underline underline-offset-2 flex-shrink-0 mr-auto"
+            >
+              Limpiar todo
+            </button>
+            <button
+              @click="filtersOpen = false"
+              class="inline-flex items-center justify-center rounded-full bg-earth-900 hover:bg-earth-800 text-white text-sm font-semibold px-5 py-3 transition-colors flex-1"
+            >
+              Ver {{ filteredProducts.length }} resultados
+            </button>
+          </div>
+        </aside>
+    </Teleport>
   </div>
 </template>
 
@@ -685,6 +737,46 @@ const selectedAroma = computed(() => {
 const activeFragranceName = computed(() => {
   return selectedAroma.value?.name || ''
 })
+
+// ---- Helpers para chips y etiquetas del nuevo UI de filtros ----
+function shortName(name, max = 26) {
+  if (!name) return ''
+  return name.length > max ? `${name.slice(0, max).trim()}…` : name
+}
+
+const activeFamilyLabel = computed(() => {
+  if (activeFamily.value === 'all') return ''
+  const o = familyOptions.value.find(x => x.key === activeFamily.value)
+  return o?.label || ''
+})
+const activeHotelLabel = computed(() => {
+  if (activeHotel.value === 'all') return ''
+  const o = hotelOptions.value.find(x => x.key === activeHotel.value)
+  return o?.label || ''
+})
+
+// Resumen chips de filtros activos (para el drawer) — sin contar el formato,
+// que ya se ve en la barra/píldoras.
+const drawerFilterChips = computed(() => {
+  const chips = []
+  if (activeFragrance.value) {
+    chips.push({ key: 'frag', label: `🌸 ${activeFragranceName.value || ''}` })
+  }
+  if (activeFamily.value !== 'all') {
+    chips.push({ key: 'fam', label: `⊛ ${activeFamilyLabel.value || ''}` })
+  }
+  if (activeHotel.value !== 'all') {
+    chips.push({ key: 'hot', label: `⭐ ${activeHotelLabel.value || ''}` })
+  }
+  return chips
+})
+
+// Elegir un aroma desde el drawer: combina con colección/inspiración ya activas.
+function pickAromaFromDrawer(aroma) {
+  activeFragrance.value = aroma.id
+  searchQuery.value = aroma.name
+  onSearchInput()
+}
 
 // Map: para cada aroma, en qué tipos de producto (categorías) está disponible.
 // Se calcula a partir de los productos cargados (cada uno trae sus fragancias
@@ -933,6 +1025,33 @@ function onSelectChange() {
   }
   showSuggestions.value = false
 }
+
+// ---- UX del drawer: cerrar con Escape + bloquear scroll del body ----
+if (import.meta.client) {
+  onMounted(() => {
+    window.addEventListener('keydown', onDrawerKeydown)
+  })
+  onUnmounted(() => {
+    window.removeEventListener('keydown', onDrawerKeydown)
+    document.body.style.overflow = ''
+  })
+}
+
+function onDrawerKeydown(e) {
+  if (e.key === 'Escape' && filtersOpen.value) {
+    filtersOpen.value = false
+  }
+}
+
+watch(() => filtersOpen.value, (open) => {
+  if (import.meta.client) {
+    if (open) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+  }
+})
 
 function formatPrice(price) {
   return Number(price).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
