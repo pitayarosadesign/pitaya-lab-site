@@ -118,7 +118,7 @@
               <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
                 <h3 class="text-sm font-semibold text-earth-700">Elige tu aroma:</h3>
                 <NuxtLink
-                  to="/colecciones"
+                  to="/fragrancias"
                   class="text-[11px] font-medium text-primary-600 hover:text-primary-700 inline-flex items-center gap-1"
                   title="Descubre cada fragancia y en qué productos está disponible"
                 >
