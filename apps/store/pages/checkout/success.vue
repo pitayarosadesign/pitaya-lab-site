@@ -21,6 +21,18 @@
         <span class="text-sm text-earth-400">Te notificaremos cuando sea enviado con el número de guía para seguimiento.</span>
       </p>
 
+      <!-- 🚚 Fecha estimada confirmatoria -->
+      <div
+        v-if="successDeadline"
+        class="inline-flex items-center gap-3 text-left bg-primary-50 border border-primary-200 text-primary-800 rounded-xl px-5 py-3 mb-6"
+      >
+        <span class="text-xl leading-none">🚚</span>
+        <p class="text-sm leading-snug">
+          <span class="font-bold">Recibes tu pedido antes del {{ successDeadline }}.</span><br>
+          <span class="text-[11px] text-primary-600">Una vez despachado te enviaremos tu número de guía.</span>
+        </p>
+      </div>
+
       <div class="bg-white rounded-2xl border border-earth-100 p-6 mb-8 shadow-sm">
         <h2 class="text-sm font-semibold text-earth-700 mb-3">¿Qué sigue?</h2>
         <ul class="text-sm text-earth-500 space-y-2 text-left">
@@ -79,10 +91,20 @@ const route = useRoute()
 // Obtener número de orden de la URL (session_id)
 const orderNumber = ref('PIT-XXXX')
 const customerEmail = ref('')
+// 🚚 Fecha estimada de entrega mostrada en la confirmación (asume en stock)
+const successDeadline = ref('')
 
 onMounted(async () => {
   // Limpiar carrito
   cart.clearCart()
+
+  // 🚚 Calcular la fecha estimada reafirmante (en stock → envío + 2-5 días hábiles)
+  try {
+    const est = estimateDelivery({ isBackorder: false })
+    successDeadline.value = formatDeliveryDeadline(est)
+  } catch (e) {
+    successDeadline.value = ''
+  }
 
   // Stripe puede pasar session_id como query param o como hash fragment
   let sessionId = route.query.session_id

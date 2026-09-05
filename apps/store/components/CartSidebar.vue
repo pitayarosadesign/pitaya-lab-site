@@ -91,6 +91,12 @@
             <div class="flex-1 min-w-0">
               <h4 class="text-sm font-semibold text-earth-800 truncate">{{ item.name }}</h4>
               <p v-if="item.variant" class="text-xs text-earth-400">{{ item.variant.name }}</p>
+              <span
+                v-if="item.backorder"
+                class="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-1.5 py-0.5 mt-1"
+              >
+                🏭 Sobre pedido
+              </span>
               <p class="text-sm font-medium text-earth-900 mt-1">${{ formatPrice(item.price) }}</p>
 
               <!-- Cantidad -->
@@ -189,6 +195,34 @@
               <span class="text-sm font-medium text-earth-500">Total</span>
               <p class="text-xl font-bold text-earth-900">${{ formatPrice(cart.totalPrice + shippingCost) }}</p>
             </div>
+          </div>
+
+          <!-- 🚚 Fecha estimada de recepción (recíbelo antes de) -->
+          <div
+            v-if="deliveryConfig.enabled && deliveryEstimate"
+            class="rounded-xl border mb-3 px-3 py-2.5"
+            :class="deliveryEstimate.hasBackorder
+              ? 'bg-amber-50/70 border-amber-200 text-amber-800'
+              : 'bg-primary-50/60 border-primary-100 text-primary-800'"
+          >
+            <!-- Leyenda principal: recíbelo antes de -->
+            <p class="text-[13px] font-bold leading-snug">
+              <span class="mr-1">{{ deliveryEstimate.hasBackorder ? '📦' : '🚚' }}</span>
+              Recíbelo antes del
+              <span class="whitespace-nowrap">{{ deliveryDeadlineText }}</span>
+            </p>
+
+            <!-- Rango fino (opcional) -->
+            <p v-if="deliveryRangeText" class="text-[11px] font-normal opacity-90 mt-1">
+              {{ deliveryRangeText }}
+            </p>
+            <p class="text-[11px] font-normal opacity-90 mt-0.5" :class="deliveryEstimate.hasBackorder ? 'text-amber-700' : ''">
+              {{
+                deliveryEstimate.hasBackorder
+                  ? 'Incluye artículos que se preparan en taller (2-3 días hábiles), además del tiempo de envío.'
+                  : 'Órdenes pagadas antes de la 1:00 pm se envían el mismo día. De lo contrario, al siguiente día hábil.'
+              }}
+            </p>
           </div>
 
           <!-- 🔒 Pago seguro con Stripe -->
@@ -372,6 +406,34 @@ function formatPrice(price) {
   return Number(price).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
+// ===== 🚚 Fecha estimada de entrega =====
+const deliveryConfig = reactive({ ...DEFAULT_DELIVERY_CONFIG })
+const deliveryEstimate = ref(null)
+
+// ¿Algún artículo del carrito es sobre pedido?
+const cartHasBackorder = computed(() => cart.items.some(i => i.backorder))
+
+// Fecha estimada (se recalcula cuando cambia el carrito o el corte)
+const delivery = computed(() => {
+  const cfg = { ...deliveryConfig } // merge reactivo plano
+  return estimateDelivery({ isBackorder: cartHasBackorder.value }, cfg)
+})
+
+// Texto principal
+const deliveryDeadlineText = computed(() => delivery.value ? formatDeliveryDeadline(delivery.value) : '')
+const deliveryRangeText = computed(() => delivery.value ? formatDeliveryRange(delivery.value) : '')
+
+async function loadDeliveryConfigFromDB() {
+  const cfg = await loadDeliveryConfig()
+  Object.assign(deliveryConfig, cfg)
+  deliveryEstimate.value = cfg.enabled ? delivery.value : null
+}
+// Recargar la fecha cuando cambie el contenido del carrito (para el deadline)
+watch(
+  () => [cart.items.length, cartHasBackorder.value],
+  () => { deliveryEstimate.value = deliveryConfig.enabled ? delivery.value : null }
+)
+
 // Bloquear scroll del body cuando el carrito está abierto
 watch(() => cart.isOpen, (open) => {
   if (import.meta.client) {
@@ -382,6 +444,7 @@ watch(() => cart.isOpen, (open) => {
 onMounted(() => {
   isMounted.value = true
   loadShippingConfig()
+  loadDeliveryConfigFromDB()
   loadSuggestedProducts()
 })
 

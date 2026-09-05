@@ -245,6 +245,30 @@
               </span>
             </div>
 
+            <!-- 🚚 Entrega estimada -->
+            <div
+              v-if="!loading && product"
+              class="flex items-center gap-3 text-sm mb-6 px-4 py-3 rounded-xl border"
+              :class="productIsBackorder
+                ? 'bg-amber-50/70 border-amber-200 text-amber-800'
+                : 'bg-primary-50/60 border-primary-100 text-primary-800'"
+            >
+              <span class="text-lg leading-none">{{ productIsBackorder ? '🏭' : '🚚' }}</span>
+              <p class="text-[13px] leading-snug">
+                <template v-if="productIsBackorder">
+                  <span class="font-semibold">Sobre pedido:</span>
+                  se prepara en taller 2-3 días hábiles. Recíbelo antes del
+                  <strong class="whitespace-nowrap">{{ productDeliveryDeadlineText }}</strong>.
+                </template>
+                <template v-else>
+                  <span class="font-semibold">Recíbelo antes del</span>
+                  <strong class="whitespace-nowrap">{{ productDeliveryDeadlineText }}</strong>
+                  si pagas hoy antes de la 1:00 pm.
+                  <span v-if="productDeliveryRangeText">({{ productDeliveryRangeText }})</span>
+                </template>
+              </p>
+            </div>
+
             <!-- 🏷️ Badges de confianza dinámicos -->
             <div class="flex flex-wrap gap-2 mb-6">
               <!-- 🔥 Stock bajo -->
@@ -647,6 +671,18 @@ const currentStock = computed(() => {
   return product.value.stock
 })
 
+// ===== 🚚 Entrega estimada (página de producto) =====
+const productIsBackorder = computed(() => currentStock.value <= 0)
+const productDelivery = computed(() =>
+  estimateDelivery({ isBackorder: productIsBackorder.value })
+)
+const productDeliveryDeadlineText = computed(() =>
+  productDelivery.value ? formatDeliveryDeadline(productDelivery.value) : ''
+)
+const productDeliveryRangeText = computed(() =>
+  productDelivery.value ? formatDeliveryRange(productDelivery.value) : ''
+)
+
 // ¿Se puede comprar? Siempre se puede agregar al carrito.
 // Si no hay stock, se trata como pedido sobre pedido (preparación en taller).
 const isPurchasable = computed(() => {
@@ -708,6 +744,8 @@ function addToCart() {
       sku: selectedVariant.value.sku,
     } : null,
     quantity: 1,
+    // 🚚 true = sobre pedido (sin stock disponible) → se prepara en taller
+    backorder: currentStock.value <= 0,
   }
 
   cartStore.addItem(cartItem)
