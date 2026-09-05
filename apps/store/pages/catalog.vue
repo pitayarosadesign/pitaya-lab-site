@@ -39,93 +39,71 @@
            etc.), ahí SÍ conviene extraer esto a un componente genérico `FacetFilters.vue`
            que reciba config; ese refactor requiere DONDE esté la necesidad real.
          ───────────────────────────────────────────────────────────────────────────── -->
-    <section v-if="catalogConfig.blocks.filters.enabled" class="bg-white border-b border-earth-100 sticky top-20 z-30 shadow-sm">
+    <section v-if="catalogConfig.blocks.filters.enabled" class="bg-white border-b border-earth-100">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- 📌 Fila 1: píldoras de FORMATO siempre visibles (decisión primaria, scroll en móvil) -->
-        <div class="flex items-center gap-2 py-2 border-b border-earth-100 overflow-x-auto no-scrollbar">
-          <button
-            @click="activeCategory = 'all'"
-            :class="[
-              'flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all',
-              activeCategory === 'all'
-                ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
-                : 'bg-white text-earth-600 border-earth-200 hover:border-primary-300 hover:text-primary-700'
-            ]"
-          >
-            <span class="text-sm leading-none">🌸</span>
-            Todos
-            <span class="text-[10px] font-bold opacity-75">{{ categoryCounts.all || 0 }}</span>
-          </button>
-          <button
-            v-for="cat in categories.slice(1)"
-            :key="cat.id"
-            @click="activeCategory = cat.id"
-            :class="[
-              'flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all',
-              activeCategory === cat.id
-                ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
-                : 'bg-white text-earth-600 border-earth-200 hover:border-primary-300 hover:text-primary-700'
-            ]"
-          >
-            <span class="text-sm leading-none">{{ categoryIcon(cat.label) }}</span>
-            {{ cat.label }}
-            <span class="text-[10px] font-bold opacity-75">{{ categoryCounts[cat.id] || 0 }}</span>
-          </button>
-        </div>
-
-        <!-- 📌 Fila 2: chips activos + botón "Filtrar" que abre el drawer de facetas -->
-        <div class="py-1.5 flex items-center gap-2 flex-wrap">
-          <!-- Chips removibles de filtros activos (aroma/colección/inspiración) -->
-          <div v-if="activeFilterCount > (activeCategory !== 'all' ? 1 : 0)" class="flex items-center gap-1.5 flex-wrap flex-1 min-w-0">
-            <button
-              v-if="activeFragrance"
-              @click="clearAromaSelection()"
-              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary-50 border border-primary-100 text-primary-700 text-[11px] font-medium hover:bg-primary-100 transition-colors"
-            >
-              🌸 <span class="font-semibold">{{ shortName(activeFragranceName || '') }}</span>
-              <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-            <button
-              v-if="activeFamily !== 'all'"
-              @click="activeFamily = 'all'"
-              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary-50 border border-primary-100 text-primary-700 text-[11px] font-medium hover:bg-primary-100 transition-colors"
-            >
-              ⊛ <span class="font-semibold truncate max-w-[140px]">{{ shortName(activeFamilyLabel || '') }}</span>
-              <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-            <button
-              v-if="activeHotel !== 'all'"
-              @click="activeHotel = 'all'"
-              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-100 text-amber-700 text-[11px] font-medium hover:bg-amber-100 transition-colors"
-            >
-              ⭐ <span class="font-semibold truncate max-w-[140px]">{{ shortName(activeHotelLabel || '') }}</span>
-              <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-          </div>
-
-          <!-- Acciones derecha -->
-          <div class="ml-auto flex items-center gap-2 flex-shrink-0">
+        <!-- 📌 Toolbar de filtrado (discreto, a demanda mediante panel lateral) -->
+        <!-- Línea: contador + botón Filtrar que abre el drawer de facetas -->
+        <div class="flex items-center justify-between flex-wrap gap-2 py-3">
+          <p class="text-sm text-earth-600">
+            <span v-if="!loading" class="font-semibold text-earth-800">{{ filteredProducts.length }}</span>
+            <span class="text-earth-400">{{ loading ? '…' : (filteredProducts.length === 1 ? ' producto' : ' productos') }}</span>
+            <template v-if="activeFragranceName"><span class="text-earth-300 mx-1">·</span><span class="text-primary-600 font-medium">🌸 {{ activeFragranceName }}</span></template>
+          </p>
+          <div class="flex items-center gap-2">
             <button
               v-if="hasActiveFilters"
               @click="resetFilters"
-              class="text-xs text-earth-500 hover:text-primary-600 font-medium underline underline-offset-2 flex-shrink-0"
-            >
-              Limpiar todo
-            </button>
+              class="text-xs font-medium text-earth-400 hover:text-primary-600 underline underline-offset-2 transition-colors"
+            >Limpiar todo</button>
             <button
               @click="filtersOpen = true"
-              class="inline-flex items-center gap-2 rounded-full bg-earth-900 hover:bg-earth-800 text-white text-xs font-semibold px-4 py-2 transition-colors shadow-sm"
+              class="inline-flex items-center gap-2 rounded-full border border-earth-200 bg-white text-earth-700 hover:text-primary-700 hover:border-primary-300 text-sm font-medium px-4 py-2 transition-colors shadow-sm"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-              </svg>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
               Filtrar
               <span
                 v-if="activeFilterCount > (activeCategory !== 'all' ? 1 : 0)"
-                class="min-w-[18px] h-[18px] px-1 inline-flex items-center justify-center rounded-full bg-white/25 text-white text-[10px] font-bold"
+                class="min-w-[18px] h-[18px] px-1 inline-flex items-center justify-center rounded-full bg-primary-600/90 text-white text-[10px] font-bold"
               >{{ activeFilterCount - (activeCategory !== 'all' ? 1 : 0) }}</span>
             </button>
           </div>
+        </div>
+
+        <!-- Fila de filtros activos discretos (no sticky). Aparece solo si hay alguna selección. -->
+        <div v-if="activeCategory !== 'all' || activeFragrance || activeFamily !== 'all' || activeHotel !== 'all'" class="flex flex-wrap items-center gap-1.5 pb-3">
+          <span class="text-[11px] font-medium uppercase tracking-wider text-earth-400 mr-0.5">Filtrado por:</span>
+          <button
+            v-if="activeCategory !== 'all'"
+            @click="activeCategory = 'all'"
+            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-earth-50 border border-earth-200 text-earth-700 text-[11px] font-medium hover:border-primary-300 hover:text-primary-700 transition-colors"
+          >
+            {{ categoryIcon(activeCategoryName) }} <span class="font-semibold">{{ activeCategoryName }}</span>
+            <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+          <button
+            v-if="activeFragrance"
+            @click="clearAromaSelection()"
+            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary-50 border border-primary-100 text-primary-700 text-[11px] font-medium hover:bg-primary-100 transition-colors"
+          >
+            🌸 <span class="font-semibold">{{ shortName(activeFragranceName || '') }}</span>
+            <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+          <button
+            v-if="activeFamily !== 'all'"
+            @click="activeFamily = 'all'"
+            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary-50 border border-primary-100 text-primary-700 text-[11px] font-medium hover:bg-primary-100 transition-colors"
+          >
+            ⊛ <span class="font-semibold truncate max-w-[140px]">{{ shortName(activeFamilyLabel || '') }}</span>
+            <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+          <button
+            v-if="activeHotel !== 'all'"
+            @click="activeHotel = 'all'"
+            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-100 text-amber-700 text-[11px] font-medium hover:bg-amber-100 transition-colors"
+          >
+            ⭐ <span class="font-semibold truncate max-w-[140px]">{{ shortName(activeHotelLabel || '') }}</span>
+            <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
         </div>
       </div>
     </section>
@@ -490,8 +468,43 @@
               </span>
             </div>
 
+            <!-- 🎯 Sección: Tipo de producto (formato/presentación) -->
+            <section v-if="categories.length > 1">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-earth-500 mb-2 flex items-center gap-1.5">🧭 Tipo de producto</h3>
+              <div class="grid grid-cols-2 gap-2">
+                <button
+                  :class="[
+                    'flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition-colors',
+                    activeCategory === 'all'
+                      ? 'bg-primary-50 border-primary-300 text-primary-700'
+                      : 'border-earth-200 text-earth-600 hover:border-primary-300'
+                  ]"
+                  @click="activeCategory = 'all'"
+                >
+                  <span class="text-lg leading-none">🌸</span>
+                  <span class="flex-1 text-sm font-medium">Todos</span>
+                  <span class="text-[11px] text-earth-400 font-semibold">{{ categoryCounts.all || 0 }}</span>
+                </button>
+                <button
+                  v-for="cat in categories.slice(1)"
+                  :key="cat.id"
+                  :class="[
+                    'flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition-colors',
+                    activeCategory === cat.id
+                      ? 'bg-primary-50 border-primary-300 text-primary-700'
+                      : 'border-earth-200 text-earth-600 hover:border-primary-300'
+                  ]"
+                  @click="activeCategory = (activeCategory === cat.id ? 'all' : cat.id)"
+                >
+                  <span class="text-lg leading-none">{{ categoryIcon(cat.label) }}</span>
+                  <span class="flex-1 text-sm font-medium">{{ cat.label }}</span>
+                  <span class="text-[11px] text-earth-400 font-semibold">{{ categoryCounts[cat.id] || 0 }}</span>
+                </button>
+              </div>
+            </section>
+
             <!-- 🎯 Sección: Aroma -->
-            <section>
+            <section>>
               <h3 class="text-xs font-bold uppercase tracking-wider text-earth-500 mb-2 flex items-center gap-1.5">🌸 Aroma</h3>
               <!-- Buscador -->
               <div class="relative mb-2">
@@ -785,6 +798,13 @@ function shortName(name, max = 26) {
   if (!name) return ''
   return name.length > max ? `${name.slice(0, max).trim()}…` : name
 }
+
+// Nombre/etiqueta de la categoría (formato) activa elegida
+const activeCategoryName = computed(() => {
+  if (activeCategory.value === 'all') return ''
+  const c = categories.value.find(x => x.id === activeCategory.value)
+  return c?.label || ''
+})
 
 const activeFamilyLabel = computed(() => {
   if (activeFamily.value === 'all') return ''
