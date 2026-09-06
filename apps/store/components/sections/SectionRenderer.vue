@@ -18,8 +18,6 @@
 //  se vería vacía.)
 import SectionHero from './SectionHero.vue'
 import SectionProducts from './SectionProducts.vue'
-import SectionCollection from './SectionCollection.vue'
-import SectionCollections from './SectionCollections.vue'
 import SectionScents from './SectionScents.vue'
 import SectionReviews from './SectionReviews.vue'
 import SectionValues from './SectionValues.vue'
@@ -35,7 +33,6 @@ import SectionB2BAudience from './SectionB2BAudience.vue'
 import SectionB2BCalculator from './SectionB2BCalculator.vue'
 import SectionB2BRecuerdos from './SectionB2BRecuerdos.vue'
 import SectionB2BFaq from './SectionB2BFaq.vue'
-
 const props = defineProps({
   section: { type: Object, required: true },
 })
@@ -45,8 +42,8 @@ const sectionComponent = computed(() => {
   const map = {
     hero: SectionHero,
     products: SectionProducts,
-    collection: SectionCollection,
-    collections: SectionCollections,
+    // collection / collections fueron retirados (tabla eliminada). Si una
+    // página aún arrastra una sección de ese tipo no se renderiza nada.
     scents: SectionScents,
     reviews: SectionReviews,
     values: SectionValues,

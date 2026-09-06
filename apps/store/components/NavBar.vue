@@ -161,7 +161,6 @@ const navLinks = ref([
   { path: '/', label: 'Inicio' },
   { path: '/about', label: 'Sobre Nosotros' },
   { path: '/philosophy', label: 'Nuestra Filosofía' },
-  { path: '/colecciones', label: 'Colecciones' },
   { path: '/fragrancias', label: 'Guía de Fragancias' },
   { path: '/catalog', label: 'Catálogo' },
   { path: '/b2b', label: 'Mayoreo & Corporativo' },

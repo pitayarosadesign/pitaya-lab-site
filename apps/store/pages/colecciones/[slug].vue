@@ -14,19 +14,13 @@
         </div>
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div class="max-w-3xl">
-            <!-- Breadcrumb a colección -->
-            <NuxtLink
-              v-if="profile.collection"
-              :to="`/colecciones#${profile.collection.slug}`"
-              class="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 text-sm font-medium mb-6"
-            >
-              ← {{ profile.collection.icon || '🌸' }} {{ profile.collection.name }}
-            </NuxtLink>
-
             <div class="flex items-center gap-3 mb-4">
               <span v-if="profile.emoji" class="text-4xl">{{ profile.emoji }}</span>
               <span v-if="profile.hotel_reference" class="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold uppercase tracking-wide">
                 ✨ {{ profile.hotel_reference }}
+              </span>
+              <span v-if="profile.family" class="inline-flex items-center px-3 py-1 rounded-full bg-primary-100 text-primary-700 text-xs font-semibold uppercase tracking-wide">
+                🧬 {{ familyLabel(profile.family) }}
               </span>
             </div>
 
@@ -59,31 +53,25 @@
               </div>
             </div>
 
-            <!-- Columna derecha (1/3): la colección -->
-            <div v-if="profile.collection" class="space-y-6">
+            <!-- Columna derecha (1/3): perfil de clasificación -->
+            <div class="space-y-6">
               <div class="bg-white rounded-2xl border border-earth-100 p-6">
-                <h3 class="text-lg font-semibold text-earth-900 mb-4">Parte de la colección</h3>
-                <div
-                  class="aspect-[16/9] rounded-xl overflow-hidden mb-4"
-                  :style="{ backgroundColor: profile.collection.accent_color || '#16a34a' }"
-                >
-                  <img
-                    v-if="profile.collection.image_url"
-                    :src="profile.collection.image_url"
-                    :alt="profile.collection.name"
-                    class="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                  <div v-else class="w-full h-full flex items-center justify-center text-white text-4xl">{{ profile.collection.icon || '🌸' }}</div>
+                <h3 class="text-lg font-semibold text-earth-900 mb-3">Clasificación</h3>
+                <div class="space-y-3 text-sm">
+                  <div class="flex items-center justify-between">
+                    <span class="text-earth-500">Familia</span>
+                    <span class="font-medium text-earth-800">{{ familyLabel(profile.family) }}</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-earth-500">Inspiración</span>
+                    <span class="font-medium text-earth-800">{{ profile.hotel_reference || '—' }}</span>
+                  </div>
                 </div>
-                <h4 class="font-semibold text-earth-800">{{ profile.collection.name }}</h4>
-                <p class="text-sm text-primary-600 font-medium mb-2">{{ profile.collection.subtitle }}</p>
-                <p class="text-sm text-earth-500 leading-relaxed line-clamp-3">{{ profile.collection.description }}</p>
                 <NuxtLink
-                  :to="`/colecciones#${profile.collection.slug}`"
-                  class="inline-flex items-center justify-center w-full mt-4 px-4 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium transition-colors"
+                  to="/fragrancias"
+                  class="inline-flex items-center justify-center w-full mt-5 px-4 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium transition-colors"
                 >
-                  Ver toda la colección →
+                  Explorar guía de fragancias →
                 </NuxtLink>
               </div>
             </div>
@@ -113,7 +101,7 @@
     <div v-else-if="!loading" class="py-32 text-center">
       <p class="text-5xl mb-4">🌸</p>
       <p class="text-earth-600 text-lg">Perfil aromático no encontrado.</p>
-      <NuxtLink to="/colecciones" class="inline-block mt-4 text-primary-600 hover:underline font-medium">← Ver todas las colecciones</NuxtLink>
+      <NuxtLink to="/fragrancias" class="inline-block mt-4 text-primary-600 hover:underline font-medium">← Explorar la guía de fragancias</NuxtLink>
     </div>
   </div>
 </template>
@@ -135,6 +123,18 @@ const notes = computed(() => {
     })
     .filter(Boolean)
 })
+
+// Etiqueta legible de familia olfativa (4 grandes)
+const FAMILY_LABELS = {
+  floral: 'Floral',
+  oriental: 'Oriental',
+  amaderada: 'Amaderada',
+  citrica: 'Cítrica',
+}
+function familyLabel(k) {
+  if (!k) return '—'
+  return FAMILY_LABELS[k] || k
+}
 
 useSeoMeta({
   title: () => profile.value?.name ? `${profile.value.name} | PITAYA LAB` : 'Perfil Aromático | PITAYA LAB',

@@ -169,10 +169,10 @@
                       <span v-if="selectedFragrance.emoji" class="text-lg leading-none">{{ selectedFragrance.emoji }}</span>
                       <p class="text-base font-serif font-bold text-earth-900 truncate">{{ selectedFragrance.name }}</p>
                       <span
-                        v-if="selectedFragrance.collection"
-                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-earth-200 bg-white text-earth-600 text-[10px] font-medium"
+                        v-if="selectedFragrance.family"
+                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-primary-100 bg-white text-primary-700 text-[10px] font-medium"
                       >
-                        {{ selectedFragrance.collection.name }}
+                        {{ familyLabel(selectedFragrance.family) }}
                       </span>
                       <span
                         v-if="selectedFragrance.hotelReference"
@@ -539,6 +539,18 @@ function selectVariant(variant) {
 }
 
 // ===== 🌸 Experiencia olfativa de la variante seleccionada =====
+// Etiquetas legibles de la familia olfativa del aroma (mismas 4 que en la Guía)
+const FAMILY_LABELS = {
+  floral: 'Floral',
+  oriental: 'Oriental',
+  amaderada: 'Amaderada',
+  citrica: 'Cítrica',
+}
+function familyLabel(k) {
+  if (!k) return ''
+  return FAMILY_LABELS[k] || k
+}
+
 // Deriva la información del perfil aromático vinculado (notas, experiencia,
 // emoji) para mostrarlas junto al selector de aroma. Las mismas notas que
 // aparecen en el catálogo ("Explora por aroma").

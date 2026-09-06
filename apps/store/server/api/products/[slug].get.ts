@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
 
     const { data: product, error } = await supabase
       .from('products')
-      .select('*, product_categories(name, slug), product_images(url, alt_text, sort_order, is_primary), product_variants(*, product_id, fragrance_profile_id, fragrance_profiles(name, emoji, subtitle, slug, image_url, experience, notes, description, hotel_reference, collections(name, slug, icon)))')
+      .select('*, product_categories(name, slug), product_images(url, alt_text, sort_order, is_primary), product_variants(*, product_id, fragrance_profile_id, fragrance_profiles(name, emoji, subtitle, slug, image_url, experience, notes, description, hotel_reference, olfactive_family))')
       .eq('slug', cleanSlug)
       .eq('is_active', true)
       .single()
@@ -77,12 +77,7 @@ export default defineEventHandler(async (event) => {
               experience: fp.experience || '',
               notes: fp.notes || '',
               hotelReference: fp.hotel_reference || '',
-              collection: fp.collections ? {
-                id: fp.collections.id,
-                name: fp.collections.name || '',
-                slug: fp.collections.slug || '',
-                icon: fp.collections.icon || '',
-              } : null,
+              family: fp.olfactive_family || null,
             } : null,
           }
         }),

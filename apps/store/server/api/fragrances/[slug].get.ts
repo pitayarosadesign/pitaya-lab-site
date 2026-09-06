@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
   try {
     const { data: profile, error } = await supabase
       .from('fragrance_profiles')
-      .select('*, collections(*)')
+      .select('*')
       .eq('slug', slug)
       .eq('is_active', true)
       .single()
@@ -33,14 +33,8 @@ export default defineEventHandler(async (event) => {
         hotel_reference: profile.hotel_reference,
         image_url: profile.image_url,
         emoji: profile.emoji,
-        collection: profile.collections ? {
-          id: profile.collections.id,
-          slug: profile.collections.slug,
-          name: profile.collections.name,
-          subtitle: profile.collections.subtitle,
-          description: profile.collections.description,
-          image_url: profile.collections.image_url,
-        } : null,
+        family: profile.olfactive_family || null,
+        collection_tag: profile.collection_tag || null,
       },
     }
   } catch (e) {

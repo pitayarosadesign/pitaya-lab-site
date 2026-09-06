@@ -876,7 +876,7 @@ async function loadAromas() {
     if (!supabase) return
     const { data, error } = await supabase
       .from('fragrance_profiles')
-      .select('*, collections(name, slug, subtitle, icon)')
+      .select('*')
       .eq('is_active', true)
       .order('sort_order', { ascending: true })
     if (error) throw error
@@ -892,8 +892,9 @@ async function loadAromas() {
       experience: p.experience || '',
       notes: p.notes || '',
       hotel_reference: p.hotel_reference || '',
-      category: p.collections?.slug || '',
-      categoryLabel: p.collections?.name || 'Perfil',
+      // Sin tabla de colecciones: la "categoría" es la fragancia en sí (catálogo maestro)
+      category: p.slug || '',
+      categoryLabel: p.name || 'Perfil',
       vibe: p.experience || p.subtitle || '',
       bestFor: p.notes || p.description || p.hotel_reference || '',
       notesList: parseNotes(p.notes),
