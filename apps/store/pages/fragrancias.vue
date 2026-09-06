@@ -64,7 +64,6 @@
                 <div v-else class="absolute inset-0 flex items-center justify-center">
                   <span class="text-7xl opacity-70">{{ fr.emoji || '🌸' }}</span>
                 </div>
-                </div>
                 <div v-if="fr.family" class="absolute top-3 left-3 inline-flex items-center bg-white/85 text-primary-700 text-[10px] font-semibold px-2 py-1 rounded-full border border-primary-100">
                   {{ familyEmoji(fr.family) }} {{ familyLabel(fr.family) }}
                 </div>
