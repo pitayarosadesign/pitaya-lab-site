@@ -117,7 +117,7 @@
             <input ref="fileInput" type="file" accept="image/png,image/jpeg,image/webp" class="hidden" @change="onFileSelect" />
             <div>
               <button type="button" @click="fileInput?.click()" class="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors">Subir imagen</button>
-              <p class="text-xs text-gray-400 mt-1">PNG / JPG / WebP</p>
+              <p class="text-xs text-gray-400 mt-1">PNG / JPG / WebP · se optimiza a máx. 1600 px</p>
             </div>
           </div>
 
@@ -290,11 +290,93 @@ function openEdit(a) {
 }
 function closeModal() { showModal.value = false }
 
+// Los contenedores usan recortes 1:1 y 4:3 (object-cover). Recomendado:
+// imagen horizontal, formato 4:3 ó cuadrada, al menos 1400×1000 px.
+// Se redimensiona y comprime en el navegador (a 1600px de lado mayor) para:
+//  - entregar la imagen en tamaño y peso justos a la tienda, y
+//  - no exceder el límite del body del servidor (evita el error 413).
 function onFileSelect(e) {
   const f = e.target.files?.[0]
   if (!f) return
   fileToRead.value = f
+  // Vista previa con la imagen original mientras no se procese
   form.imagePreview = URL.createObjectURL(f)
+  // Procesar: redimensionar + comprimir y usar como archivo a subir
+  compressImage(f).then(({ dataUrl, w, h }) => {
+    form.imagePreview = dataUrl
+    // Reemplazar el archivo a enviar por la versión optimizada (muy ligera)
+    fileToRead.value = dataUrlToFile(dataUrl)
+    // eslint-disable-next-line no-console
+    console.log(`✅ Imagen optimizada a ${w}×${h} (lista para subir)`)
+  }).catch(err => {
+    console.error('No se pudo procesar la imagen:', err)
+    // Si falla canvas, intentaremos de todas formas subir el original
+  })
+}
+
+// Redimensiona y comprime una imagen (mantiene orientación EXIF).
+async function compressImage(file) {
+  const original = await readFileAsDataURL(file)
+  const img = await loadImage(original)
+  const MAX = 1600
+  let { width, height } = img
+  // Aplicar rotación EXIF implícita del navegador ya viene con img.onload
+  if (width > MAX || height > MAX) {
+    const scale = MAX / Math.max(width, height)
+    width = Math.round(width * scale)
+    height = Math.round(height * scale)
+  }
+  width = Math.max(2, Math.round(width))
+  height = Math.max(2, Math.round(height))
+
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('Canvas no soportado en este navegador')
+  ctx.fillStyle = '#ffffff' // fondo blanco (evita negro en PNG con alfa)
+  ctx.fillRect(0, 0, width, height)
+  if (img.width > MAX || img.height > MAX) {
+    // Asegurar encaje de la imagen (ya escala guardando relación)
+    const ratio = Math.min(width / img.width, height / img.height)
+    const w = img.width * ratio
+    const h = img.height * ratio
+    ctx.drawImage(img, (width - w) / 2, (height - h) / 2, w, h)
+  } else {
+    ctx.drawImage(img, 0, 0)
+  }
+  // Salida: PNG solo si el original era con transparencia; si no, JPEG 0.85
+  const isPng = /png/i.test(file.type) || /\.png$/i.test(file.name)
+  const mime = isPng ? 'image/png' : 'image/jpeg'
+  const dataUrl = canvas.toDataURL(mime, isPng ? 0.92 : 0.85)
+  return { dataUrl, w: width, h: height }
+}
+
+function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = () => reject(reader.error || new Error('No se pudo leer el archivo'))
+    reader.readAsDataURL(file)
+  })
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => resolve(img)
+    img.onerror = () => reject(new Error('Imagen inválida'))
+    img.src = src
+  })
+}
+
+function dataUrlToFile(dataUrl) {
+  const [head, payload] = dataUrl.split(',')
+  const mime = (head.match(/:(.*?);/) || [])[1] || 'image/jpeg'
+  const bin = atob(payload)
+  const u8 = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i)
+  return new File([u8], 'foto-aroma-optimizada', { type: mime })
 }
 
 // ══ Guardar (crear/editar) ══
