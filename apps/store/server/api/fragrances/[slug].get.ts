@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
         description: profile.description,
         experience: profile.experience,
         notes: profile.notes,
-        hotel_reference: profile.hotel_reference,
+        inspiracion: profile.inspiracion,
         image_url: profile.image_url,
         emoji: profile.emoji,
         family: profile.olfactive_family || null,

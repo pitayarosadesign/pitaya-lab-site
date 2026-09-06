@@ -84,7 +84,7 @@ export default defineEventHandler(async (event) => {
         experience: pr.experience,
         notes: pr.notes,
         notesList: (pr.notes || '').split('/').map(n => n.trim()).filter(Boolean),
-        hotel_reference: pr.hotel_reference,
+        inspiracion: pr.inspiracion,
         image_url: pr.image_url,
         emoji: pr.emoji,
         short_desc: pr.short_desc,

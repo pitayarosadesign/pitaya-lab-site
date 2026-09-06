@@ -16,8 +16,8 @@
           <div class="max-w-3xl">
             <div class="flex items-center gap-3 mb-4">
               <span v-if="profile.emoji" class="text-4xl">{{ profile.emoji }}</span>
-              <span v-if="profile.hotel_reference" class="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold uppercase tracking-wide">
-                ✨ {{ profile.hotel_reference }}
+              <span v-if="profile.inspiracion" class="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold uppercase tracking-wide">
+                ✨ {{ profile.inspiracion }}
               </span>
               <span v-if="profile.family" class="inline-flex items-center px-3 py-1 rounded-full bg-primary-100 text-primary-700 text-xs font-semibold uppercase tracking-wide">
                 🧬 {{ familyLabel(profile.family) }}
@@ -64,7 +64,7 @@
                   </div>
                   <div class="flex items-center justify-between">
                     <span class="text-earth-500">Inspiración</span>
-                    <span class="font-medium text-earth-800">{{ profile.hotel_reference || '—' }}</span>
+                    <span class="font-medium text-earth-800">{{ profile.inspiracion || '—' }}</span>
                   </div>
                 </div>
                 <NuxtLink

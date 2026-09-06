@@ -891,12 +891,12 @@ async function loadAromas() {
       subtitle: p.subtitle || '',
       experience: p.experience || '',
       notes: p.notes || '',
-      hotel_reference: p.hotel_reference || '',
+      hotel_reference: p.inspiracion || '',
       // Sin tabla de colecciones: la "categoría" es la fragancia en sí (catálogo maestro)
       category: p.slug || '',
       categoryLabel: p.name || 'Perfil',
       vibe: p.experience || p.subtitle || '',
-      bestFor: p.notes || p.description || p.hotel_reference || '',
+      bestFor: p.notes || p.description || p.inspiracion || '',
       notesList: parseNotes(p.notes),
     }))
   } catch (e) {

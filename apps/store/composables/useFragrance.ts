@@ -48,7 +48,7 @@ export function normalizeFragrance(profile: any) {
     experience: profile.experience || '',
     notes: profile.notes || '',
     notesList: parseNotes(profile.notes),
-    hotelReference: profile.hotelReference || profile.hotel_reference || '',
+    hotelReference: profile.hotelReference || profile.inspiracion || profile.hotel_reference || '',
     image: profile.image || profile.image_url || null,
     slug: profile.slug || '',
     collection: profile.collection || normalizeCollection(profile.collections),
