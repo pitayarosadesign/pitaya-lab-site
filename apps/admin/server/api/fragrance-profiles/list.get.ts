@@ -11,27 +11,13 @@ export default defineEventHandler(async (event) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('fragrance_profiles')
-      .select('*, collections(id, name, slug)')
+      .select('*')
       .order('sort_order', { ascending: true })
 
     if (error) throw error
 
-    const profiles = (data || []).map(p => ({
-      ...p,
-      collection_name: p.collections?.name || '',
-      collection_slug: p.collections?.slug || '',
-      collection: p.collections ? {
-        id: p.collections.id,
-        name: p.collections.name,
-        slug: p.collections.slug,
-        subtitle: p.collections.subtitle,
-        icon: p.collections.icon,
-      } : null,
-    }))
-
-    return { profiles }
+    return { profiles: data || [] }
   } catch (e) {
     throw createError({ statusCode: 500, message: e.message })
   }
 })
-
