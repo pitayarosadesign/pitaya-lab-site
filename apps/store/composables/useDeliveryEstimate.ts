@@ -191,18 +191,13 @@ export async function loadDeliveryConfig(): Promise<DeliveryEstimateConfig> {
   const cfg = { ...DEFAULT_DELIVERY_CONFIG }
   if (!import.meta.client) return cfg
   try {
-    const supabase = useNuxtApp().$supabase
-    if (!supabase) return cfg
-    const { data } = await supabase
-      .from('site_config')
-      .select('value')
-      .eq('key', 'delivery_estimates')
-      .single()
-    if (data?.value && typeof data.value === 'object') {
+    // Lectura vía endpoint Nitro (service_role → sin depender de RLS pública)
+    const { value } = await $fetch('/api/delivery-config')
+    if (value && typeof value === 'object') {
       // Merge profundo ligero con defaults
       Object.keys(cfg).forEach((k) => {
-        if (data.value[k] !== undefined) {
-          ;(cfg as any)[k] = data.value[k]
+        if (value[k] !== undefined) {
+          ;(cfg as any)[k] = value[k]
         }
       })
     }

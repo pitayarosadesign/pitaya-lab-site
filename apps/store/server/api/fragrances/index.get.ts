@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
     // 1) Perfiles aromáticos activos
     const { data: profiles, error: profilesError } = await supabase
       .from('fragrance_profiles')
-      .select('*, collections(id, slug, name, icon)')
+      .select('*')
       .eq('is_active', true)
       .order('sort_order', { ascending: true })
 
@@ -91,9 +91,6 @@ export default defineEventHandler(async (event) => {
         // Clasificación limpia por aroma desde admin
         family: pr.olfactive_family || null,
         collectionTag: pr.collection_tag || null,
-        collection: pr.collections
-          ? { id: pr.collections.id, slug: pr.collections.slug, name: pr.collections.name, icon: pr.collections.icon }
-          : null,
         presentaciones: disponibles.length,
         disponibles,
       }

@@ -64,8 +64,6 @@
                 <div v-else class="absolute inset-0 flex items-center justify-center">
                   <span class="text-7xl opacity-70">{{ fr.emoji || '🌸' }}</span>
                 </div>
-                <div v-if="fr.collection" class="absolute top-3 left-3 inline-flex items-center bg-black/55 backdrop-blur text-white text-[10px] font-semibold px-2 py-1 rounded-full">
-                  {{ fr.collection.icon || '🖇️' }} {{ fr.collection.name }}
                 </div>
                 <div v-if="fr.family" class="absolute top-3 left-3 inline-flex items-center bg-white/85 text-primary-700 text-[10px] font-semibold px-2 py-1 rounded-full border border-primary-100">
                   {{ familyEmoji(fr.family) }} {{ familyLabel(fr.family) }}
@@ -167,47 +165,24 @@ function familyEmoji(k) {
 }
 
 // ---- Filtro de la Guía ----
-// Prioridad: familias olfativas configuradas por aroma (olfactive_family).
-// Si todavía ningún aroma tiene familia cargada, queda el filtro por colección
-// para mantener la Guía útil.
-const usingFamilyBase = computed(() => fragrances.value.some(f => f.family))
-
+// Filtro por FAMILIA olfativa (clasificación limpia por aroma, sin tablas
+// de colecciones). Hasta que un aroma no tenga familia, queda en "Todas".
 const filtros = computed(() => {
   const map = new Map()
-  if (usingFamilyBase.value) {
-    // Eje "familias olfativas"
-    map.set('todas', { key: 'todas', label: 'Todas', emoji: '🧭', count: fragrances.value.length })
-    fragrances.value.forEach(fr => {
-      if (!fr.family) return
-      const key = 'fam:' + fr.family
-      if (!map.has(key)) map.set(key, { key, label: familyLabel(fr.family), emoji: familyEmoji(fr.family), count: 0 })
-      map.get(key).count++
-    })
-    return Array.from(map.values())
-  }
-  // Fallback: filtro por colección
   map.set('todas', { key: 'todas', label: 'Todas', emoji: '🌸', count: fragrances.value.length })
   fragrances.value.forEach(fr => {
-    const c = fr.collection
-    if (!c) return
-    const key = 'col:' + c.slug
-    if (!map.has(key)) map.set(key, { key, label: c.name, emoji: c.icon || '🖇️', count: 0 })
+    if (!fr.family) return
+    const key = 'fam:' + fr.family
+    if (!map.has(key)) map.set(key, { key, label: familyLabel(fr.family), emoji: familyEmoji(fr.family), count: 0 })
     map.get(key).count++
   })
   return Array.from(map.values())
 })
 
 const filteredFragrances = computed(() => {
-  if (activeFiltro.value === 'todas') return fragrances.value
-  if (usingFamilyBase.value && activeFiltro.value.startsWith('fam:')) {
-    const fam = activeFiltro.value.slice(4)
-    return fragrances.value.filter(fr => fr.family === fam)
-  }
-  if (activeFiltro.value.startsWith('col:')) {
-    const slug = activeFiltro.value.slice(4)
-    return fragrances.value.filter(fr => fr.collection && fr.collection.slug === slug)
-  }
-  return fragrances.value
+  if (activeFiltro.value === 'todas' || !activeFiltro.value.startsWith('fam:')) return fragrances.value
+  const fam = activeFiltro.value.slice(4)
+  return fragrances.value.filter(fr => fr.family === fam)
 })
 
 function goToProduct(slug, aromaSlug) {
