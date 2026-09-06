@@ -161,8 +161,6 @@ const dragIndex = ref(null)
 const sectionTypes = [
   // Productos & Catálogo
   { value: 'products', label: 'Productos', icon: '📦', description: 'Grilla de productos destacados', category: 'Productos' },
-  { value: 'collection', label: 'Colección', icon: '🏷️', description: 'Productos de una colección', category: 'Productos' },
-  { value: 'collections', label: 'Colecciones', icon: '🌸', description: 'Grid de colecciones de aromas', category: 'Productos' },
   { value: 'scents', label: 'Aromas', icon: '🌿', description: 'Galería de perfiles aromáticos', category: 'Productos' },
 
   // Contenido

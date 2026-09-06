@@ -576,14 +576,22 @@ async function loadScentProfiles() {
 
     const activeProfiles = profiles.filter(p => p.is_active !== false)
 
+    // Agrupar por FAMILIA olfativa (clasificación vigente; ya no hay colecciones)
+    const FAM = {
+      floral: { name: 'Florales', icon: '🌸', subtitle: 'Frescas y románticas' },
+      oriental: { name: 'Orientales', icon: '✨', subtitle: 'Cálidas y envolventes' },
+      amaderada: { name: 'Amaderadas', icon: '🪵', subtitle: 'Terrosas y profundas' },
+      citrica: { name: 'Cítricas', icon: '🍋', subtitle: 'Vibrantes y luminosas' },
+    }
     const groups = []
     const groupMap = new Map()
     for (const p of activeProfiles) {
-      const colData = p.collection || p.collections
-      const colKey = colData?.id || p.collection_id || 'sin-coleccion'
-      const colName = colData?.name || p.collection_name || 'Otros aromas'
-      const colIcon = colData?.icon || '🌸'
-      const colSubtitle = colData?.subtitle || ''
+      const fam = p.olfactive_family
+      const meta = FAM[fam] || { name: 'Otros aromas', icon: '🌸', subtitle: '' }
+      const colKey = fam || 'sin-familia'
+      const colName = meta.name
+      const colIcon = meta.icon
+      const colSubtitle = meta.subtitle
 
       if (!groupMap.has(colKey)) {
         const g = {
@@ -600,7 +608,7 @@ async function loadScentProfiles() {
         subtitle: p.subtitle,
         experience: p.experience,
         emoji: p.emoji,
-        collection_id: p.collection_id,
+        olfactive_family: p.olfactive_family,
       })
     }
 
@@ -611,7 +619,7 @@ async function loadScentProfiles() {
       subtitle: p.subtitle,
       experience: p.experience,
       emoji: p.emoji,
-      collection_id: p.collection_id,
+      olfactive_family: p.olfactive_family,
     }))
 
     // Inicializar datos de variante para cada aroma

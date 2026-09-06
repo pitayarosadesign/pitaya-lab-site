@@ -127,7 +127,7 @@ async function syncVariantsByProfiles(supabaseAdmin, productId, profileIds, base
   if (selectedProfileIdSet.size > 0) {
     const { data: profiles, error: pError } = await supabaseAdmin
       .from('fragrance_profiles')
-      .select('id, name, slug, subtitle, collection_id, image_url')
+      .select('id, name, slug, subtitle, image_url')
       .in('id', Array.from(selectedProfileIdSet))
       .eq('is_active', true)
 
