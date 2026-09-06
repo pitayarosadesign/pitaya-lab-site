@@ -376,7 +376,7 @@ function dataUrlToFile(dataUrl) {
   const bin = atob(payload)
   const u8 = new Uint8Array(bin.length)
   for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i)
-  return new File([u8], 'foto-aroma-optimizada', { type: mime })
+  return new File([u8], 'foto-aroma-optimizada.' + ext, { type: mime })
 }
 
 // ══ Guardar (crear/editar) ══
