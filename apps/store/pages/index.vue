@@ -33,7 +33,7 @@
       <SectionProducts :content="{ title: 'Nuestros Productos', subtitle: 'Descubre', description: 'Velas de soya perfumadas, aceites aromáticos y brumas que transforman tu hogar en una experiencia sensorial única.', max_products: 4, show_view_all: true, view_all_text: 'Ver catálogo completo', view_all_link: '/catalog' }" />
       <SectionValues :content="{ title: '¿Por qué elegir PITAYA LAB?', subtitle: 'Nuestro Compromiso' }" />
       <SectionTrust :content="{ title: 'Envíos seguros a todo México', subtitle: 'Recibe tus productos de forma rápida y confiable' }" />
-      <SectionCollections :content="{ title: 'El arte de la fragancia', subtitle: 'Aromas', description: 'Cada aroma ha sido cuidadosamente seleccionado para ofrecerte una experiencia única.', show_all: true }" />
+      <SectionScents :content="{ title: 'El arte de la fragancia', subtitle: 'Aromas', description: 'Cada aroma ha sido cuidadosamente seleccionado para ofrecerte una experiencia única.', show_all: true }" />
       <SectionReviews :content="{ title: 'Lo que dicen nuestros clientes', subtitle: 'Opiniones reales de quienes ya disfrutan PITAYA LAB' }" />
       <SectionCta :content="{ title: '¿Listo para transformar tu hogar?', description: 'Descubre nuestra colección completa en Amazon y encuentra la fragancia perfecta para cada momento.', button_link: 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329' }" />
     </div>
