@@ -958,11 +958,14 @@ const collections = ref([])
 // que usa el store (HeroSection.vue): si media_type dice 'video' pero la URL
 // apunta a una imagen, se muestra la imagen.
 const heroPreviewType = computed(() => {
-  const type = section.content?.media_type || (section.content?.media_url ? inferMediaType(section.content.media_url) : 'video')
-  if (type === 'video' && section.content?.media_url && inferMediaType(section.content.media_url) === 'image') {
-    return 'image'
-  }
-  return type
+  // 'none' / 'carousel' no dependen de media_url: se respetan siempre.
+  const mt = section.content?.media_type
+  if (mt === 'none' || mt === 'carousel') return mt
+  // Con media_url presente, la extensión REAL del archivo es la fuente de
+  // verdad (coincide con HeroSection.vue del store).
+  if (section.content?.media_url) return inferMediaType(section.content.media_url)
+  // Sin media_url hay gradiente de color (no se previsualiza media).
+  return 'none'
 })
 
 // Slide actual del carrusel en la vista previa

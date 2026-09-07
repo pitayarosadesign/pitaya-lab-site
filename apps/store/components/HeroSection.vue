@@ -205,15 +205,17 @@ function isExternal(link) {
   return /^https?:\/\//i.test(link || '')
 }
 
-// Determina el tipo de media real ('none' | 'image' | 'video' | 'carousel')
+// Determina el tipo de media real ('none' | 'image' | 'video' | 'carousel').
+// Prioriza la extensión REAL del archivo en `media_url`, porque es la fuente de
+// verdad del archivo guardado. Esto evita que el hero quede roto por
+// inconsistencias entre media_type y la URL real (p. ej. media_type='image'
+// pero media_url apunta a un .mp4, o al revés). 'none' / 'carousel' se
+// respetan siempre (no dependen de media_url).
 const resolvedMediaType = computed(() => {
-  let type = props.media_type || (props.media_url ? inferType(props.media_url) : 'none')
-  if (type === 'carousel') return type
-  if (type === 'video' && props.media_url && inferType(props.media_url) === 'image') {
-    return 'image'
-  }
-  if ((type === 'image' || type === 'video') && !props.media_url) return 'none'
-  return type
+  if (props.media_type === 'none') return 'none'
+  if (props.media_type === 'carousel') return 'carousel'
+  if (!props.media_url) return 'none'
+  return inferType(props.media_url)
 })
 
 const mediaUrl = computed(() => props.media_url || '')

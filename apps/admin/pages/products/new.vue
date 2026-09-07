@@ -462,11 +462,14 @@ const form = reactive({
   amazon_link: '',
   sync_amazon: false,
   variants: [],
-  selectedScents: new Set(),
-  scentGroups: [],
-  allScents: [],
-  loadingProfiles: false,
 })
+
+// ===== Aromas disponibles (perfiles aromáticos) =====
+const selectedScents = ref(new Set())
+const scentGroups = ref([])
+const allScents = ref([])
+const loadingProfiles = ref(false)
+const selectedScentCount = computed(() => selectedScents.value.size)
 
 watch(() => form.name, (name) => {
   if (name && !form.slug) {
@@ -498,10 +501,8 @@ function setPrimary(index) {
 }
 
 // ===== Aromas disponibles (perfiles aromáticos) =====
-const selectedScentCount = computed(() => form.selectedScents.size)
-
 async function loadScentProfiles() {
-  form.loadingProfiles = true
+  loadingProfiles.value = true
   try {
     const res = await $fetch('/api/fragrance-profiles/list')
     const profiles = res.profiles || []
@@ -544,8 +545,8 @@ async function loadScentProfiles() {
       })
     }
 
-    form.scentGroups = groups
-    form.allScents = activeProfiles.map(p => ({
+    scentGroups.value = groups
+    allScents.value = activeProfiles.map(p => ({
       id: p.id,
       name: p.name,
       subtitle: p.subtitle,
@@ -553,30 +554,30 @@ async function loadScentProfiles() {
       emoji: p.emoji,
       olfactive_family: p.olfactive_family,
     }))
-    form.selectedScents = new Set()
+    selectedScents.value = new Set()
   } catch (e) {
     console.error('Error cargando perfiles aromáticos:', e)
   } finally {
-    form.loadingProfiles = false
+    loadingProfiles.value = false
   }
 }
 
-function isScentSelected(scentId) { return form.selectedScents.has(scentId) }
+function isScentSelected(scentId) { return selectedScents.value.has(scentId) }
 
 function toggleScent(scentId) {
-  form.selectedScents.has(scentId) ? form.selectedScents.delete(scentId) : form.selectedScents.add(scentId)
+  selectedScents.value.has(scentId) ? selectedScents.value.delete(scentId) : selectedScents.value.add(scentId)
   updateGroupCounts()
 }
 
 function toggleAllInGroup(group) {
-  const allSelected = group.scents.every(s => form.selectedScents.has(s.id))
-  group.scents.forEach(s => allSelected ? form.selectedScents.delete(s.id) : form.selectedScents.add(s.id))
+  const allSelected = group.scents.every(s => selectedScents.value.has(s.id))
+  group.scents.forEach(s => allSelected ? selectedScents.value.delete(s.id) : selectedScents.value.add(s.id))
   updateGroupCounts()
 }
 
 function updateGroupCounts() {
-  form.scentGroups.forEach(g => {
-    g.selectedCount = g.scents.filter(s => form.selectedScents.has(s.id)).length
+  scentGroups.value.forEach(g => {
+    g.selectedCount = g.scents.filter(s => selectedScents.value.has(s.id)).length
   })
 }
 
@@ -632,7 +633,7 @@ async function handleSave() {
           published_at: new Date().toISOString(),
         },
         images,
-        variantProfileIds: Array.from(form.selectedScents),
+        variantProfileIds: Array.from(selectedScents.value),
       },
     })
 
