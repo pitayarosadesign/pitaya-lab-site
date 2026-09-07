@@ -7,7 +7,16 @@
         <p class="text-earth-500 mt-3">{{ subtitle }}</p>
       </div>
 
-      <CotizadorRecuerdos @order="$emit('order', $event)" />
+      <ClientOnly>
+        <CotizadorRecuerdos @order="$emit('order', $event)" />
+        <template #fallback>
+          <!-- Estado de carga SSR (evita mismatch de hydration) -->
+          <div class="bg-white rounded-3xl border border-earth-100 shadow-lg p-10 text-center text-earth-400 text-sm">
+            <div class="w-8 h-8 border-2 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-3"></div>
+            Cargando recuerdos para eventos…
+          </div>
+        </template>
+      </ClientOnly>
     </div>
   </section>
 </template>

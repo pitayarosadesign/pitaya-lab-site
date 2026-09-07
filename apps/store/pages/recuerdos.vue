@@ -32,7 +32,16 @@
     <!-- Cotizador de recuerdos -->
     <section class="py-14 md:py-20 bg-earth-50/50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <CotizadorRecuerdos @order="onOrderRequested" />
+        <ClientOnly>
+          <CotizadorRecuerdos @order="onOrderRequested" />
+          <template #fallback>
+            <!-- Estado de carga SSR (evita mismatch de hydration) -->
+            <div class="bg-white rounded-3xl border border-earth-100 shadow-lg p-10 text-center text-earth-400 text-sm">
+              <div class="w-8 h-8 border-2 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-3"></div>
+              Cargando recuerdos para eventos…
+            </div>
+          </template>
+        </ClientOnly>
       </div>
     </section>
 
