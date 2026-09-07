@@ -24,6 +24,7 @@ export default defineEventHandler(async (event) => {
         product_categories(name, slug),
         product_images(url, alt_text, sort_order, is_primary)
       `)
+      .eq('sales_channel', 'directa')
       .eq('is_active', true)
       .order('sort_order', { ascending: true })
 

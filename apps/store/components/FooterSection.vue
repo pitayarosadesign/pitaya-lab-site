@@ -18,6 +18,7 @@
           <p class="text-sm text-earth-400 leading-relaxed">
             Productos botánicos biodegradables que transforman tu hogar en una experiencia sensorial única.
           </p>
+          
         </div>
 
         <!-- Enlaces rápidos -->
@@ -112,6 +113,7 @@ const navLinks = ref([
   { path: '/about', label: 'Sobre Nosotros' },
   { path: '/philosophy', label: 'Nuestra Filosofía' },
   { path: '/catalog', label: 'Catálogo' },
+  { path: '/recuerdos', label: 'Recuerdos' },
   { path: '/b2b', label: 'Mayoreo & Corporativo' },
   { path: '/faq', label: 'Preguntas Frecuentes' },
 ])

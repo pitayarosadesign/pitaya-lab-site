@@ -90,6 +90,15 @@
       <!-- Estado y Configuración -->
       <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
         <h2 class="text-lg font-semibold text-gray-900">⚙️ Estado y Configuración</h2>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Canal de venta</label>
+          <select v-model="form.sales_channel" class="w-full md:max-w-sm px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all">
+            <option value="directa">Menudeo (tienda pública / catálogo de la web)</option>
+            <option value="evento">Eventos / Recuerdos (solo cotizador /b2b)</option>
+            <option value="mayoreo">Comercial por volumen (reservado a futuro)</option>
+          </select>
+          <p class="text-xs text-gray-400 mt-1">💡 Los de <b>Eventos</b> NO salen en el catálogo público ni en feeds: solo aparecen en el cotizador de recuerdos (/b2b).</p>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
@@ -440,7 +449,7 @@ const form = reactive({
   is_active: true, is_featured: false, google_category: '', free_shipping: false,
   amazon_link: '', compare_at_price: '', cost_price: '',
   wholesale_enabled: false, wholesale_price: '', wholesale_min_qty: 20,
-  category: '',
+  category: '', sales_channel: 'directa',
 })
 
 // Categorías cargadas dinámicamente desde la base de datos
@@ -530,6 +539,7 @@ async function loadProduct() {
     form.wholesale_enabled = data.wholesale_enabled || false
     form.wholesale_price = data.wholesale_price || ''
     form.wholesale_min_qty = data.wholesale_min_qty || 20
+    form.sales_channel = data.sales_channel || 'directa'
     form.images = data.images || []
 
     // Pre-seleccionar las variantes (aromas) existentes del producto
@@ -809,6 +819,7 @@ async function handleSave() {
           wholesale_price: form.wholesale_price ? parseFloat(form.wholesale_price) : null,
           wholesale_min_qty: parseInt(form.wholesale_min_qty) || 20,
           category_id: categoryId,
+          sales_channel: form.sales_channel,
         },
         images,
         variantProfileIds,

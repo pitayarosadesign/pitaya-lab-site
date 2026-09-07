@@ -17,6 +17,7 @@ export default defineEventHandler(async (event) => {
     const { data: product, error } = await supabase
       .from('products')
       .select('*, product_categories(name, slug), product_images(url, alt_text, sort_order, is_primary), product_variants(*, product_id, fragrance_profile_id, fragrance_profiles(name, emoji, subtitle, slug, image_url, experience, notes, description, inspiracion, olfactive_family))')
+      .eq('sales_channel', 'directa')
       .eq('slug', cleanSlug)
       .eq('is_active', true)
       .single()

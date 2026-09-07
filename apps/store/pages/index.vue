@@ -106,6 +106,7 @@ async function loadProductsForSchema() {
     const { data, error } = await supabase
       .from('products')
       .select('*')
+      .eq('sales_channel', 'directa')
       .eq('is_active', true)
       .order('sort_order', { ascending: true })
       .limit(4)

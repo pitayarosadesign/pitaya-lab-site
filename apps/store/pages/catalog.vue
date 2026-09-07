@@ -341,6 +341,9 @@
       </div>
     </section>
 
+    <!-- 💍 Banner / carrusel de Recuerdos para Eventos (debajo de los productos normales) -->
+    <RecuerdosBanner />
+
     <!-- 🎯 Guía de Aromas por Mood -->
     <section v-if="catalogConfig.blocks.scent_guide.enabled" class="py-16 bg-gradient-to-b from-white to-primary-50/30">
       <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">

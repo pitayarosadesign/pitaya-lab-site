@@ -59,6 +59,7 @@ async function loadProducts() {
     const { data, error } = await supabase
       .from('products')
       .select('*, product_categories(name), product_images(url, is_primary, sort_order)')
+      .eq('sales_channel', 'directa')
       .eq('is_active', true)
       .order('sort_order', { ascending: true })
       .limit(maxProducts.value)

@@ -34,6 +34,7 @@ export default defineEventHandler(async (event) => {
     const { data: products } = await supabase
       .from('products')
       .select('slug, updated_at')
+      .eq('sales_channel', 'directa')
       .eq('is_active', true)
       .order('sort_order', { ascending: true })
 

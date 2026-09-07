@@ -128,6 +128,8 @@ import { useB2BConfig } from '~/composables/useB2BConfig'
 const props = defineProps<{
   open: boolean
   order: any | null
+  cancelUrl?: string
+  successUrl?: string
 }>()
 const emit = defineEmits<{
   (e: 'close'): void
@@ -216,8 +218,8 @@ async function proceedToCheckout() {
       b2bDiscountPercent: props.order.discountPercent || 0,
       leadTimeDays: props.order.leadTimeDays || (props.order.type === 'event' ? 15 : null),
       notes: contact.notes || null,
-      successUrl: `${window.location.origin}/b2b/gracias`,
-      cancelUrl: `${window.location.origin}/b2b`,
+      successUrl: props.successUrl || `${window.location.origin}/b2b/gracias`,
+      cancelUrl: props.cancelUrl || `${window.location.origin}/b2b`,
     }
 
     const res = await $fetch('/api/checkout/b2b/create', {

@@ -30,6 +30,7 @@ export default defineEventHandler(async (event) => {
         product_images(url, alt_text, sort_order, is_primary),
         product_variants(id, name, sku, gtin, price, compare_at_price, stock, image_url, is_active)
       `)
+      .eq('sales_channel', 'directa')
       .eq('is_active', true)
       .order('sort_order', { ascending: true })
 

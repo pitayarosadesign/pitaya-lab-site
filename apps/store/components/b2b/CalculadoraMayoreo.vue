@@ -179,6 +179,7 @@ async function loadProducts() {
     const { data, error } = await supabase
       .from('products')
       .select('id, sku, name, subtitle, price, wholesale_price, wholesale_min_qty, product_categories(name)')
+      .eq('sales_channel', 'directa')
       .eq('is_active', true)
       .eq('wholesale_enabled', true)
       .order('sort_order', { ascending: true })

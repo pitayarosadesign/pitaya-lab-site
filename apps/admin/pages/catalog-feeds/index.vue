@@ -142,6 +142,7 @@ onMounted(async () => {
     const { data } = await supabase
       .from('products')
       .select('id, name, sku, price, is_active, slug, product_images(url, is_primary)')
+      .eq('sales_channel', 'directa')
       .eq('is_active', true)
       .order('sort_order', { ascending: true })
 

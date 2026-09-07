@@ -39,6 +39,18 @@
           </div>
         </div>
         <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Canal de venta *</label>
+          <select v-model="form.sales_channel" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
+            <option value="directa">Menudeo (tienda pública / catálogo de la web)</option>
+            <option value="evento">Eventos / Recuerdos (solo cotizador /b2b)</option>
+            <option value="mayoreo">Comercial por volumen (reservado a futuro)</option>
+          </select>
+          <p class="text-xs text-gray-400 mt-1">
+            💡 Menudeo: tu venta 1-a-1 de fabricante. Los de <b>Eventos</b> NO salen en el catálogo público
+            ni en los feeds: solo aparecen en el cotizador de recuerdos (/b2b) con su aroma y precio por pieza.
+          </p>
+        </div>
+        <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Descripción corta</label>
           <textarea v-model="form.description" rows="2" placeholder="Descripción breve para tarjetas de producto" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
         </div>
@@ -423,6 +435,7 @@ const form = reactive({
   name: '',
   sku: '',
   category: '',
+  sales_channel: 'directa',
   description: '',
   long_description: '',
   images: [],
@@ -595,6 +608,7 @@ async function handleSave() {
           description: form.description,
           long_description: form.long_description,
           category_id: categoryId,
+          sales_channel: form.sales_channel,
           price: parseFloat(form.price),
           compare_at_price: form.compare_at_price ? parseFloat(form.compare_at_price) : null,
           cost_price: form.cost_price ? parseFloat(form.cost_price) : null,

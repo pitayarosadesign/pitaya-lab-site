@@ -1,8 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 
+
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
-  const { category, featured, limit, search } = getQuery(event)
+  const { category, featured, limit, search, channel = 'directa' } = getQuery(event)
 
   // Cliente con service role para leer productos (incluyendo inactivos si es necesario)
   const supabase = createClient(
@@ -12,9 +13,17 @@ export default defineEventHandler(async (event) => {
   )
 
   try {
+    // channel determina qué canal se consulta:
+    //   'directa' (default) -> producto público de menudeo
+    //   'evento'            -> recuerdos para el cotizador /b2b
+    //   'mayoreo'           -> reservado a futuro
+    const allowed = ['directa', 'evento', 'mayoreo']
+    const channelValue = allowed.includes(String(channel)) ? String(channel) : 'directa'
+
     let query = supabase
       .from('products')
-      .select('*, product_categories(name, slug), product_images(url, alt_text, sort_order, is_primary), product_variants(id, name, image_url, fragrance_profile_id, fragrance_profiles(name, emoji, subtitle, slug, image_url, experience, notes, description))')
+      .select('*, product_categories(name, slug), product_images(url, alt_text, sort_order, is_primary), product_variants(id, name, image_url, fragrance_profile_id, fragrance_profiles(id, name, emoji, subtitle, slug, image_url, experience, notes, description))')
+      .eq('sales_channel', channelValue)
       .eq('is_active', true)
       .order('sort_order', { ascending: true, nullsFirst: false })
 
@@ -100,5 +109,4 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, message: e.message })
   }
 })
-
 
