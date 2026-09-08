@@ -193,7 +193,7 @@
                     class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-earth-50 hover:bg-primary-50 border border-earth-100 hover:border-primary-200 transition-all group"
                   >
                     <div class="w-8 h-8 rounded-lg overflow-hidden bg-earth-100 flex-shrink-0">
-                      <img v-if="product.image" :src="useOptimizedImage(product.image, { width: 200, quality: 80 })" :alt="product.name" class="w-full h-full object-cover" />
+                      <img v-if="productDisplayImage(product)" :src="useOptimizedImage(productDisplayImage(product), { width: 200, quality: 80 })" :alt="product.name" class="w-full h-full object-cover" />
                       <div v-else class="w-full h-full flex items-center justify-center text-earth-300 text-xs">📦</div>
                     </div>
                     <div class="text-left">
@@ -329,7 +329,7 @@
             <ProductCard
               :product-name="`${product.name}${product.subtitle ? ' – ' + product.subtitle : ''}`"
               :short-description="`${product.description}${product.size ? ' (' + product.size + ')' : ''}`"
-              :image-url="product.image"
+              :image-url="productDisplayImage(product)"
               :amazon-link="product.amazonLink"
               :product-slug="product.slug"
               :price="product.price"
@@ -794,6 +794,18 @@ const selectedAroma = computed(() => {
 const activeFragranceName = computed(() => {
   return selectedAroma.value?.name || ''
 })
+
+// Imagen a mostrar para un producto en la grilla:
+//  - Si hay un aroma activo y ese producto tiene una imagen propia de la
+//    variante para ese aroma (elegida en el admin desde la galería), se usa esa.
+//  - Si no, se usa la imagen principal del producto.
+function productDisplayImage(product) {
+  if (!product) return ''
+  if (activeFragrance.value && product.variantImageByFragrance?.[activeFragrance.value]) {
+    return product.variantImageByFragrance[activeFragrance.value]
+  }
+  return product.image || ''
+}
 
 // ---- Helpers para chips y etiquetas del nuevo UI de filtros ----
 function shortName(name, max = 26) {

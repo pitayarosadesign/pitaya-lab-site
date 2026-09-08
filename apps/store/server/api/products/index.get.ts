@@ -67,6 +67,16 @@ export default defineEventHandler(async (event) => {
           description: v.fragrance_profiles.description || '',
         }))
 
+      // Imagen propia de la variante por aroma (la elegida de la galería del
+      // producto en el admin). Mapea fragrance_profile_id -> image_url de la
+      // variante. Se usa para mostrar la foto correcta al filtrar por aroma.
+      const variantImageByFragrance = {}
+      variants.forEach(v => {
+        if (v.fragrance_profile_id && v.image_url) {
+          variantImageByFragrance[v.fragrance_profile_id] = v.image_url
+        }
+      })
+
       // Nombres de todas las variantes (para filtrado por coincidencia de aroma)
       const variantNames = variants.map(v => v.name).filter(Boolean)
 
@@ -90,6 +100,7 @@ export default defineEventHandler(async (event) => {
         })),
         fragrances,
         variantNames,
+        variantImageByFragrance,
         stock: p.stock,
         isFeatured: p.is_featured,
         amazonLink: p.amazon_link,
