@@ -179,20 +179,14 @@ async function syncVariantsByProfiles(supabaseAdmin, productId, profileIds, base
           : `${baseSku}-${profile.name.replace(/\s+/g, '').toUpperCase()}`)
 
     // Resolver imagen de la variante:
-    //   1) Conservar la imagen que ya tenía la variante si existe.
-    //   2) Si no, usar la imagen del perfil aromático (fallback automático).
-    let variantImageUrl = null
-    if (existingVar) {
-      const { data: ev } = await supabaseAdmin
-        .from('product_variants')
-        .select('image_url')
-        .eq('id', existingVar.id)
-        .single()
-      variantImageUrl = ev?.image_url || null
-    }
-    if (!variantImageUrl && profile.image_url) {
-      variantImageUrl = profile.image_url
-    }
+    //   El admin envía `selection.imageUrl` (una imagen elegida de la galería
+    //   del producto, o vacío si no se asignó ninguna).
+    //   - Si viene una URL, se usa esa imagen para la variante.
+    //   - Si viene vacío, se limpia la imagen de la variante para que en la
+    //     tienda se muestre la imagen principal del producto (sin fallback al
+    //     perfil aromático, que es material editorial de la tarjeta olfativa).
+    const hasExplicitImage = typeof selection.imageUrl === 'string' && selection.imageUrl.trim() !== ''
+    let variantImageUrl = hasExplicitImage ? selection.imageUrl.trim() : null
 
     // Resolver precio de la variante: el proporcionado o null (usará el del producto).
     const variantPrice = (!selection.price || selection.price === '') ? null : parseFloat(selection.price)

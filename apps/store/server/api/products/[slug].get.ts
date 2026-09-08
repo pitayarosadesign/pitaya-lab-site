@@ -74,7 +74,7 @@ export default defineEventHandler(async (event) => {
               emoji: fp.emoji || '',
               subtitle: fp.subtitle || '',
               slug: fp.slug,
-              image: fp.image_url || v.image_url || null,
+              image: fp.image_url || null,
               experience: fp.experience || '',
               notes: fp.notes || '',
               hotelReference: fp.inspiracion || '',

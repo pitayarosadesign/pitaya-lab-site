@@ -20,10 +20,11 @@
         >
           <img
             v-if="scent.image_url"
-            :src="scent.image_url"
+            :src="useOptimizedImage(scent.image_url, { width: 600, quality: 80 })"
             :alt="`Aroma ${scent.name} - PITAYA LAB`"
             class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
             loading="lazy"
+            decoding="async"
           />
           <div v-else class="w-full h-full bg-gradient-to-br from-primary-100 to-amber-100 flex items-center justify-center">
             <span class="text-5xl">{{ scent.emoji || '🌸' }}</span>

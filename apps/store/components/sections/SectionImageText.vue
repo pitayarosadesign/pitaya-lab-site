@@ -6,10 +6,11 @@
         <div class="relative w-full max-w-md mx-auto lg:max-w-none">
           <img
             v-if="content.image_url"
-            :src="content.image_url"
+            :src="optimizedImage"
             :alt="content.title || 'Imagen'"
             class="w-full h-auto aspect-[2/3] object-cover rounded-2xl shadow-lg"
             loading="lazy"
+            decoding="async"
           />
           <div v-else class="w-full aspect-[2/3] bg-gradient-to-br from-primary-100 to-amber-100 rounded-2xl flex items-center justify-center">
             <span class="text-6xl">🖼️</span>
@@ -43,5 +44,10 @@ const props = defineProps({
 })
 
 const imageOnRight = computed(() => props.settings.image_position !== 'left')
+
+// Imagen optimizada (redimensionada/comprimida por Supabase) para carga rápida
+const optimizedImage = computed(() =>
+  useOptimizedImage(props.content.image_url, { width: 800, quality: 80 })
+)
 </script>
 

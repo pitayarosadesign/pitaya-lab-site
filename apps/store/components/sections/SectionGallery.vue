@@ -15,10 +15,11 @@
           class="group relative rounded-2xl overflow-hidden aspect-square bg-earth-100 cursor-pointer"
         >
           <img
-            :src="image.url"
+            :src="useOptimizedImage(image.url, { width: 600, quality: 80 })"
             :alt="image.alt || 'Imagen'"
             class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
             loading="lazy"
+            decoding="async"
           />
           <div v-if="image.caption" class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-earth-900/80 to-transparent">
             <p class="text-white text-sm font-medium">{{ image.caption }}</p>

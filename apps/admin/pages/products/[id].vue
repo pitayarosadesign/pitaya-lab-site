@@ -364,9 +364,50 @@
                     </div>
                   </div>
 
-                  <!-- La imagen de la variante se gestiona en la galería general del producto.
-                       El ángulo de previsualización usa la imagen del perfil aromático de forma automática. -->
-                  <p class="text-[10px] text-gray-400">🖼️ La imagen de este aroma se toma automáticamente del perfil aromático seleccionado.</p>
+                  <!-- Imagen de la variante: se elige de la galería del producto.
+                       Si no se elige ninguna, en la tienda se mostrará la imagen
+                       principal del producto para este aroma. -->
+                  <div class="pt-1">
+                    <label class="block text-[11px] font-medium text-gray-500 mb-1.5">
+                      Imagen para este aroma <span class="text-gray-400 font-normal">(opcional · de la galería del producto)</span>
+                    </label>
+
+                    <!-- Imagen seleccionada actualmente -->
+                    <div v-if="variantData[scent.id].imageUrl" class="flex items-center gap-3 mb-2">
+                      <div class="w-14 h-14 rounded-lg overflow-hidden border border-gray-200 bg-white flex-shrink-0">
+                        <img :src="variantData[scent.id].imageUrl" alt="Imagen del aroma" class="w-full h-full object-cover" />
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-xs text-gray-600 font-medium">Imagen asignada a este aroma</p>
+                        <p class="text-[10px] text-gray-400">Se mostrará en la ficha del producto al seleccionar este aroma.</p>
+                      </div>
+                      <button
+                        type="button"
+                        @click="variantData[scent.id].imageUrl = ''"
+                        class="text-[11px] text-red-500 hover:text-red-700 font-medium flex-shrink-0"
+                      >
+                        Quitar
+                      </button>
+                    </div>
+
+                    <!-- Selector de imágenes de la galería del producto -->
+                    <div v-if="form.images.length > 0" class="flex flex-wrap gap-2">
+                      <button
+                        v-for="(gimg, gIdx) in form.images"
+                        :key="gimg.id || gIdx"
+                        type="button"
+                        @click="variantData[scent.id].imageUrl = (gimg.url || gimg.preview)"
+                        class="w-12 h-12 rounded-lg overflow-hidden border-2 transition-all"
+                        :class="variantData[scent.id].imageUrl === (gimg.url || gimg.preview)
+                          ? 'border-primary-500 ring-2 ring-primary-200'
+                          : 'border-gray-200 hover:border-gray-300'"
+                        :title="'Usar imagen ' + (gIdx + 1)"
+                      >
+                        <img :src="gimg.url || gimg.preview" :alt="'Imagen ' + (gIdx + 1)" class="w-full h-full object-cover" />
+                      </button>
+                    </div>
+                    <p v-else class="text-[10px] text-gray-400">Sube imágenes en la sección "📸 Imágenes" para poder asignarlas a cada aroma.</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -565,6 +606,9 @@ async function loadProduct() {
           variantData[v.fragrance_profile_id].gtin = v.gtin || ''
           variantData[v.fragrance_profile_id].price = v.price ?? ''
           variantData[v.fragrance_profile_id].compare_at_price = v.compare_at_price ?? ''
+          // Imagen de la variante (si se eligió una de la galería del producto).
+          // Solo se conserva si coincide con una imagen de la galería actual.
+          variantData[v.fragrance_profile_id].imageUrl = v.image_url || ''
         }
       }
       updateGroupCounts()
@@ -784,8 +828,9 @@ async function handleSave() {
     const selectedCat = categories.value.find(c => c.slug === form.category)
     const categoryId = selectedCat?.id || null
 
-    // Procesar variantes: solo datos de inventario/códigos/precio.
-    // La imagen de cada aroma se toma automáticamente del perfil aromático.
+    // Procesar variantes: datos de inventario/códigos/precio + imagen propia
+    // (opcional, elegida de la galería del producto). Si imageUrl queda vacío,
+    // en la tienda se mostrará la imagen principal del producto para ese aroma.
     const variantProfileIds = []
     for (const profileId of selectedScents.value) {
       const vd = variantData[profileId] || {}
@@ -796,6 +841,7 @@ async function handleSave() {
         gtin: vd.gtin || '',
         price: vd.price,
         compare_at_price: vd.compare_at_price,
+        imageUrl: vd.imageUrl || '',
       })
     }
 

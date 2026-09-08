@@ -27,12 +27,14 @@
         <source
           v-if="mediaUrlMobile"
           media="(min-width: 1024px)"
-          :srcset="mediaUrl"
+          :srcset="optimizedDesktop"
         />
         <img
-          :src="mediaUrlMobile || mediaUrl"
+          :src="optimizedMobile || optimizedDesktop"
           :alt="title"
           class="w-full h-full object-cover"
+          fetchpriority="high"
+          decoding="async"
         />
       </picture>
       <!-- Carrusel de fondo -->
@@ -234,6 +236,15 @@ const resolvedMediaType = computed(() => {
 const mediaUrl = computed(() => props.media_url || '')
 const mediaUrlMobile = computed(() => props.media_url_mobile || '')
 const poster = computed(() => props.poster || '')
+
+// Imágenes optimizadas (redimensionadas por Supabase) para carga rápida.
+// El hero es la primera imagen visible, así que priorizamos su carga.
+const optimizedDesktop = computed(() =>
+  useOptimizedImage(props.media_url, { width: 1920, quality: 80 })
+)
+const optimizedMobile = computed(() =>
+  useOptimizedImage(props.media_url_mobile, { width: 800, quality: 80 })
+)
 
 function inferType(url) {
   const ext = (url || '').split('?')[0].split('.').pop()?.toLowerCase()

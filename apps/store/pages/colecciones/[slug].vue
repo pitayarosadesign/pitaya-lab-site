@@ -10,7 +10,7 @@
       <!-- Banner del perfil -->
       <section class="relative py-24 overflow-hidden bg-gradient-to-b from-primary-50 to-white">
         <div class="absolute inset-0" v-if="profile.image_url">
-          <img :src="profile.image_url" :alt="profile.name" class="w-full h-full object-cover opacity-30" loading="lazy" />
+          <img :src="useOptimizedImage(profile.image_url, { width: 1600, quality: 80 })" :alt="profile.name" class="w-full h-full object-cover opacity-30" loading="lazy" decoding="async" />
         </div>
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div class="max-w-3xl">

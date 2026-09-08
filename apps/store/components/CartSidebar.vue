@@ -75,12 +75,14 @@
             class="flex gap-4 p-3 rounded-xl bg-earth-50/50 hover:bg-earth-50 transition-colors group"
           >
             <!-- Imagen miniatura -->
-            <div class="w-20 h-20 rounded-lg overflow-hidden bg-earth-100 flex-shrink-0">
+            <div class="w-20 h-20 rounded-lg overflow-hidden bg-white border border-earth-100 flex-shrink-0 flex items-center justify-center">
               <img
                 v-if="item.image"
-                :src="item.image"
+                :src="useOptimizedImage(item.image, { width: 160, quality: 80 })"
                 :alt="item.name"
-                class="w-full h-full object-cover"
+                class="w-full h-full object-contain p-0.5"
+                loading="lazy"
+                decoding="async"
               />
               <div v-else class="w-full h-full flex items-center justify-center text-earth-300 text-2xl">
                 📦
@@ -149,7 +151,7 @@
                 class="flex items-center gap-3 p-2 rounded-xl bg-white border border-earth-100 hover:border-primary-200 shadow-sm transition-all"
               >
                 <NuxtLink :to="`/product/${sug.slug}`" class="w-14 h-14 rounded-lg overflow-hidden bg-earth-50 flex-shrink-0">
-                  <img v-if="sug.image" :src="sug.image" :alt="sug.name" class="w-full h-full object-cover" />
+                  <img v-if="sug.image" :src="useOptimizedImage(sug.image, { width: 160, quality: 80 })" :alt="sug.name" class="w-full h-full object-cover" loading="lazy" decoding="async" />
                   <div v-else class="w-full h-full flex items-center justify-center text-earth-300">📦</div>
                 </NuxtLink>
                 <div class="flex-1 min-w-0">

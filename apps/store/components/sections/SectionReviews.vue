@@ -36,10 +36,11 @@
           >
             <div v-if="review.image" class="aspect-[4/3] overflow-hidden bg-earth-50">
               <img
-                :src="review.image"
+                :src="useOptimizedImage(review.image, { width: 800, quality: 80 })"
                 :alt="`Reseña de ${review.author}`"
                 class="w-full h-full object-cover"
                 loading="lazy"
+                decoding="async"
               />
             </div>
 

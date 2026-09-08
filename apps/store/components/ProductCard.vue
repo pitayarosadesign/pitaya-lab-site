@@ -11,20 +11,22 @@
       class="relative overflow-hidden aspect-square bg-earth-50 block"
     >
       <img
-        :src="imageUrl"
+        :src="optimizedImageUrl"
         :alt="`${productName} - PITAYA LAB`"
         class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
         loading="lazy"
+        decoding="async"
         itemprop="image"
       />
       <div class="absolute inset-0 bg-gradient-to-t from-earth-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
     </NuxtLink>
     <div v-else class="relative overflow-hidden aspect-square bg-earth-50">
       <img
-        :src="imageUrl"
+        :src="optimizedImageUrl"
         :alt="`${productName} - PITAYA LAB`"
         class="w-full h-full object-cover"
         loading="lazy"
+        decoding="async"
         itemprop="image"
       />
     </div>
@@ -175,6 +177,11 @@ const props = defineProps({
 })
 
 const showToast = ref(false)
+
+// Imagen optimizada (redimensionada/comprimida por Supabase) para carga rápida
+const optimizedImageUrl = computed(() =>
+  useOptimizedImage(props.imageUrl, { width: 600, quality: 80 })
+)
 
 // Enlace de detalle, añadiendo query si viene (ej. ?aroma=...)
 const productLink = computed(() => {

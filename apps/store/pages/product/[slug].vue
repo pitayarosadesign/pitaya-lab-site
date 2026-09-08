@@ -38,14 +38,18 @@
       <!-- Contenido principal -->
       <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          <!-- Columna izquierda: Galería del PRODUCTO (independiente del aroma seleccionado) -->
+          <!-- Columna izquierda: Galería del PRODUCTO.
+               Si la variante (aroma) seleccionada tiene una imagen propia asignada
+               desde la galería del producto, esa imagen se muestra como principal. -->
           <div class="space-y-4">
             <div class="aspect-square rounded-3xl overflow-hidden bg-earth-50 shadow-sm border border-earth-100">
               <img
                 v-if="activeImage"
-                :src="activeImage"
+                :src="useOptimizedImage(activeImage, { width: 1000, quality: 80 })"
                 :alt="activeImageAlt"
                 class="w-full h-full object-cover"
+                fetchpriority="high"
+                decoding="async"
               />
               <div v-else class="w-full h-full flex items-center justify-center text-earth-300">
                 <svg class="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,9 +65,11 @@
                 :key="img.key"
                 @click="selectGalleryImage(index)"
                 class="w-20 h-20 rounded-xl overflow-hidden border-2 flex-shrink-0 transition-all"
-                :class="activeGalleryIndex === index ? 'border-primary-500 shadow-md' : 'border-earth-200 hover:border-earth-300'"
+                :class="(!showingVariantImage && activeGalleryIndex === index) ? 'border-primary-500 shadow-md' : 'border-earth-200 hover:border-earth-300'"
               >
-                <img :src="img.url" :alt="img.alt || product.name" class="w-full h-full object-cover" />
+                <div class="w-full h-full bg-white flex items-center justify-center">
+                  <img :src="useOptimizedImage(img.url, { width: 160, quality: 80 })" :alt="img.alt || product.name" class="w-full h-full object-contain p-0.5" loading="lazy" decoding="async" />
+                </div>
               </button>
             </div>
           </div>
@@ -143,8 +149,9 @@
               </div>
 
               <!-- 🌸 Tarjeta contextual del aroma seleccionado
-                   Contenido editorial propio del aroma (no una imagen dentro de la
-                   galería del producto). La galería de la izquierda NO cambia. -->
+                   Contenido editorial propio del aroma (imagen del perfil aromático,
+                   notas y experiencia). Es independiente de la imagen de la variante
+                   que pueda mostrarse en la galería del producto (izquierda). -->
               <div
                 v-if="selectedFragrance"
                 class="mt-5 rounded-2xl border border-earth-100 bg-earth-50/50 overflow-hidden"
@@ -154,9 +161,11 @@
                   <div class="w-24 h-24 rounded-xl overflow-hidden bg-earth-100 flex-shrink-0 shrink-0">
                     <img
                       v-if="selectedFragrance.image"
-                      :src="selectedFragrance.image"
+                      :src="useOptimizedImage(selectedFragrance.image, { width: 200, quality: 80 })"
                       :alt="selectedFragrance.name || 'Aroma'"
                       class="w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
                     />
                     <div v-else class="w-full h-full flex items-center justify-center text-3xl">
                       {{ selectedFragrance.emoji || '🌸' }}
@@ -381,7 +390,7 @@
               <div class="w-14 h-14 rounded-xl overflow-hidden bg-earth-50 flex-shrink-0">
                 <img
                   v-if="toastProduct.image"
-                  :src="toastProduct.image"
+                  :src="useOptimizedImage(toastProduct.image, { width: 200, quality: 80 })"
                   :alt="toastProduct.name"
                   class="w-full h-full object-cover"
                 />
@@ -516,26 +525,50 @@ const productGalleryImages = computed(() => {
 // Índice activo en la galería del producto
 const activeGalleryIndex = ref(0)
 
-// Imagen activa: imagen del PRODUCTO en activo (NUNCA cambia con el aroma)
-const activeImage = computed(() =>
-  productGalleryImages.value[activeGalleryIndex.value]?.url || product.value?.image || null
-)
+// Indica si la imagen principal mostrada es la foto propia de la variante
+// (aroma) seleccionada, en lugar de una imagen del producto físico.
+const showingVariantImage = ref(false)
+
+// Imagen activa de la galería:
+//  - Si la variante seleccionada tiene foto propia (imageUrl), se muestra esa
+//    foto como imagen principal (Opción A). Al hacer clic en una miniatura del
+//    producto se vuelve a la galería física.
+//  - En caso contrario, se muestra la imagen del producto en activeGalleryIndex.
+const activeImage = computed(() => {
+  if (showingVariantImage.value && selectedVariant.value?.imageUrl) {
+    return selectedVariant.value.imageUrl
+  }
+  return productGalleryImages.value[activeGalleryIndex.value]?.url || product.value?.image || null
+})
 
 // Alt de la imagen activa
-const activeImageAlt = computed(() =>
-  productGalleryImages.value[activeGalleryIndex.value]?.alt || product.value?.name || ''
-)
+const activeImageAlt = computed(() => {
+  if (showingVariantImage.value && selectedVariant.value?.imageUrl) {
+    return `${product.value?.name || ''} · ${selectedVariant.value.name || 'aroma'}`
+  }
+  return productGalleryImages.value[activeGalleryIndex.value]?.alt || product.value?.name || ''
+})
 
-// Al seleccionar una imagen de la galería (solo índice; no toca la variante)
+// Al seleccionar una imagen de la galería del producto físico, se sale de la
+// vista de la foto de la variante y se muestra la imagen elegida del producto.
 function selectGalleryImage(index) {
-  if (productGalleryImages.value[index]) activeGalleryIndex.value = index
+  if (productGalleryImages.value[index]) {
+    showingVariantImage.value = false
+    activeGalleryIndex.value = index
+  }
 }
 
-// Al seleccionar una variante (aroma), NO se altera la galería del producto:
-// únicamente se actualiza la variante seleccionada y con ella el contenido
-// contextual del aroma (tarjeta + precio/stock/carro).
+// Al seleccionar una variante (aroma):
+//  - Si la variante tiene foto propia (imageUrl), se muestra como imagen
+//    principal de la galería (sin tocar la tarjeta de experiencia olfativa).
+//  - Si no tiene foto propia, se mantiene la galería del producto físico.
 function selectVariant(variant) {
   selectedVariant.value = variant
+  if (variant?.imageUrl) {
+    showingVariantImage.value = true
+  } else {
+    showingVariantImage.value = false
+  }
 }
 
 // ===== 🌸 Experiencia olfativa de la variante seleccionada =====
@@ -750,8 +783,9 @@ async function loadProduct() {
         }
 
         selectedVariant.value = initial
-        // Nota: la galería muestra siempre las imágenes del PRODUCTO físico.
-        // La selección de aroma NO cambia la imagen principal (como pide el diseño UX).
+        // Si la variante inicial tiene foto propia, mostrarla como imagen
+        // principal de la galería (Opción A). Si no, se muestra el producto.
+        showingVariantImage.value = !!(initial?.imageUrl)
       }
       // Cargar relacionados
       await loadRelatedProducts(data.product.categorySlug, data.product.id)
