@@ -294,6 +294,7 @@ function getDefaultContent(type) {
         cta_secondary_link: 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329',
         media_type: 'video',
         media_url: '',
+        media_url_mobile: '',
         poster_url: '',
         slides: [],
         bg_color: 'bg-gradient-to-br from-earth-900 via-primary-900 to-earth-900',

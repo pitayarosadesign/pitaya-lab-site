@@ -1,4 +1,5 @@
 <template>
+  
   <section
     class="relative min-h-[85vh] flex items-center overflow-hidden"
     :class="bgClasses"
@@ -18,12 +19,21 @@
         <source :src="mediaUrl" type="video/mp4" />
       </video>
       <!-- Imagen de fondo (si está configurada) -->
-      <img
-        v-else-if="mediaUrl && resolvedMediaType === 'image'"
-        :src="mediaUrl"
-        :alt="title"
-        class="w-full h-full object-cover"
-      />
+      <!-- Usa <picture> para servir la imagen móvil en pantallas pequeñas y la
+           de escritorio en pantallas grandes (>=768px). Si no hay imagen móvil,
+           se usa la de escritorio en todos los tamaños. -->
+      <picture v-else-if="(mediaUrl || mediaUrlMobile) && resolvedMediaType === 'image'" class="w-full h-full block">
+        <source
+          v-if="mediaUrlMobile"
+          media="(min-width: 768px)"
+          :srcset="mediaUrl"
+        />
+        <img
+          :src="mediaUrlMobile || mediaUrl"
+          :alt="title"
+          class="w-full h-full object-cover"
+        />
+      </picture>
       <!-- Carrusel de fondo -->
       <template v-else-if="resolvedMediaType === 'carousel' && slides.length">
         <div
@@ -119,6 +129,7 @@ const props = defineProps({
   // Media de fondo ('none' por defecto para NO heredar el video de la portada)
   media_type: { type: String, default: 'none' },
   media_url: { type: String, default: '' },
+  media_url_mobile: { type: String, default: '' },
   poster: { type: String, default: '' },
   slides: { type: Array, default: () => [] },
 
@@ -148,7 +159,7 @@ const currentSlide = ref(0)
 const hasBackgroundMedia = computed(() => {
   if (props.media_type === 'none') return false
   if (props.media_type === 'carousel') return Array.isArray(props.slides) && props.slides.length > 0
-  return Boolean(props.media_url)
+  return Boolean(props.media_url || props.media_url_mobile)
 })
 
 const bgClasses = computed(() => (!hasBackgroundMedia.value ? props.bg_color : ''))
@@ -214,11 +225,13 @@ function isExternal(link) {
 const resolvedMediaType = computed(() => {
   if (props.media_type === 'none') return 'none'
   if (props.media_type === 'carousel') return 'carousel'
-  if (!props.media_url) return 'none'
-  return inferType(props.media_url)
+  const url = props.media_url || props.media_url_mobile
+  if (!url) return 'none'
+  return inferType(url)
 })
 
 const mediaUrl = computed(() => props.media_url || '')
+const mediaUrlMobile = computed(() => props.media_url_mobile || '')
 const poster = computed(() => props.poster || '')
 
 function inferType(url) {

@@ -28,15 +28,15 @@
         ></video>
         <!-- Imagen -->
         <img
-          :key="section.content.media_url"
-          v-else-if="heroPreviewType === 'image' && section.content.media_url && !heroPreviewFailed"
-          :src="section.content.media_url"
+          :key="section.content.media_url || section.content.media_url_mobile"
+          v-else-if="heroPreviewType === 'image' && (section.content.media_url || section.content.media_url_mobile) && !heroPreviewFailed"
+          :src="section.content.media_url || section.content.media_url_mobile"
           alt="Vista previa del hero"
           class="w-full h-full object-cover"
           @error="onPreviewImgError($event)"
         />
         <div
-          v-else-if="heroPreviewType === 'image' && section.content.media_url && heroPreviewFailed"
+          v-else-if="heroPreviewType === 'image' && (section.content.media_url || section.content.media_url_mobile) && heroPreviewFailed"
           class="w-full h-full flex flex-col items-center justify-center gap-2 bg-red-50 text-red-500"
         >
           <span class="text-3xl">⚠️</span>
@@ -196,7 +196,7 @@
         <!-- Imagen única -->
         <template v-if="section.content.media_type === 'image'">
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">URL de la imagen</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Imagen de escritorio (desktop)</label>
             <div class="flex flex-wrap items-center gap-2">
               <input
                 v-model="section.content.media_url"
@@ -213,6 +213,26 @@
               >{{ uploadingField === 'media_url' ? 'Subiendo...' : '📷 Subir imagen' }}</button>
               <span class="text-xs text-gray-400">Dimensiones recomendadas: <strong>1920×1080 px</strong> (apaisada)</span>
             </div>
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Imagen móvil <span class="text-gray-400 font-normal">(opcional — se muestra en pantallas pequeñas)</span></label>
+            <div class="flex flex-wrap items-center gap-2">
+              <input
+                v-model="section.content.media_url_mobile"
+                type="url"
+                class="flex-1 min-w-[220px] px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm"
+                placeholder="https://... o /images/..."
+              />
+              <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" class="hidden" data-input-key="hero_image_mobile" @change="onMediaUpload('media_url_mobile', $event)" />
+              <button
+                type="button"
+                @click="triggerMediaUpload('hero_image_mobile')"
+                class="px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs text-gray-600 hover:bg-gray-100 transition-colors"
+                :disabled="uploadingField === 'media_url_mobile'"
+              >{{ uploadingField === 'media_url_mobile' ? 'Subiendo...' : '📷 Subir imagen móvil' }}</button>
+              <span class="text-xs text-gray-400">Dimensiones recomendadas: <strong>750×1334 px</strong> (vertical)</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-1.5">Si no subes imagen móvil, se usará la imagen de escritorio en todos los tamaños.</p>
           </div>
         </template>
 
@@ -912,6 +932,7 @@
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1">Ícono</label>
               <input v-model="card.icon" type="text" placeholder="📦" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+              
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1">Título</label>
@@ -1158,7 +1179,8 @@ const heroPreviewType = computed(() => {
   if (mt === 'none' || mt === 'carousel') return mt
   // Con media_url presente, la extensión REAL del archivo es la fuente de
   // verdad (coincide con HeroSection.vue del store).
-  if (section.content?.media_url) return inferMediaType(section.content.media_url)
+  const url = section.content?.media_url || section.content?.media_url_mobile
+  if (url) return inferMediaType(url)
   // Sin media_url hay gradiente de color (no se previsualiza media).
   return 'none'
 })

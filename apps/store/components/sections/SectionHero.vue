@@ -9,6 +9,7 @@
     :cta_secondary_link="content.cta_secondary_link"
     :media_type="content.media_type"
     :media_url="content.media_url"
+    :media_url_mobile="content.media_url_mobile"
     :poster="content.poster_url"
     :slides="content.slides"
     :bg_color="content.bg_color"
