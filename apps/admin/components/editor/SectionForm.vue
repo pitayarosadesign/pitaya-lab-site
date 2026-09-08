@@ -211,11 +211,11 @@
                 class="px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs text-gray-600 hover:bg-gray-100 transition-colors"
                 :disabled="uploadingField === 'media_url'"
               >{{ uploadingField === 'media_url' ? 'Subiendo...' : '📷 Subir imagen' }}</button>
-              <span class="text-xs text-gray-400">Dimensiones recomendadas: <strong>1920×1080 px</strong> (apaisada)</span>
+              <span class="text-xs text-gray-400">Dimensiones recomendadas: <strong>1920×1080 px</strong> (apaisada, se usa en pantallas ≥1024px)</span>
             </div>
           </div>
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Imagen móvil <span class="text-gray-400 font-normal">(opcional — se muestra en pantallas pequeñas)</span></label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Imagen móvil <span class="text-gray-400 font-normal">(opcional — se muestra en pantallas &lt;1024px)</span></label>
             <div class="flex flex-wrap items-center gap-2">
               <input
                 v-model="section.content.media_url_mobile"

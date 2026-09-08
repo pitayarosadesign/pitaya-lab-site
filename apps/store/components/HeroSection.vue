@@ -1,5 +1,6 @@
 <template>
   
+  
   <section
     class="relative min-h-[85vh] flex items-center overflow-hidden"
     :class="bgClasses"
@@ -20,12 +21,12 @@
       </video>
       <!-- Imagen de fondo (si está configurada) -->
       <!-- Usa <picture> para servir la imagen móvil en pantallas pequeñas y la
-           de escritorio en pantallas grandes (>=768px). Si no hay imagen móvil,
+           de escritorio en pantallas grandes (>=1024px). Si no hay imagen móvil,
            se usa la de escritorio en todos los tamaños. -->
       <picture v-else-if="(mediaUrl || mediaUrlMobile) && resolvedMediaType === 'image'" class="w-full h-full block">
         <source
           v-if="mediaUrlMobile"
-          media="(min-width: 768px)"
+          media="(min-width: 1024px)"
           :srcset="mediaUrl"
         />
         <img
