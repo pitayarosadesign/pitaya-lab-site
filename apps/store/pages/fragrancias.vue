@@ -52,14 +52,15 @@
               :key="fr.id"
               class="group bg-white rounded-3xl border border-earth-200/80 overflow-hidden hover:shadow-xl transition-shadow flex flex-col"
             >
-              <!-- Imagen/Cabecera del aroma -->
-              <NuxtLink :to="`/colecciones/${fr.slug}`" class="relative block aspect-[4/3] overflow-hidden bg-earth-50">
+              <!-- Imagen/Cabecera del aroma (no enlaza a una página aparte) -->
+              <div class="relative block aspect-[4/3] overflow-hidden bg-earth-50">
                 <img
                   v-if="fr.image_url"
-                  :src="fr.image_url"
+                  :src="useOptimizedImage(fr.image_url, { width: 800, quality: 80 })"
                   :alt="fr.name"
                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
+                  decoding="async"
                 />
                 <div v-else class="absolute inset-0 flex items-center justify-center">
                   <span class="text-7xl opacity-70">{{ fr.emoji || '🌸' }}</span>
@@ -70,11 +71,11 @@
                 <div v-if="fr.inspiracion" class="absolute top-3 right-3 inline-flex items-center bg-amber-500/90 text-white text-[10px] font-semibold px-2 py-1 rounded-full uppercase tracking-wide">
                   ✨ {{ fr.inspiracion }}
                 </div>
-              </NuxtLink>
+              </div>
 
               <!-- Contenido -->
               <div class="p-5 flex-1 flex flex-col">
-                <h2 class="text-xl font-serif font-bold text-earth-900 group-hover:text-primary-600 transition-colors">
+                <h2 class="text-xl font-serif font-bold text-earth-900">
                   {{ fr.name }}
                 </h2>
                 <p v-if="fr.subtitle" class="text-sm font-medium text-primary-600 mt-0.5">{{ fr.subtitle }}</p>
@@ -109,20 +110,14 @@
                   </div>
                 </div>
 
-                <!-- Acciones -->
-                <div v-if="fr.disponibles.length" class="mt-auto pt-5 flex gap-3">
+                <!-- Acción principal: comprar el primer formato disponible -->
+                <div v-if="fr.disponibles.length" class="mt-auto pt-5">
                   <button
                     @click="goToProduct(fr.disponibles[0].slug, fr.slug)"
-                    class="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors"
+                    class="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors"
                   >
                     Comprar {{ fr.disponibles[0].presentacion }}
                   </button>
-                  <NuxtLink
-                    :to="`/colecciones/${fr.slug}`"
-                    class="flex-1 border border-earth-200 text-earth-700 hover:border-primary-400 hover:text-primary-700 font-semibold py-2.5 rounded-xl text-sm transition-colors text-center"
-                  >
-                    Conocerla
-                  </NuxtLink>
                 </div>
               </div>
             </article>
