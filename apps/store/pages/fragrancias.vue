@@ -92,31 +92,26 @@
                   </span>
                 </div>
 
-                <!-- Presentaciones disponibles -->
-                <div class="mt-4 pt-4 border-t border-earth-100">
-                  <p class="text-[11px] font-semibold text-earth-500 uppercase tracking-wider mb-2">
-                    Disponible en {{ fr.presentaciones }} {{ fr.presentaciones === 1 ? 'formato' : 'formatos' }}
+                <!-- Presentaciones disponibles (solo informativo, elegante) -->
+                <div v-if="fr.disponibles.length" class="mt-4 pt-4 border-t border-earth-100">
+                  <p class="text-[11px] text-earth-400 uppercase tracking-wider mb-1.5">
+                    Disponible en
                   </p>
-                  <div v-if="fr.disponibles.length" class="flex flex-wrap gap-1.5">
-                    <button
-                      v-for="prod in fr.disponibles"
-                      :key="prod.id"
-                      @click="goToProduct(prod.slug, fr.slug)"
-                      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-earth-200 bg-white text-xs text-earth-700 font-medium hover:border-primary-400 hover:text-primary-700 hover:bg-primary-50 transition-colors"
-                      :title="prod.name"
-                    >
-                      {{ prod.emoji }} {{ prod.presentacion }}
-                    </button>
-                  </div>
+                  <p class="text-sm text-earth-700 font-medium leading-relaxed">
+                    {{ disponibilidadText(fr.disponibles) }}
+                  </p>
                 </div>
 
-                <!-- Acción principal: comprar el primer formato disponible -->
-                <div v-if="fr.disponibles.length" class="mt-auto pt-5">
+                <!-- Acción: comprar este aroma (lleva al catálogo filtrado por fragancia) -->
+                <div class="mt-auto pt-5">
                   <button
-                    @click="goToProduct(fr.disponibles[0].slug, fr.slug)"
-                    class="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors"
+                    @click="goToCatalog(fr.slug)"
+                    class="w-full inline-flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 rounded-xl text-sm transition-colors"
                   >
-                    Comprar {{ fr.disponibles[0].presentacion }}
+                    Comprar este aroma
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                    </svg>
                   </button>
                 </div>
               </div>
@@ -179,8 +174,17 @@ const filteredFragrances = computed(() => {
   return fragrances.value.filter(fr => fr.family === fam)
 })
 
-function goToProduct(slug, aromaSlug) {
-  navigateTo(`/product/${slug}?aroma=${aromaSlug}`)
+// Texto sobrio de las presentaciones disponibles, ej: "Vela · Aceite · Bruma"
+function disponibilidadText(disponibles) {
+  if (!Array.isArray(disponibles) || disponibles.length === 0) return ''
+  const nombres = disponibles.map(p => p.presentacion || p.name || '')
+  // Quitar duplicados conservando el orden
+  return [...new Set(nombres)].join(' · ')
+}
+
+// Lleva al catálogo con el aroma ya filtrado (?aroma=slug)
+function goToCatalog(aromaSlug) {
+  navigateTo(`/catalog?aroma=${encodeURIComponent(aromaSlug || '')}`)
 }
 
 async function loadFragrances() {

@@ -117,7 +117,7 @@
             <div class="md:col-span-1 relative min-h-[220px] bg-earth-100">
               <img
                 v-if="selectedAroma.image"
-                :src="selectedAroma.image"
+                :src="useOptimizedImage(selectedAroma.image, { width: 600, quality: 80 })"
                 :alt="selectedAroma.name"
                 class="absolute inset-0 w-full h-full object-cover"
               />
@@ -193,7 +193,7 @@
                     class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-earth-50 hover:bg-primary-50 border border-earth-100 hover:border-primary-200 transition-all group"
                   >
                     <div class="w-8 h-8 rounded-lg overflow-hidden bg-earth-100 flex-shrink-0">
-                      <img v-if="product.image" :src="product.image" :alt="product.name" class="w-full h-full object-cover" />
+                      <img v-if="product.image" :src="useOptimizedImage(product.image, { width: 200, quality: 80 })" :alt="product.name" class="w-full h-full object-cover" />
                       <div v-else class="w-full h-full flex items-center justify-center text-earth-300 text-xs">📦</div>
                     </div>
                     <div class="text-left">
@@ -230,10 +230,11 @@
               <div class="aspect-square overflow-hidden bg-earth-100 relative">
                 <img
                   v-if="aroma.image"
-                  :src="aroma.image"
+                  :src="useOptimizedImage(aroma.image, { width: 400, quality: 80 })"
                   :alt="aroma.name"
                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
+                  decoding="async"
                 />
                 <div v-else class="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-amber-100">
                   <span class="text-5xl text-primary-300 font-serif font-bold">{{ aroma.name.charAt(0) }}</span>
@@ -376,7 +377,7 @@
                     <div class="w-10 h-10 rounded-full overflow-hidden bg-earth-100 flex-shrink-0 shadow-sm border border-earth-200">
                       <img
                         v-if="scent.image"
-                        :src="scent.image"
+                        :src="useOptimizedImage(scent.image, { width: 200, quality: 80 })"
                         :alt="scent.name"
                         class="w-full h-full object-cover"
                       />
@@ -1069,6 +1070,22 @@ function selectAroma(aroma) {
   showSuggestions.value = false
 }
 
+// Aplica un filtro por aroma desde la URL (?aroma=slug) al llegar al catálogo.
+// Se ejecuta después de cargar los perfiles aromáticos.
+function applyAromaFromUrl() {
+  if (!import.meta.client) return
+  try {
+    const route = useRoute()
+    const slug = route.query.aroma
+    if (!slug || aromas.value.length === 0) return
+    const aroma = aromas.value.find(a => a.slug && a.slug.toLowerCase() === String(slug).toLowerCase())
+    if (aroma) selectAroma(aroma)
+  } catch (e) {
+    console.warn('No se pudo aplicar el aroma desde la URL', e)
+  }
+}
+
+
 function selectFirstSuggestion() {
   if (filteredAromas.value.length > 0) {
     selectAroma(filteredAromas.value[0])
@@ -1182,6 +1199,6 @@ onMounted(() => {
   loadCatalogConfig()
   loadCategories()
   loadProducts()
-  loadAromas()
+  loadAromas().then(applyAromaFromUrl)
 })
 </script>
