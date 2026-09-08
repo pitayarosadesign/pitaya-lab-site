@@ -179,6 +179,9 @@ const sectionTypes = [
   { value: 'cta', label: 'CTA', icon: '🚀', description: 'Llamada a la acción con botón', category: 'Conversión' },
   { value: 'newsletter', label: 'Newsletter', icon: '✉️', description: 'Formulario de suscripción', category: 'Conversión' },
 
+  // Redes Sociales
+  { value: 'instagram', label: 'Instagram', icon: '📸', description: 'Embed del perfil / comunidad de Instagram', category: 'Redes' },
+
   // B2B (Mayoreo & Corporativo)
   { value: 'b2b_stats', label: 'B2B Stats', icon: '📊', description: 'Estadísticas de confianza B2B', category: 'B2B' },
   { value: 'b2b_audience', label: 'B2B Audiencia', icon: '🎯', description: 'Tarjetas de segmentos (mayoreo, eventos, etiquetado)', category: 'B2B' },
@@ -193,6 +196,7 @@ const sectionCategories = [
   { key: 'Contenido', label: 'Contenido', icon: '📝', hint: 'Construye narrativa de marca' },
   { key: 'Confianza', label: 'Prueba social', icon: '⭐', hint: 'Genera confianza y fidelidad' },
   { key: 'Conversión', label: 'Conversión', icon: '🚀', hint: 'Impulsa acciones de compra' },
+  { key: 'Redes', label: 'Redes Sociales', icon: '📸', hint: 'Conecta tu comunidad en Instagram' },
   { key: 'B2B', label: 'Mayoreo & Corporativo', icon: '🏢', hint: 'Secciones para la página B2B' },
 ]
 
@@ -252,8 +256,22 @@ async function addSection(type) {
       body: newSection,
     })
     if (res?.section) {
-      sections.value.push(res.section)
-      expandedSection.value = res.section.id
+      // Normalizar igual que en loadSections: garantizar que content/settings
+      // sean objetos con todas las claves base del tipo. Esto evita que una
+      // sección recién creada llegue a SectionForm con content incompleto o
+      // no reactivo (causa de que la subida de imagen no se refleje).
+      const s = res.section
+      const dflt = getDefaultContent(s.type)?.content || {}
+      if (!s.content || typeof s.content !== 'object' || Array.isArray(s.content)) {
+        s.content = { ...dflt }
+      } else {
+        s.content = { ...dflt, ...s.content }
+      }
+      if (!s.settings || typeof s.settings !== 'object' || Array.isArray(s.settings)) {
+        s.settings = {}
+      }
+      sections.value.push(s)
+      expandedSection.value = s.id
       showAddModal.value = false
     }
   } catch (e) {
@@ -291,6 +309,7 @@ function getDefaultContent(type) {
         subtitle: 'Descubre',
         description: 'Velas de soya perfumadas, aceites aromáticos y brumas.',
         max_products: 4,
+        product_ids: [], // selección manual (curated). Vacío = automático.
         show_view_all: true,
         view_all_text: 'Ver catálogo completo',
         view_all_link: '/catalog',
@@ -402,6 +421,18 @@ function getDefaultContent(type) {
       title: 'Newsletter',
       content: { title: 'Únete a nuestra comunidad', subtitle: '', description: '' },
       settings: { enabled: true },
+    },
+    instagram: {
+      title: 'Instagram',
+      content: {
+        title: 'Comunidad PITAYA LAB',
+        subtitle: 'Síguenos',
+        description: 'Inspiración, rutinas de aromaterapia y novedades de nuestra casa.',
+        handle: 'pitayalab.mx',
+        cta_text: 'Seguir en Instagram',
+        profile_link: '',
+      },
+      settings: { enabled: true, background: 'light' },
     },
     b2b_stats: {
       title: 'B2B Stats',

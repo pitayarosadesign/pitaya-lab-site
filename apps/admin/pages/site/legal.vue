@@ -81,17 +81,16 @@ async function loadConfig() {
 async function handleSave() {
   saving.value = true
   try {
-    const client = supabaseAdmin || supabase
+    // Escritura vía endpoint server (service_role). El cliente anónimo del
+    // navegador NO puede escribir site_config (RLS lo bloquea).
     const entries = [
       { key: 'privacy_page', value: { ...privacyConfig } },
       { key: 'terms_page', value: { ...termsConfig } },
     ]
-    for (const entry of entries) {
-      const { error } = await client
-        .from('site_config')
-        .upsert({ key: entry.key, value: entry.value, updated_at: new Date().toISOString() }, { onConflict: 'key' })
-      if (error) throw error
-    }
+    await $fetch('/api/site/config', {
+      method: 'PUT',
+      body: { entries },
+    })
     alert('✅ Cambios guardados correctamente')
   } catch (e) {
     console.error('Error guardando:', e)

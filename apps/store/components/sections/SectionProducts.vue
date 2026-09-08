@@ -50,37 +50,60 @@ const supabase = useNuxtApp().$supabase
 const products = ref([])
 const maxProducts = computed(() => props.content.max_products || 4)
 
-// Carga los productos únicamente desde Supabase. Si no hay ningún producto
-// activo, la sección simplemente no muestra tarjetas (estado vacío limpio).
+// Ids "curados" (selección manual de productos concretos). Se guardan como los
+// ids reales (UUID) de `products`, porque el selector del admin usa esos ids.
+const curatedIds = computed(() => {
+  const ids = props.content.product_ids
+  return Array.isArray(ids) && ids.length ? ids.filter(Boolean) : []
+})
+
+// Carga los productos. Si hay `product_ids` (curated) carga SOLO esos en el
+// orden elegido; si no, carga los primeros `max_products` activos de venta
+// directa ordenados por sort_order (comportamiento por defecto).
 async function loadProducts() {
   if (!supabase) return
 
   try {
-    const { data, error } = await supabase
+    // Subconsulta al catálogo restringida a productos de venta directa + activos.
+    let query = supabase
       .from('products')
       .select('*, product_categories(name), product_images(url, is_primary, sort_order)')
       .eq('sales_channel', 'directa')
       .eq('is_active', true)
-      .order('sort_order', { ascending: true })
-      .limit(maxProducts.value)
 
+    if (curatedIds.value.length) {
+      query = query.in('id', curatedIds.value)
+      // Sin límite: mostramos exactamente la selección; el orden se respeta abajo.
+    } else {
+      query = query.order('sort_order', { ascending: true }).limit(maxProducts.value)
+    }
+
+    const { data, error } = await query
     if (error) throw error
 
-    products.value = (data || []).map(p => {
+    // Ordenar según la selección curada (Supabase `.in()` no garantiza el orden).
+    let list = (data || []).map(p => {
       const primaryImg = p.product_images?.find(img => img.is_primary) || p.product_images?.[0]
       return {
         id: p.slug || p.id,
+        dbId: p.id,
         slug: p.slug,
         name: p.name,
         subtitle: p.subtitle || '',
         description: p.description || '',
         price: p.price || 0,
-
         image: primaryImg?.url || null,
         amazonLink: p.amazon_link || 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329',
         category: p.product_categories?.name || '',
       }
     })
+
+    if (curatedIds.value.length) {
+      const byId = new Map(list.map(p => [p.dbId, p]))
+      list = curatedIds.value.map(id => byId.get(id)).filter(Boolean)
+    }
+
+    products.value = list
   } catch (e) {
     console.warn('Error cargando productos:', e.message)
     products.value = []
@@ -89,3 +112,5 @@ async function loadProducts() {
 
 onMounted(loadProducts)
 </script>
+
+

@@ -350,6 +350,72 @@
             <span class="text-sm">Sí</span>
           </label>
         </div>
+        <!-- 🔎 Selección manual de productos (curated) -->
+        <div class="md:col-span-2">
+          <div class="flex items-center justify-between">
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Productos que se mostrarán {{ curatedProductsActive ? '(selección manual)' : '(automático: primero disponibles)' }}
+            </label>
+            <button
+              v-if="section.content.product_ids && section.content.product_ids.length"
+              type="button"
+              @click="section.content.product_ids = []"
+              class="text-xs text-primary-600 hover:text-primary-700 font-medium"
+            >Limpiar selección (usar automático)</button>
+          </div>
+          <p class="text-xs text-gray-400 mb-2">
+            Elige productos concretos de tu catálogo. Se muestran en este orden. Si dejas vacío, la sección muestra los primeros productos activos automáticamente.
+          </p>
+
+          <!-- Seleccionados (se muestran primero, en orden) -->
+          <div v-if="selectedCatalogProductList.length" class="space-y-1.5 mb-2">
+            <div
+              v-for="(p, index) in selectedCatalogProductList"
+              :key="p.id"
+              class="flex items-center gap-3 p-2 rounded-lg border border-primary-200 bg-primary-50/60"
+            >
+              <img v-if="p.image" :src="p.image" alt="" class="w-9 h-9 rounded-md object-cover border border-primary-100 flex-shrink-0" @error="onPreviewImgError($event)" />
+              <div v-else class="w-9 h-9 rounded-md bg-gray-100 border border-primary-100 flex items-center justify-center text-gray-300 text-sm flex-shrink-0">📦</div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-800 truncate">{{ p.name }}</p>
+                <p class="text-[11px] text-gray-400 truncate">{{ p.category || '—' }}</p>
+              </div>
+              <div class="flex items-center gap-1 flex-shrink-0">
+                <button type="button" @click="moveCatalogProduct(section.content.product_ids, index, -1)" :disabled="index === 0" class="text-gray-400 hover:text-gray-600 disabled:opacity-25 text-xs px-1" title="Subir">↑</button>
+                <button type="button" @click="moveCatalogProduct(section.content.product_ids, index, 1)" :disabled="selectedCatalogProductList.length - 1 === index" class="text-gray-400 hover:text-gray-600 disabled:opacity-25 text-xs px-1" title="Bajar">↓</button>
+                <button type="button" @click="removeCatalogProduct(p.id)" class="text-red-400 hover:text-red-600 text-xs px-1" title="Quitar">✕</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selector de catálogo (checkbox de productos no elegidos) -->
+          <div class="border border-gray-200 rounded-xl p-2 bg-white max-h-52 overflow-y-auto">
+            <template v-if="loadingCatalog">
+              <p class="text-sm text-gray-400 px-2 py-3">Cargando productos…</p>
+            </template>
+            <template v-else-if="choosableCatalogProducts.length">
+              <label
+                v-for="p in choosableCatalogProducts"
+                :key="p.id"
+                class="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-gray-50 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  class="text-primary-600 rounded"
+                  :checked="isCatalogProductSelected(p.id)"
+                  @change="toggleCatalogProduct(p, $event)"
+                />
+                <img v-if="p.image" :src="p.image" alt="" class="w-7 h-7 rounded object-cover flex-shrink-0" @error="onPreviewImgError($event)" />
+                <div v-else class="w-7 h-7 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-sm flex-shrink-0">📦</div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm text-gray-700 truncate">{{ p.name }}</p>
+                  <p class="text-[11px] text-gray-400 truncate">{{ p.category || p.sku || '—' }}</p>
+                </div>
+              </label>
+            </template>
+            <p v-else class="text-sm text-gray-400 px-2 py-3">No quedan productos por elegir (o el catálogo está vacío).</p>
+          </div>
+        </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-gray-700 mb-1">Texto del enlace</label>
           <input v-model="section.content.view_all_text" type="text" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
@@ -748,6 +814,43 @@
       </div>
     </div>
 
+    <!-- Instagram -->
+    <div v-else-if="section.type === 'instagram'">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
+          <input v-model="section.content.title" type="text" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Subtítulo (etiqueta)</label>
+          <input v-model="section.content.subtitle" type="text" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+          <textarea v-model="section.content.description" rows="2" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Usuario de Instagram <span class="text-gray-400 font-normal">(sin @)</span>
+          </label>
+          <input v-model="section.content.handle" type="text" placeholder="pitayalab.mx" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+          <p class="text-xs text-gray-400 mt-1.5">
+            Se muestra el perfil embebido de Instagram cuando el usuario es válido. Sin usuario, se muestra un enlace de seguimiento.
+          </p>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Texto del botón de seguimiento</label>
+          <input v-model="section.content.cta_text" type="text" placeholder="Seguir en Instagram" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            URL del perfil <span class="text-gray-400 font-normal">(opcional; por defecto @usuario)</span>
+          </label>
+          <input v-model="section.content.profile_link" type="url" placeholder="https://www.instagram.com/pitayalab.mx/" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+      </div>
+    </div>
+
     <!-- B2B Stats -->
     <div v-else-if="section.type === 'b2b_stats'">
       <div class="space-y-3">
@@ -832,6 +935,7 @@
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1">Enlace</label>
               <input v-model="card.link" type="text" placeholder="#calculadora-mayoreo" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+              
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1">Texto del botón</label>
@@ -952,6 +1056,97 @@ const section = computed(() => props.section)
 
 const supabase = useSupabase()
 const collections = ref([])
+
+// Catálogo de productos para el bloque "products" (selección manual).
+const catalogProducts = ref([])
+const loadingCatalog = ref(false)
+
+// Productos del catálogo que YA están en la selección manual (ordenados según
+// el orden en `product_ids`).
+const selectedCatalogProductList = computed(() => {
+  const ids = section.value?.content?.product_ids
+  if (!Array.isArray(ids) || !ids.length) return []
+  const byId = new Map(catalogProducts.value.map(p => [p.id, p]))
+  return ids.map(id => byId.get(id)).filter(Boolean)
+})
+
+// ¿Está activa la selección manual de productos en esta sección?
+const curatedProductsActive = computed(() =>
+  Array.isArray(section.value?.content?.product_ids) && section.value.content.product_ids.length > 0
+)
+
+// Productos del catálogo que NO están aún en la selección (para el picker).
+const choosableCatalogProducts = computed(() => {
+  const ids = section.value?.content?.product_ids
+  const chosen = new Set(Array.isArray(ids) ? ids : [])
+  return catalogProducts.value.filter(p => !chosen.has(p.id))
+})
+
+function isCatalogProductSelected(pid) {
+  const ids = section.value?.content?.product_ids
+  return Array.isArray(ids) && ids.includes(pid)
+}
+
+function toggleCatalogProduct(product, event) {
+  ensureContent()
+  if (!section.value.content.product_ids || !Array.isArray(section.value.content.product_ids)) {
+    section.value.content.product_ids = []
+  }
+  // Usamos el id real (UUID) del producto: coincide con lo que filtra el store.
+  const pid = product.id
+  const idx = section.value.content.product_ids.indexOf(pid)
+  if (event.target.checked) {
+    if (idx === -1) section.value.content.product_ids.push(pid)
+  } else if (idx !== -1) {
+    section.value.content.product_ids.splice(idx, 1)
+  }
+}
+
+function removeCatalogProduct(pid) {
+  const ids = section.value?.content?.product_ids
+  if (!Array.isArray(ids)) return
+  const idx = ids.indexOf(pid)
+  if (idx !== -1) ids.splice(idx, 1)
+}
+
+// Reordena un item dentro del array de ids seleccionados.
+function moveCatalogProduct(ids, index, delta) {
+  if (!Array.isArray(ids)) return
+  const from = index
+  const to = index + delta
+  if (to < 0 || to >= ids.length) return
+  const [moved] = ids.splice(from, 1)
+  ids.splice(to, 0, moved)
+}
+
+async function loadCatalogProducts() {
+  if (loadingCatalog.value) return
+  loadingCatalog.value = true
+  try {
+    // El endpoint admin /api/products/list ya devuelve id, name, category,
+    // sku, price e image (imagen principal o primera disponible).
+    let list = []
+    try {
+      list = await $fetch('/api/products/list') || []
+    } catch {
+      list = []
+    }
+    catalogProducts.value = (list || []).map(p => ({
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      sku: p.sku,
+      price: p.price,
+      image: p.image || null,
+      category: p.category || '',
+    }))
+  } catch (e) {
+    console.warn('Error cargando catálogo para selector:', e.message)
+    catalogProducts.value = []
+  } finally {
+    loadingCatalog.value = false
+  }
+}
 
 // ---------- Vista previa en vivo del hero ----------
 // Determina el tipo de media a previsualizar, con la misma lógica de inferencia
@@ -1228,37 +1423,26 @@ async function onMediaUpload(field, event) {
   uploadingField.value = field
   ensureContent()
   try {
+    console.log(`📤 Subiendo media a campo '${field}' (sección ${props.section?.type}, id=${props.section?.id})`)
     const url = await uploadToStorage(file)
+    console.log('📤 Resultado de subida:', url ? 'OK' : 'NULL', url || '')
     if (url) {
-      // Mutar el objeto content directamente (no reasignar) para que Vue
-      // detecte el cambio y actualice la vista previa y el guardado.
-      section.content[field] = url
+      // Reasignar `content` con un objeto nuevo para forzar la reactividad de
+      // Vue en TODOS los campos (v-model, preview). Mutar una propiedad anidada
+      // (`section.content[field] = url`) no siempre dispara la vista cuando el
+      // objeto content viene "plano" de la BD o de una sección recién creada.
+      section.content = { ...section.content, [field]: url }
       // Si se subió una imagen como fondo del hero (media_url), cambiar el
       // tipo de fondo a 'image' para que la tienda la muestre correctamente.
       if (field === 'media_url' && file.type && file.type.startsWith('image/')) {
-        section.content.media_type = 'image'
+        section.content = { ...section.content, media_type: 'image' }
       }
-      // AUTO-GUARD: persistir de inmediato el fondo/poster subido (hero) para
-      // que la tienda refleje el cambio aunque el usuario no presione el botón
-      // "Guardar sección". Se hace un fetch directo al endpoint de update con
-      // el content actualizado, para no depender del flujo del padre.
-      if (field === 'media_url' || field === 'poster_url') {
-        try {
-          await $fetch('/api/sections/update', {
-            method: 'PUT',
-            body: {
-              id: props.section.id,
-              title: props.section.title,
-              content: section.content,
-              settings: section.settings,
-            },
-          })
-          console.log('🖼️ Hero media auto-guardado:', field, section.content[field])
-        } catch (e) {
-          console.error('Error al auto-guardar hero media:', e)
-          alert('La imagen se subió pero hubo un error al guardarla: ' + e.message)
-        }
-      }
+      // AUTO-GUARD: persistir de inmediato cualquier media subida, para que la
+      // tienda y la vista previa reflejen el cambio aunque el usuario no pulse
+      // el botón "Guardar sección". Antes esto solo ocurría para el hero
+      // (media_url/poster_url), por lo que en bloques como "Imagen + Texto",
+      // "Galería" o reseñas la imagen se perdía al recargar.
+      await autoSaveSection(`media '${field}'`)
     } else {
       alert('No se pudo subir el archivo')
     }
@@ -1268,6 +1452,28 @@ async function onMediaUpload(field, event) {
   } finally {
     uploadingField.value = null
     event.target.value = ''
+  }
+}
+
+// Persiste de inmediato el estado actual de la sección (content + settings) vía
+// el endpoint de update. Se usa tras cada subida de media para que al recargar
+// la página o previsualizar la tienda no se pierda la imagen.
+async function autoSaveSection(what) {
+  if (!props.section?.id) return
+  try {
+    await $fetch('/api/sections/update', {
+      method: 'PUT',
+      body: {
+        id: props.section.id,
+        title: props.section.title,
+        content: section.content,
+        settings: section.settings,
+      },
+    })
+    console.log(`🖼️ Auto-guardado tras subir: ${what}`)
+  } catch (e) {
+    console.error('Error al auto-guardar sección tras subir media:', e)
+    alert('La imagen se subió, pero hubo un error al guardar la sección: ' + e.message)
   }
 }
 
@@ -1285,6 +1491,7 @@ async function onImageListUpload(array, index, field, event) {
     const url = await uploadToStorage(file)
     if (url && array[index]) {
       array[index][field] = url
+      await autoSaveSection('imagen de lista')
     } else {
       alert('No se pudo subir la imagen')
     }
@@ -1307,6 +1514,7 @@ async function onReviewUpload(review, event) {
     const url = await uploadToStorage(file)
     if (url) {
       review.image = url
+      await autoSaveSection('foto de reseña')
     } else {
       alert('No se pudo subir la foto')
     }
@@ -1355,6 +1563,7 @@ async function onSlideUpload(slide, event) {
     const url = await uploadToStorage(file)
     if (url) {
       slide.image = url
+      await autoSaveSection('imagen de carrusel')
     } else {
       alert('No se pudo subir la imagen')
     }
@@ -1382,6 +1591,16 @@ function iconEmoji(icon) {
 }
 
 onMounted(loadCollections)
+
+// Carga el catálogo de productos cuando el formulario corresponde a una
+// sección de productos (para la selección manual / curated).
+onMounted(() => {
+  if (props.section?.type === 'products') loadCatalogProducts()
+})
+watch(
+  () => props.section?.type,
+  (t) => { if (t === 'products') loadCatalogProducts() }
+)
 </script>
 
 <style scoped>

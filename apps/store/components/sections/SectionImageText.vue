@@ -3,15 +3,15 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center" :class="imageOnRight ? '' : 'lg:[&>*:first-child]:order-2'">
         <!-- Imagen -->
-        <div class="relative">
+        <div class="relative w-full max-w-md mx-auto lg:max-w-none">
           <img
             v-if="content.image_url"
             :src="content.image_url"
             :alt="content.title || 'Imagen'"
-            class="w-full h-[400px] object-cover rounded-2xl shadow-lg"
+            class="w-full h-auto aspect-[2/3] object-cover rounded-2xl shadow-lg"
             loading="lazy"
           />
-          <div v-else class="w-full h-[400px] bg-gradient-to-br from-primary-100 to-amber-100 rounded-2xl flex items-center justify-center">
+          <div v-else class="w-full aspect-[2/3] bg-gradient-to-br from-primary-100 to-amber-100 rounded-2xl flex items-center justify-center">
             <span class="text-6xl">🖼️</span>
           </div>
         </div>
@@ -44,3 +44,4 @@ const props = defineProps({
 
 const imageOnRight = computed(() => props.settings.image_position !== 'left')
 </script>
+

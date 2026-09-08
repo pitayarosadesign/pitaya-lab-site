@@ -253,7 +253,6 @@ function remove(arr, index) {
 async function save(key) {
   saving[key] = true
   try {
-    const client = supabaseAdmin || supabase
     let value
     switch (key) {
       case 'values': value = { values: config.values }; break
@@ -266,10 +265,12 @@ async function save(key) {
       case 'reviews': value = { title: config.reviews.title, subtitle: config.reviews.subtitle, items: config.reviews.items }; break
       case 'cta': value = { ...config.cta }; break
     }
-    const { error } = await client
-      .from('site_config')
-      .upsert({ key: SECTION_KEY[key], value, updated_at: new Date().toISOString() }, { onConflict: 'key' })
-    if (error) throw error
+    // Escritura vía endpoint server (service_role). El cliente anónimo del
+    // navegador NO puede escribir site_config (RLS lo bloquea).
+    await $fetch('/api/site/config', {
+      method: 'PUT',
+      body: { entries: [{ key: SECTION_KEY[key], value }] },
+    })
     alert('✅ Cambios guardados correctamente')
   } catch (e) {
     console.error('Error guardando:', e)

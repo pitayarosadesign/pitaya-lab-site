@@ -31,6 +31,10 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
             <input v-model="form.name" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all" />
           </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Subtítulo <span class="text-gray-400 font-normal">(opcional — se muestra junto al nombre en el catálogo)</span></label>
+            <input v-model="form.subtitle" type="text" placeholder="Ej. Edición limitada, Para difusores, 15 ml…" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all" />
+          </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">SKU</label>
             <input v-model="form.sku" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all font-mono" />
@@ -444,7 +448,7 @@ const saving = ref(false)
 const fileInput = ref(null)
 
 const form = reactive({
-  name: '', sku: '', slug: '', description: '', long_description: '', price: '', stock: 0,
+  name: '', subtitle: '', sku: '', slug: '', description: '', long_description: '', price: '', stock: 0,
   gtin: '', amazon_asin: '', images: [],
   is_active: true, is_featured: false, google_category: '', free_shipping: false,
   amazon_link: '', compare_at_price: '', cost_price: '',
@@ -521,6 +525,7 @@ async function loadProduct() {
 
     product.value = data
     form.name = data.name
+    form.subtitle = data.subtitle || ''
     form.sku = data.sku
     form.slug = data.slug
     form.description = data.description || ''
@@ -800,6 +805,7 @@ async function handleSave() {
         id: route.params.id,
         product: {
           name: form.name,
+          subtitle: form.subtitle || null,
           sku: form.sku,
           slug: form.slug,
           description: form.description,

@@ -16,6 +16,10 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del producto *</label>
             <input v-model="form.name" type="text" required placeholder="Ej: Vela Aromática Clásica" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
           </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Subtítulo <span class="text-gray-400 font-normal">(opcional — se muestra junto al nombre en el catálogo)</span></label>
+            <input v-model="form.subtitle" type="text" placeholder="Ej. Edición limitada, Para difusores, 15 ml…" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+          </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">SKU *</label>
             <input v-model="form.sku" type="text" required placeholder="Ej: VCL-250" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all font-mono" />
@@ -433,6 +437,7 @@ async function createCategory() {
 
 const form = reactive({
   name: '',
+  subtitle: '',
   sku: '',
   category: '',
   sales_channel: 'directa',

@@ -80,12 +80,13 @@
               <td class="px-4 py-3">
                 <div class="flex items-center gap-3">
                   <div class="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
-                    <img v-if="product.image" :src="product.image" :alt="product.name" class="w-full h-full object-cover" />
+                    <img v-if="product.image" :src="product.image" :alt="product.name" class="w-full h-full object-cover" @error="onThumbError($event)" />
                     <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-lg">📷</div>
                   </div>
                   <div>
                     <p class="font-medium text-gray-900">{{ product.name }}</p>
-                    <p class="text-xs text-gray-400">{{ product.category }}</p>
+                    <p v-if="product.subtitle" class="text-xs text-gray-400 truncate max-w-[220px]" :title="product.subtitle">{{ product.subtitle }}</p>
+                    <p v-else class="text-xs text-gray-400">{{ product.category }}</p>
                   </div>
                 </div>
               </td>
@@ -381,6 +382,12 @@ onMounted(() => {
 
 function formatPrice(price) {
   return Number(price).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+// Si una miniatura no carga (URL rota o relativa), ocultamos la <img> para que
+// se muestre el placeholder 📷 en su lugar.
+function onThumbError(event) {
+  event.target.style.display = 'none'
 }
 
 async function duplicateProduct(product) {

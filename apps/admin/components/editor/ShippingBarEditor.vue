@@ -100,14 +100,12 @@ async function loadConfig() {
 async function saveShippingBar() {
   saving.value = true
   try {
-    const client = supabaseAdmin || supabase
-    const { error } = await client
-      .from('site_config')
-      .upsert(
-        { key: 'shipping_bar', value: { ...config }, updated_at: new Date().toISOString() },
-        { onConflict: 'key' }
-      )
-    if (error) throw error
+    // Escritura vía endpoint server (service_role). El cliente anónimo del
+    // navegador NO puede escribir site_config (RLS lo bloquea).
+    await $fetch('/api/site/config', {
+      method: 'PUT',
+      body: { entries: [{ key: 'shipping_bar', value: { ...config } }] },
+    })
     alert(config.enabled ? '✅ Barra promocional activada' : '✅ Barra promocional desactivada')
   } catch (e) {
     console.error('Error guardando barra promocional:', e)

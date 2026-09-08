@@ -20,11 +20,14 @@ export default defineEventHandler(async (event) => {
     // Obtener imágenes principales
     const productsWithImages = await Promise.all((products || []).map(async (p) => {
       let image = null
+      // Primero intentamos la imagen marcada como principal; si no existe,
+      // usamos la primera imagen disponible (ordenada por sort_order).
       const { data: images } = await supabaseAdmin
         .from('product_images')
-        .select('url')
+        .select('url, is_primary, sort_order')
         .eq('product_id', p.id)
-        .eq('is_primary', true)
+        .order('is_primary', { ascending: false })
+        .order('sort_order', { ascending: true })
         .limit(1)
       if (images && images.length > 0) image = images[0].url
       return {
@@ -45,3 +48,4 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, message: e.message })
   }
 })
+
