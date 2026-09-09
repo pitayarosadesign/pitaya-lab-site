@@ -68,6 +68,11 @@ export default defineEventHandler(async (event) => {
             compareAtPrice: v.compare_at_price,
             stock: v.stock,
             isActive: v.is_active,
+            // Campos del modelo flexible de variantes (dimensiones)
+            optionType1: v.option_type_1 || null,
+            optionValue1: v.option_value_1 || null,
+            optionType2: v.option_type_2 || null,
+            optionValue2: v.option_value_2 || null,
             fragrance: fp ? {
               id: fp.id,
               name: fp.name,

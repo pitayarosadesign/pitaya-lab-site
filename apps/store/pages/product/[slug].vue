@@ -120,33 +120,75 @@
             </div>
 
             <!-- Variantes (Aromas) -->
+            <!-- Selector de variantes -->
             <div v-if="product.variants && product.variants.length > 0" class="mb-6">
-              <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
-                <h3 class="text-sm font-semibold text-earth-700">Elige tu aroma:</h3>
-                <NuxtLink
-                  to="/fragrancias"
-                  class="text-[11px] font-medium text-primary-600 hover:text-primary-700 inline-flex items-center gap-1"
-                  title="Descubre cada fragancia y en qué productos está disponible"
-                >
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                  </svg>
-                  Guía de fragancias
-                </NuxtLink>
-              </div>
-              <div class="flex flex-wrap gap-2">
-                <button
-                  v-for="variant in product.variants"
-                  :key="variant.id"
-                  @click="selectVariant(variant)"
-                  class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all border-2"
-                  :class="selectedVariant?.id === variant.id
-                    ? 'border-primary-500 bg-primary-50 text-primary-700'
-                    : 'border-earth-200 bg-white text-earth-600 hover:border-earth-300'"
-                >
-                  {{ variant.name }}
-                </button>
-              </div>
+              <!-- Modelo flexible (dimensiones: ej. Aroma + Tamaño) -->
+              <template v-if="isFlexibleVariants">
+                <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
+                  <h3 class="text-sm font-semibold text-earth-700">Opciones:</h3>
+                  <NuxtLink
+                    v-if="flexibleDimensions[0]?.type === 'Aroma'"
+                    to="/fragrancias"
+                    class="text-[11px] font-medium text-primary-600 hover:text-primary-700 inline-flex items-center gap-1"
+                    title="Descubre cada fragancia y en qué productos está disponible"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                    </svg>
+                    Guía de fragancias
+                  </NuxtLink>
+                </div>
+
+                <!-- Selector por cada dimensión -->
+                <div v-for="(dim, di) in flexibleDimensions" :key="di" class="mb-4">
+                  <p class="text-xs font-semibold text-earth-500 uppercase tracking-wide mb-2">
+                    {{ dim.type === 'Aroma' ? 'Elige tu aroma' : `Elige tu ${dim.type.toLowerCase()}` }}:
+                  </p>
+                  <div class="flex flex-wrap gap-2">
+                    <button
+                      v-for="val in dim.values"
+                      :key="val"
+                      @click="di === 0 ? selectDim1(val) : selectDim2(val)"
+                      class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all border-2"
+                      :class="(di === 0 ? selectedDim1 : selectedDim2) === val
+                        ? 'border-primary-500 bg-primary-50 text-primary-700'
+                        : 'border-earth-200 bg-white text-earth-600 hover:border-earth-300'"
+                    >
+                      {{ val }}
+                    </button>
+                  </div>
+                </div>
+              </template>
+
+              <!-- Modelo legacy (solo aroma) -->
+              <template v-else>
+                <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
+                  <h3 class="text-sm font-semibold text-earth-700">Elige tu aroma:</h3>
+                  <NuxtLink
+                    to="/fragrancias"
+                    class="text-[11px] font-medium text-primary-600 hover:text-primary-700 inline-flex items-center gap-1"
+                    title="Descubre cada fragancia y en qué productos está disponible"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                    </svg>
+                    Guía de fragancias
+                  </NuxtLink>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-for="variant in product.variants"
+                    :key="variant.id"
+                    @click="selectVariant(variant)"
+                    class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all border-2"
+                    :class="selectedVariant?.id === variant.id
+                      ? 'border-primary-500 bg-primary-50 text-primary-700'
+                      : 'border-earth-200 bg-white text-earth-600 hover:border-earth-300'"
+                  >
+                    {{ variant.name }}
+                  </button>
+                </div>
+              </template>
 
               <!-- 🌸 Tarjeta contextual del aroma seleccionado
                    Contenido editorial propio del aroma (imagen del perfil aromático,
@@ -571,6 +613,78 @@ function selectVariant(variant) {
   }
 }
 
+// ===== Modelo flexible de variantes (dimensiones) =====
+// Detecta si el producto usa el modelo flexible (variantes con optionType1)
+// en lugar del modelo legacy (solo aroma).
+const isFlexibleVariants = computed(() => {
+  const variants = product.value?.variants || []
+  return variants.some(v => v.optionType1)
+})
+
+// Dimensiones del producto flexible (ej. [{type:'Aroma', values:[...]}, {type:'Tamaño', values:[...]}])
+const flexibleDimensions = computed(() => {
+  const variants = product.value?.variants || []
+  if (!isFlexibleVariants.value) return []
+
+  const dims = []
+  const seen1 = new Set()
+  const seen2 = new Set()
+
+  variants.forEach(v => {
+    if (v.optionType1 && !seen1.has(v.optionValue1)) {
+      seen1.add(v.optionValue1)
+      if (!dims[0]) dims[0] = { type: v.optionType1, values: [] }
+      dims[0].values.push(v.optionValue1)
+    }
+    if (v.optionType2 && !seen2.has(v.optionValue2)) {
+      seen2.add(v.optionValue2)
+      if (!dims[1]) dims[1] = { type: v.optionType2, values: [] }
+      dims[1].values.push(v.optionValue2)
+    }
+  })
+
+  return dims
+})
+
+// Valores seleccionados de cada dimensión (para el modelo flexible)
+const selectedDim1 = ref(null)
+const selectedDim2 = ref(null)
+
+// Encontrar la variante que coincide con los valores seleccionados de las dimensiones
+function findFlexibleVariant() {
+  const variants = product.value?.variants || []
+  return variants.find(v => {
+    const match1 = !selectedDim1.value || v.optionValue1 === selectedDim1.value
+    const match2 = !selectedDim2.value || v.optionValue2 === selectedDim2.value
+    return match1 && match2
+  }) || null
+}
+
+// Al seleccionar un valor de la dimensión 1
+function selectDim1(value) {
+  selectedDim1.value = value
+  // Si hay dimensión 2, reiniciar su selección (porque cambió la combinación)
+  if (flexibleDimensions.value.length > 1) {
+    selectedDim2.value = null
+  }
+  const v = findFlexibleVariant()
+  if (v) selectVariant(v)
+}
+
+// Al seleccionar un valor de la dimensión 2
+function selectDim2(value) {
+  selectedDim2.value = value
+  const v = findFlexibleVariant()
+  if (v) selectVariant(v)
+}
+
+// Inicializar selección flexible desde una variante
+function initFlexibleSelection(variant) {
+  if (!variant) return
+  selectedDim1.value = variant.optionValue1 || null
+  selectedDim2.value = variant.optionValue2 || null
+}
+
 // ===== 🌸 Experiencia olfativa de la variante seleccionada =====
 // Etiquetas legibles de la familia olfativa del aroma (mismas 4 que en la Guía)
 const FAMILY_LABELS = {
@@ -783,6 +897,11 @@ async function loadProduct() {
         }
 
         selectedVariant.value = initial
+        // Si el producto usa el modelo flexible, inicializar la selección de
+        // dimensiones a partir de la variante inicial.
+        if (initial?.optionType1) {
+          initFlexibleSelection(initial)
+        }
         // Si la variante inicial tiene foto propia, mostrarla como imagen
         // principal de la galería (Opción A). Si no, se muestra el producto.
         showingVariantImage.value = !!(initial?.imageUrl)
