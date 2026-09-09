@@ -71,9 +71,59 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // 3. Insertar variantes basadas en perfiles aromáticos seleccionados
+    // 3. Insertar variantes
+    //    a) Nuevo modelo flexible (variantOptions): dimensiones + combinaciones.
+    //    b) Legacy (variantProfileIds): solo aromas (productos existentes).
+    //    c) Legacy (variants): variantes manuales de texto libre.
+    const variantOptions = body.variantOptions
     const profileIds = body.variantProfileIds || []
-    if (profileIds.length > 0) {
+
+    if (variantOptions && variantOptions.combinations && variantOptions.combinations.length > 0) {
+      // --- Nuevo modelo flexible ---
+      const { type1, type2, isAroma1, isAroma2 } = variantOptions
+
+      // Resolver ids de perfiles aromáticos si la dimensión es Aroma
+      // (para vincular la variante a la fragancia en la tienda).
+      const resolveProfileId = async (value, isAroma) => {
+        if (!isAroma) return null
+        const { data } = await supabaseAdmin
+          .from('fragrance_profiles')
+          .select('id')
+          .eq('name', value)
+          .maybeSingle()
+        return data?.id || null
+      }
+
+      const variants = []
+      for (let i = 0; i < variantOptions.combinations.length; i++) {
+        const c = variantOptions.combinations[i]
+        const profileId1 = await resolveProfileId(c.value1, isAroma1)
+        const profileId2 = await resolveProfileId(c.value2, isAroma2)
+
+        variants.push({
+          product_id: product.id,
+          name: c.label,
+          sku: c.sku,
+          price: c.price,
+          stock: c.stock,
+          fragrance_profile_id: profileId1 || profileId2 || null,
+          option_type_1: type1,
+          option_value_1: c.value1,
+          option_type_2: type2 || null,
+          option_value_2: c.value2 || null,
+          sort_order: i,
+          is_active: true,
+        })
+      }
+
+      if (variants.length > 0) {
+        const { error: varError } = await supabaseAdmin
+          .from('product_variants')
+          .insert(variants)
+        if (varError) throw varError
+      }
+    } else if (profileIds.length > 0) {
+      // --- Legacy: solo aromas ---
       const { data: profiles, error: pError } = await supabaseAdmin
         .from('fragrance_profiles')
         .select('id, name, slug, subtitle')
@@ -100,7 +150,7 @@ export default defineEventHandler(async (event) => {
         if (varError) throw varError
       }
     } else if (body.variants && body.variants.length > 0) {
-      // Compatibilidad: variantes manuales (formato texto libre)
+      // --- Legacy: variantes manuales de texto libre ---
       const variants = body.variants.map(v => ({
         product_id: product.id,
         name: v.name,

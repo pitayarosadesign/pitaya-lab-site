@@ -259,75 +259,219 @@
         </div>
       </div>
 
-      <!-- Variantes (Aromas) -->
+      <!-- Variantes -->
       <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-lg font-semibold text-gray-900">🧴 Disponible en estos Aromas</h2>
-            <p class="text-sm text-gray-400 mt-0.5">Selecciona en cuáles perfiles aromáticos estará disponible este producto</p>
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900">🧩 Variantes</h2>
+          <p class="text-sm text-gray-400 mt-0.5">Define si este producto tiene opciones de compra (aroma, tamaño, etc.)</p>
+        </div>
+
+        <!-- Toggle: ¿tiene variantes? -->
+        <div class="flex items-center gap-4">
+          <span class="text-sm font-medium text-gray-700">¿Este producto tiene variantes?</span>
+          <div class="flex rounded-lg border border-gray-200 overflow-hidden">
+            <button
+              type="button"
+              @click="hasVariants = false"
+              class="px-4 py-2 text-sm font-medium transition-colors"
+              :class="!hasVariants ? 'bg-primary-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'"
+            >No</button>
+            <button
+              type="button"
+              @click="hasVariants = true"
+              class="px-4 py-2 text-sm font-medium transition-colors"
+              :class="hasVariants ? 'bg-primary-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'"
+            >Sí</button>
           </div>
-          <span class="text-xs font-medium px-3 py-1 rounded-full bg-primary-50 text-primary-700">
-            {{ selectedScentCount }} / {{ allScents.length }} seleccionados
-          </span>
         </div>
 
-        <div v-if="loadingProfiles" class="py-8 text-center text-gray-400 text-sm">
-          Cargando perfiles aromáticos...
-        </div>
-
-        <!-- Agrupado por colección -->
-        <div v-else class="space-y-6">
-          <div v-for="group in scentGroups" :key="group.collection.id || group.collection.name" class="border border-gray-100 rounded-xl overflow-hidden">
-            <div class="flex items-center gap-3 px-4 py-3 bg-gray-50 border-b border-gray-100">
-              <span class="text-lg">{{ group.collection.icon || '🌸' }}</span>
-              <div>
-                <h3 class="text-sm font-semibold text-gray-800">{{ group.collection.name }}</h3>
-                <p v-if="group.collection.subtitle" class="text-xs text-gray-400">{{ group.collection.subtitle }}</p>
-              </div>
-              <div class="ml-auto">
-                <button
-                  type="button"
-                  @click="toggleAllInGroup(group)"
-                  class="text-xs font-medium text-primary-600 hover:text-primary-700"
-                >
-                  {{ group.selectedCount === group.scents.length ? 'Quitar todos' : 'Seleccionar todos' }}
-                </button>
-              </div>
+        <!-- Configuración de variantes (solo si Sí) -->
+        <template v-if="hasVariants">
+          <!-- Dimensión 1 -->
+          <div class="border border-gray-100 rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-semibold text-gray-800">Dimensión 1</h3>
+              <span class="text-[10px] text-gray-400">Obligatoria</span>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 p-4">
-              <label
-                v-for="scent in group.scents"
-                :key="scent.id"
-                class="flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer"
-                :class="isScentSelected(scent.id) ? 'border-primary-400 bg-primary-50/60' : 'border-gray-200 hover:border-gray-300'"
-              >
-                <input
-                  type="checkbox"
-                  :checked="isScentSelected(scent.id)"
-                  @change="toggleScent(scent.id)"
-                  class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                />
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2">
-                    <span class="text-sm font-medium text-gray-800 truncate">{{ scent.name }}</span>
-                    <span v-if="scent.emoji" class="text-base">{{ scent.emoji }}</span>
+
+            <!-- Tipo de dimensión 1 -->
+            <div class="flex items-center gap-2">
+              <label class="text-xs font-medium text-gray-500 w-24">Tipo</label>
+              <select v-model="dim1.type" class="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm">
+                <option value="Aroma">Aroma</option>
+                <option value="custom">Otra (personalizada)</option>
+              </select>
+            </div>
+
+            <!-- Si es personalizada, pedir nombre del tipo -->
+            <div v-if="dim1.type === 'custom'" class="flex items-center gap-2">
+              <label class="text-xs font-medium text-gray-500 w-24">Nombre</label>
+              <input v-model="dim1.customName" type="text" placeholder="Ej: Tamaño, Color, Presentación…" class="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
+            </div>
+
+            <!-- Valores de dimensión 1 -->
+            <div class="flex items-start gap-2">
+              <label class="text-xs font-medium text-gray-500 w-24 pt-2">Valores</label>
+              <div class="flex-1 space-y-2">
+                <!-- Selector de aromas (si tipo = Aroma) -->
+                <div v-if="dim1.type === 'Aroma'">
+                  <div v-if="loadingProfiles" class="text-sm text-gray-400">Cargando aromas...</div>
+                  <div v-else-if="allScents.length === 0" class="text-sm text-gray-400">No hay perfiles aromáticos configurados.</div>
+                  <div v-else class="flex flex-wrap gap-2">
+                    <button
+                      v-for="scent in allScents"
+                      :key="scent.id"
+                      type="button"
+                      @click="toggleDim1Scent(scent)"
+                      class="px-3 py-1.5 rounded-lg border text-sm transition-all"
+                      :class="dim1Values.includes(scent.id)
+                        ? 'border-primary-500 bg-primary-50 text-primary-700 font-medium'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'"
+                    >
+                      {{ scent.emoji }} {{ scent.name }}
+                    </button>
                   </div>
-                  <p v-if="scent.subtitle" class="text-xs text-gray-400 truncate">{{ scent.subtitle }}</p>
-                  <p v-if="scent.experience" class="text-xs text-earth-500 truncate">{{ scent.experience }}</p>
                 </div>
-              </label>
+
+                <!-- Valores personalizados (si tipo = custom) -->
+                <div v-else>
+                  <div class="flex flex-wrap gap-2">
+                    <span
+                      v-for="(val, vi) in dim1.customValues"
+                      :key="vi"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-50 border border-primary-200 text-primary-700 text-sm"
+                    >
+                      {{ val }}
+                      <button type="button" @click="dim1.customValues.splice(vi, 1)" class="text-primary-400 hover:text-primary-700">✕</button>
+                    </span>
+                  </div>
+                  <div class="flex gap-2 mt-2">
+                    <input
+                      v-model="dim1.newValue"
+                      type="text"
+                      :placeholder="`Ej: ${dim1.customName || 'valor'}…`"
+                      class="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm"
+                      @keyup.enter="addDim1Value"
+                    />
+                    <button type="button" @click="addDim1Value" class="px-3 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700">+ Agregar</button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div v-if="allScents.length === 0" class="py-8 text-center border-2 border-dashed border-gray-200 rounded-xl">
-            <p class="text-3xl mb-2">🌸</p>
-            <p class="text-sm text-gray-400">No hay perfiles aromáticos configurados.</p>
-            <p class="text-xs text-gray-400 mt-1">Crea perfiles aromáticos desde Colecciones en el panel.</p>
-          </div>
-        </div>
+          <!-- Dimensión 2 (opcional) -->
+          <div v-if="dim2.enabled" class="border border-gray-100 rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-semibold text-gray-800">Dimensión 2</h3>
+              <button type="button" @click="removeDim2" class="text-xs text-red-500 hover:text-red-700 font-medium">Quitar</button>
+            </div>
 
-        <p class="text-xs text-gray-400">
-          💡 Los aromas seleccionados se guardarán como variantes del producto y aparecerán como opciones de compra en la tienda.
+            <div class="flex items-center gap-2">
+              <label class="text-xs font-medium text-gray-500 w-24">Tipo</label>
+              <select v-model="dim2.type" class="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm">
+                <option value="Aroma">Aroma</option>
+                <option value="custom">Otra (personalizada)</option>
+              </select>
+            </div>
+
+            <div v-if="dim2.type === 'custom'" class="flex items-center gap-2">
+              <label class="text-xs font-medium text-gray-500 w-24">Nombre</label>
+              <input v-model="dim2.customName" type="text" placeholder="Ej: Tamaño, Color…" class="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
+            </div>
+
+            <div class="flex items-start gap-2">
+              <label class="text-xs font-medium text-gray-500 w-24 pt-2">Valores</label>
+              <div class="flex-1 space-y-2">
+                <div v-if="dim2.type === 'Aroma'">
+                  <div v-if="loadingProfiles" class="text-sm text-gray-400">Cargando aromas...</div>
+                  <div v-else class="flex flex-wrap gap-2">
+                    <button
+                      v-for="scent in allScents"
+                      :key="scent.id"
+                      type="button"
+                      @click="toggleDim2Scent(scent)"
+                      class="px-3 py-1.5 rounded-lg border text-sm transition-all"
+                      :class="dim2Values.includes(scent.id)
+                        ? 'border-primary-500 bg-primary-50 text-primary-700 font-medium'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'"
+                    >
+                      {{ scent.emoji }} {{ scent.name }}
+                    </button>
+                  </div>
+                </div>
+                <div v-else>
+                  <div class="flex flex-wrap gap-2">
+                    <span
+                      v-for="(val, vi) in dim2.customValues"
+                      :key="vi"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-50 border border-primary-200 text-primary-700 text-sm"
+                    >
+                      {{ val }}
+                      <button type="button" @click="dim2.customValues.splice(vi, 1)" class="text-primary-400 hover:text-primary-700">✕</button>
+                    </span>
+                  </div>
+                  <div class="flex gap-2 mt-2">
+                    <input
+                      v-model="dim2.newValue"
+                      type="text"
+                      :placeholder="`Ej: ${dim2.customName || 'valor'}…`"
+                      class="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm"
+                      @keyup.enter="addDim2Value"
+                    />
+                    <button type="button" @click="addDim2Value" class="px-3 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700">+ Agregar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botón agregar 2ª dimensión -->
+          <button
+            v-if="!dim2.enabled"
+            type="button"
+            @click="dim2.enabled = true"
+            class="text-sm font-medium text-primary-600 hover:text-primary-700 inline-flex items-center gap-1"
+          >
+            + Agregar 2ª dimensión (ej. Tamaño)
+          </button>
+
+          <!-- Combinaciones generadas -->
+          <div v-if="generatedCombinations.length > 0" class="border border-gray-100 rounded-xl overflow-hidden">
+            <div class="px-4 py-3 bg-gray-50 border-b border-gray-100">
+              <h3 class="text-sm font-semibold text-gray-800">Combinaciones ({{ generatedCombinations.length }})</h3>
+              <p class="text-xs text-gray-400 mt-0.5">Cada combinación tendrá su propio precio, stock y SKU en la tienda.</p>
+            </div>
+            <div class="divide-y divide-gray-100">
+              <div v-for="(combo, ci) in generatedCombinations" :key="ci" class="px-4 py-3 flex items-center gap-3">
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-gray-800">{{ combo.label }}</p>
+                  <p class="text-[10px] text-gray-400 font-mono">{{ combo.sku }}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input
+                    v-model="combo.price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="Precio"
+                    class="w-24 px-2 py-1.5 rounded-md border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm"
+                  />
+                  <input
+                    v-model="combo.stock"
+                    type="number"
+                    min="0"
+                    placeholder="Stock"
+                    class="w-20 px-2 py-1.5 rounded-md border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <p v-if="!hasVariants" class="text-xs text-gray-400">
+          💡 Sin variantes, el producto se vende tal cual con su precio y stock generales.
         </p>
       </div>
 
@@ -470,11 +614,132 @@ const form = reactive({
 })
 
 // ===== Aromas disponibles (perfiles aromáticos) =====
-const selectedScents = ref(new Set())
-const scentGroups = ref([])
+// ===== Variantes flexibles (dimensiones) =====
 const allScents = ref([])
 const loadingProfiles = ref(false)
-const selectedScentCount = computed(() => selectedScents.value.size)
+
+// ¿El producto tiene variantes?
+const hasVariants = ref(false)
+
+// Dimensión 1 (obligatoria si hay variantes)
+const dim1 = reactive({
+  type: 'Aroma',          // 'Aroma' | 'custom'
+  customName: '',         // nombre si type === 'custom' (ej. 'Tamaño')
+  scentIds: [],           // ids de aromas seleccionados (si type === 'Aroma')
+  customValues: [],       // valores personalizados (si type === 'custom')
+  newValue: '',           // input temporal para agregar valor
+})
+
+// Dimensión 2 (opcional)
+const dim2 = reactive({
+  enabled: false,
+  type: 'custom',         // 'Aroma' | 'custom'
+  customName: '',         // nombre si type === 'custom' (ej. 'Tamaño')
+  scentIds: [],
+  customValues: [],
+  newValue: '',
+})
+
+// Valores efectivos de cada dimensión (para combinaciones)
+const dim1Values = computed(() => dim1.type === 'Aroma' ? dim1.scentIds : dim1.customValues)
+const dim2Values = computed(() => dim2.type === 'Aroma' ? dim2.scentIds : dim2.customValues)
+
+// Nombre legible del tipo de cada dimensión
+function dimTypeName(dim) {
+  if (dim.type === 'Aroma') return 'Aroma'
+  return dim.customName || 'Opción'
+}
+
+// Valor legible de un id de aroma
+function scentNameById(id) {
+  const s = allScents.value.find(x => x.id === id)
+  return s ? s.name : id
+}
+
+// Combinaciones generadas (producto cartesiano de las dimensiones)
+const generatedCombinations = computed(() => {
+  const v1 = dim1Values.value
+  if (v1.length === 0) return []
+
+  const baseSku = form.sku || 'PROD'
+  const combos = []
+
+  if (!dim2.enabled || dim2Values.value.length === 0) {
+    // Solo dimensión 1
+    v1.forEach((val, i) => {
+      const label = dim1.type === 'Aroma' ? scentNameById(val) : String(val)
+      combos.push({
+        label,
+        value1: val,
+        value2: null,
+        sku: `${baseSku}-${slugify(label)}`,
+        price: '',
+        stock: '',
+      })
+    })
+  } else {
+    // Dimensión 1 × Dimensión 2
+    const v2 = dim2Values.value
+    v1.forEach((val1) => {
+      v2.forEach((val2) => {
+        const label1 = dim1.type === 'Aroma' ? scentNameById(val1) : String(val1)
+        const label2 = dim2.type === 'Aroma' ? scentNameById(val2) : String(val2)
+        const label = `${label1} · ${label2}`
+        combos.push({
+          label,
+          value1: val1,
+          value2: val2,
+          sku: `${baseSku}-${slugify(label1)}-${slugify(label2)}`,
+          price: '',
+          stock: '',
+        })
+      })
+    })
+  }
+  return combos
+})
+
+function slugify(str) {
+  return String(str || '').toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim()
+}
+
+// Toggle de aroma en dimensión 1
+function toggleDim1Scent(scent) {
+  const idx = dim1.scentIds.indexOf(scent.id)
+  if (idx >= 0) dim1.scentIds.splice(idx, 1)
+  else dim1.scentIds.push(scent.id)
+}
+
+// Toggle de aroma en dimensión 2
+function toggleDim2Scent(scent) {
+  const idx = dim2.scentIds.indexOf(scent.id)
+  if (idx >= 0) dim2.scentIds.splice(idx, 1)
+  else dim2.scentIds.push(scent.id)
+}
+
+// Agregar valor personalizado a dimensión 1
+function addDim1Value() {
+  const v = dim1.newValue.trim()
+  if (v && !dim1.customValues.includes(v)) dim1.customValues.push(v)
+  dim1.newValue = ''
+}
+
+// Agregar valor personalizado a dimensión 2
+function addDim2Value() {
+  const v = dim2.newValue.trim()
+  if (v && !dim2.customValues.includes(v)) dim2.customValues.push(v)
+  dim2.newValue = ''
+}
+
+// Quitar dimensión 2
+function removeDim2() {
+  dim2.enabled = false
+  dim2.type = 'custom'
+  dim2.customName = ''
+  dim2.scentIds = []
+  dim2.customValues = []
+  dim2.newValue = ''
+}
 
 watch(() => form.name, (name) => {
   if (name && !form.slug) {
@@ -511,46 +776,7 @@ async function loadScentProfiles() {
   try {
     const res = await $fetch('/api/fragrance-profiles/list')
     const profiles = res.profiles || []
-
     const activeProfiles = profiles.filter(p => p.is_active !== false)
-
-    // Agrupar por FAMILIA olfativa (clasificación vigente; ya no hay colecciones)
-    const FAM = {
-      floral: { name: 'Florales', icon: '🌸', subtitle: 'Frescas y románticas' },
-      oriental: { name: 'Orientales', icon: '✨', subtitle: 'Cálidas y envolventes' },
-      amaderada: { name: 'Amaderadas', icon: '🪵', subtitle: 'Terrosas y profundas' },
-      citrica: { name: 'Cítricas', icon: '🍋', subtitle: 'Vibrantes y luminosas' },
-    }
-    const groups = []
-    const groupMap = new Map()
-    for (const p of activeProfiles) {
-      const fam = p.olfactive_family
-      const meta = FAM[fam] || { name: 'Otros aromas', icon: '🌸', subtitle: '' }
-      const colKey = fam || 'sin-familia'
-      const colName = meta.name
-      const colIcon = meta.icon
-      const colSubtitle = meta.subtitle
-
-      if (!groupMap.has(colKey)) {
-        const g = {
-          collection: { id: colKey, name: colName, icon: colIcon, subtitle: colSubtitle },
-          scents: [],
-          selectedCount: 0,
-        }
-        groupMap.set(colKey, g)
-        groups.push(g)
-      }
-      groupMap.get(colKey).scents.push({
-        id: p.id,
-        name: p.name,
-        subtitle: p.subtitle,
-        experience: p.experience,
-        emoji: p.emoji,
-        olfactive_family: p.olfactive_family,
-      })
-    }
-
-    scentGroups.value = groups
     allScents.value = activeProfiles.map(p => ({
       id: p.id,
       name: p.name,
@@ -559,7 +785,6 @@ async function loadScentProfiles() {
       emoji: p.emoji,
       olfactive_family: p.olfactive_family,
     }))
-    selectedScents.value = new Set()
   } catch (e) {
     console.error('Error cargando perfiles aromáticos:', e)
   } finally {
@@ -567,23 +792,34 @@ async function loadScentProfiles() {
   }
 }
 
-function isScentSelected(scentId) { return selectedScents.value.has(scentId) }
+// Construye el payload de variantes flexibles para el API de creación.
+// Devuelve null si el producto no tiene variantes.
+function buildVariantOptionsPayload() {
+  if (!hasVariants.value) return null
 
-function toggleScent(scentId) {
-  selectedScents.value.has(scentId) ? selectedScents.value.delete(scentId) : selectedScents.value.add(scentId)
-  updateGroupCounts()
-}
+  const combos = generatedCombinations.value
+  if (combos.length === 0) return null
 
-function toggleAllInGroup(group) {
-  const allSelected = group.scents.every(s => selectedScents.value.has(s.id))
-  group.scents.forEach(s => allSelected ? selectedScents.value.delete(s.id) : selectedScents.value.add(s.id))
-  updateGroupCounts()
-}
+  // Nombre del tipo de cada dimensión
+  const type1 = dimTypeName(dim1)
+  const type2 = dim2.enabled ? dimTypeName(dim2) : null
 
-function updateGroupCounts() {
-  scentGroups.value.forEach(g => {
-    g.selectedCount = g.scents.filter(s => selectedScents.value.has(s.id)).length
-  })
+  return {
+    type1,
+    type2,
+    // Si la dimensión es Aroma, guardamos también el id del perfil aromático
+    // para poder vincular la variante a la fragancia (tarjeta olfativa, etc.)
+    isAroma1: dim1.type === 'Aroma',
+    isAroma2: dim2.enabled && dim2.type === 'Aroma',
+    combinations: combos.map(c => ({
+      value1: c.value1,
+      value2: c.value2,
+      label: c.label,
+      sku: c.sku,
+      price: c.price ? parseFloat(c.price) : null,
+      stock: c.stock !== '' ? parseInt(c.stock) || 0 : 0,
+    })),
+  }
 }
 
 async function handleSave() {
@@ -638,7 +874,8 @@ async function handleSave() {
           published_at: new Date().toISOString(),
         },
         images,
-        variantProfileIds: Array.from(selectedScents.value),
+        // Variantes flexibles (dimensiones + combinaciones)
+        variantOptions: buildVariantOptionsPayload(),
       },
     })
 
