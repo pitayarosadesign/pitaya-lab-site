@@ -736,14 +736,17 @@ async function handleSave() {
     const selectedCat = categories.value.find(c => c.slug === form.category)
     const categoryId = selectedCat?.id || null
 
-    // Preparar imágenes como base64 para el API
+    // Preparar imágenes como base64 para el API.
+    // Se optimizan en el navegador (redimensiona a máx. 1600 px y comprime)
+    // antes de subirlas, para evitar el error 413 (Payload Too Large) con
+    // fotos originales de cámara/teléfono.
     const images = []
     for (const img of form.images) {
-      const base64 = await fileToBase64(img.file)
+      const base64 = await optimizeImageToBase64(img.file)
       images.push({
         name: img.file.name,
         type: img.file.type,
-        data: base64,
+        data: 'data:' + (img.file.type || 'image/jpeg') + ';base64,' + base64,
       })
     }
 
@@ -795,14 +798,6 @@ async function handleSave() {
   }
 }
 
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.readAsDataURL(file)
-    reader.onload = () => resolve(reader.result)
-    reader.onerror = (error) => reject(error)
-  })
-}
 
 onMounted(async () => {
   await loadCategories()

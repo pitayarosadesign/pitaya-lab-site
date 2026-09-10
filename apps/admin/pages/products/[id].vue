@@ -807,12 +807,15 @@ async function handleSave() {
     const images = []
     for (const img of form.images) {
       if (img._new && img.file) {
-        const base64 = await fileToBase64(img.file)
+        // Optimizar la imagen en el navegador antes de subirla (redimensiona a
+        // máx. 1600 px y comprime). Así se evita el error 413 (Payload Too Large)
+        // que ocurría al enviar fotos originales de cámara/teléfono sin comprimir.
+        const base64 = await optimizeImageToBase64(img.file)
         images.push({
           _new: true,
           name: img.file.name,
           type: img.file.type,
-          data: base64,
+          data: 'data:' + (img.file.type || 'image/jpeg') + ';base64,' + base64,
           is_primary: img.is_primary,
         })
       } else {
@@ -887,14 +890,6 @@ async function handleSave() {
   }
 }
 
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.readAsDataURL(file)
-    reader.onload = () => resolve(reader.result)
-    reader.onerror = (error) => reject(error)
-  })
-}
 
 // Formatear precio en MXN
 function formatPrice(price) {
