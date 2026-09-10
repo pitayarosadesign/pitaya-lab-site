@@ -373,6 +373,10 @@ function loadImage(src) {
 function dataUrlToFile(dataUrl) {
   const [head, payload] = dataUrl.split(',')
   const mime = (head.match(/:(.*?);/) || [])[1] || 'image/jpeg'
+  // Derivar la extensión del MIME. Antes se usaba una variable `ext` inexistente,
+  // lo que lanzaba "ReferenceError: ext is not defined", rompía el procesamiento
+  // de la imagen y provocaba el error 413 al subir el original sin optimizar.
+  const ext = mime === 'image/png' ? 'png' : 'jpg'
   const bin = atob(payload)
   const u8 = new Uint8Array(bin.length)
   for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i)
