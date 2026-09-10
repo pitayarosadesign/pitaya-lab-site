@@ -22,16 +22,50 @@
 
       <!-- Navegación -->
       <nav class="p-4 space-y-1 overflow-y-auto h-[calc(100vh-4rem)]">
-        <NuxtLink
-          v-for="item in navItems"
-          :key="item.to"
-          :to="item.to"
-          class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
-          :class="isActive(item.to) ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'"
-        >
-          <span class="text-lg">{{ item.icon }}</span>
-          {{ item.label }}
-        </NuxtLink>
+        <template v-for="group in navGroups" :key="group.label">
+          <!-- Grupo con submenú -->
+          <div v-if="group.children">
+            <button
+              type="button"
+              @click="toggleGroup(group.label)"
+              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
+              :class="isGroupActive(group) ? 'text-primary-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'"
+            >
+              <span class="text-lg">{{ group.icon }}</span>
+              <span class="flex-1 text-left">{{ group.label }}</span>
+              <svg
+                class="w-4 h-4 transition-transform"
+                :class="openGroups.includes(group.label) ? 'rotate-90' : ''"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+            <div v-show="openGroups.includes(group.label)" class="mt-0.5 ml-4 pl-3 border-l border-gray-100 space-y-0.5">
+              <NuxtLink
+                v-for="item in group.children"
+                :key="item.to"
+                :to="item.to"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors"
+                :class="isActive(item.to) ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'"
+              >
+                <span class="text-base">{{ item.icon }}</span>
+                {{ item.label }}
+              </NuxtLink>
+            </div>
+          </div>
+
+          <!-- Enlace simple -->
+          <NuxtLink
+            v-else
+            :to="group.to"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
+            :class="isActive(group.to) ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'"
+          >
+            <span class="text-lg">{{ group.icon }}</span>
+            {{ group.label }}
+          </NuxtLink>
+        </template>
       </nav>
     </aside>
 
@@ -90,27 +124,78 @@ const route = useRoute()
 const supabase = useSupabase()
 const sidebarOpen = ref(false)
 
-const navItems = [
+// Navegación agrupada. Los grupos con `children` se muestran como submenús.
+const navGroups = [
   { icon: '📊', label: 'Dashboard', to: '/dashboard' },
-  { icon: '📦', label: 'Productos', to: '/products' },
-  { icon: '🌾', label: 'Aromas', to: '/aromas' },
-  { icon: '🧴', label: 'Envases Recuerdos', to: '/recuerdo-envases' },
-  { icon: '🛒', label: 'Órdenes', to: '/orders' },
-  { icon: '👥', label: 'Clientes', to: '/customers' },
-  { icon: '📦', label: 'Inventario', to: '/inventory' },
-  { icon: '🏪', label: 'Showroom', to: '/commerce' },
-  { icon: '🏷️', label: 'Cupones', to: '/coupons' },
-  { icon: '💬', label: 'Reseñas', to: '/reviews' },
-  { icon: '📄', label: 'Páginas', to: '/paginas' },
-  { icon: '🎨', label: 'Editar Sitio Web', to: '/site' },
-  { icon: '📈', label: 'Analíticas', to: '/analytics' },
-  { icon: '📡', label: 'Catálogos', to: '/catalog-feeds' },
+  {
+    icon: '📦', label: 'Productos',
+    children: [
+      { icon: '📦', label: 'Todos los productos', to: '/products' },
+      { icon: '🗂️', label: 'Categorías', to: '/categories' },
+      { icon: '🌾', label: 'Aromas', to: '/aromas' },
+      { icon: '🧴', label: 'Envases Recuerdos', to: '/recuerdo-envases' },
+      { icon: '📦', label: 'Inventario', to: '/inventory' },
+    ],
+  },
+  {
+    icon: '🛒', label: 'Ventas',
+    children: [
+      { icon: '🛒', label: 'Órdenes', to: '/orders' },
+      { icon: '👥', label: 'Clientes', to: '/customers' },
+      { icon: '🏷️', label: 'Cupones', to: '/coupons' },
+      { icon: '🏪', label: 'Showroom', to: '/commerce' },
+    ],
+  },
+  {
+    icon: '🎨', label: 'Sitio Web',
+    children: [
+      { icon: '🎨', label: 'Editar Sitio Web', to: '/site' },
+      { icon: '📄', label: 'Páginas', to: '/paginas' },
+      { icon: '💬', label: 'Reseñas', to: '/reviews' },
+    ],
+  },
+  {
+    icon: '📈', label: 'Análisis',
+    children: [
+      { icon: '📈', label: 'Analíticas', to: '/analytics' },
+      { icon: '📡', label: 'Catálogos', to: '/catalog-feeds' },
+    ],
+  },
   { icon: '⚙️', label: 'Configuración', to: '/settings' },
 ]
 
+// Grupos abiertos (submenús desplegados)
+const openGroups = ref([])
+
+function toggleGroup(label) {
+  const i = openGroups.value.indexOf(label)
+  if (i === -1) openGroups.value.push(label)
+  else openGroups.value.splice(i, 1)
+}
+
+function isGroupActive(group) {
+  return group.children?.some(c => isActive(c.to))
+}
+
+// Abrir automáticamente el grupo que contiene la ruta activa
+watchEffect(() => {
+  for (const g of navGroups) {
+    if (g.children && isGroupActive(g) && !openGroups.value.includes(g.label)) {
+      openGroups.value.push(g.label)
+    }
+  }
+})
+
 const pageTitle = computed(() => {
-  const item = navItems.find(i => route.path.startsWith(i.to))
-  return item?.label || 'Panel de Administración'
+  for (const g of navGroups) {
+    if (g.children) {
+      const child = g.children.find(c => route.path.startsWith(c.to))
+      if (child) return child.label
+    } else if (route.path.startsWith(g.to)) {
+      return g.label
+    }
+  }
+  return 'Panel de Administración'
 })
 
 function isActive(path) {

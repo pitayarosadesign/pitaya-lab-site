@@ -6,12 +6,7 @@ export default defineEventHandler(async (event) => {
   const supabaseAdmin = createClient(
     config.public.supabaseUrl,
     config.supabaseServiceKey,
-    {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    }
+    { auth: { persistSession: false, autoRefreshToken: false } }
   )
 
   try {
@@ -22,11 +17,23 @@ export default defineEventHandler(async (event) => {
 
     if (error) throw error
 
-    return { categories: data || [] }
+    // Conteo de productos por categoría (para mostrar en la tabla y validar borrado)
+    const { data: products } = await supabaseAdmin
+      .from('products')
+      .select('category_id')
+
+    const counts = {}
+    for (const p of products || []) {
+      if (p.category_id) counts[p.category_id] = (counts[p.category_id] || 0) + 1
+    }
+
+    const categories = (data || []).map(c => ({
+      ...c,
+      product_count: counts[c.id] || 0,
+    }))
+
+    return { categories }
   } catch (e) {
-    throw createError({
-      statusCode: 500,
-      message: e.message,
-    })
+    throw createError({ statusCode: 500, message: e.message })
   }
 })
