@@ -227,6 +227,35 @@
             </p>
           </div>
 
+          <!-- 📝 Nota del pedido (opcional · aplica a toda la compra) -->
+          <div class="mb-3">
+            <button
+              type="button"
+              @click="showOrderNote = !showOrderNote"
+              class="w-full flex items-center justify-between text-xs font-medium text-earth-500 hover:text-primary-600 transition-colors py-1.5"
+              :aria-expanded="showOrderNote"
+            >
+              <span class="inline-flex items-center gap-1">
+                📝 {{ cart.orderNote ? 'Editar nota del pedido' : 'Agregar nota al pedido' }}
+                <span class="text-earth-400 font-normal">(opcional)</span>
+              </span>
+              <svg class="w-3.5 h-3.5 transition-transform" :class="showOrderNote ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            <div v-show="showOrderNote" class="mt-2">
+              <textarea
+                :value="cart.orderNote"
+                @input="cart.setOrderNote($event.target.value)"
+                rows="2"
+                maxlength="500"
+                placeholder="Ej: dejar en portería, instrucciones de entrega, dedicatoria general…"
+                class="w-full px-3 py-2 rounded-xl border border-earth-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none text-sm resize-none transition-all"
+              ></textarea>
+              <p class="text-[10px] text-earth-400 mt-1 text-right">{{ (cart.orderNote || '').length }}/500</p>
+            </div>
+          </div>
+
           <!-- 🔒 Pago seguro con Stripe -->
           <div class="flex items-center justify-center gap-2 mb-3 text-[11px] text-earth-500">
             <svg class="w-3.5 h-3.5 text-green-600 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
@@ -325,6 +354,8 @@ const isMounted = ref(false)
 
 // Controla el desglose de la compra (subtotal/envío) colapsable en el footer
 const showPaymentDetails = ref(false)
+// Nota del pedido: se auto-abre si ya hay una nota guardada
+const showOrderNote = ref(false)
 
 // 💳 Solo Stripe como proveedor de pago
 const paymentProvider = 'stripe'
@@ -448,6 +479,8 @@ onMounted(() => {
   loadShippingConfig()
   loadDeliveryConfigFromDB()
   loadSuggestedProducts()
+  // Mostrar la nota si el cliente ya había escrito una antes
+  if (cart.orderNote) showOrderNote.value = true
 })
 
 // Refrescar sugerencias cuando se abre el carrito o cambia el contenido
@@ -478,6 +511,7 @@ async function handleCheckout() {
       body: {
         items: cart.getCheckoutItems(),
         shippingCost: shippingCost.value, // ← Enviamos el costo de envío
+        orderNote: cart.orderNote || '', // ← Nota general del pedido (opcional)
         successUrl: `${window.location.origin}/checkout/success`,
         cancelUrl: `${window.location.origin}/checkout/cancel`,
       },

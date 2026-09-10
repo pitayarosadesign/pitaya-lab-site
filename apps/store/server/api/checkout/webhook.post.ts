@@ -419,6 +419,7 @@ export default defineEventHandler(async (event) => {
               subtotal: session.amount_subtotal ? session.amount_subtotal / 100 : 0,
               total: session.amount_total ? session.amount_total / 100 : 0,
               shipping_address: session.shipping_details || {},
+              notes: session.metadata?.order_note || null,
               paid_at: new Date().toISOString(),
             })
 

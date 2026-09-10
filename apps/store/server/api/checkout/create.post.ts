@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   )
 
   try {
-    const { items, successUrl, cancelUrl, customerEmail, shippingCost } = body
+    const { items, successUrl, cancelUrl, customerEmail, shippingCost, orderNote } = body
 
     if (!items || items.length === 0) {
       throw createError({ statusCode: 400, message: 'El carrito está vacío' })
@@ -84,6 +84,9 @@ export default defineEventHandler(async (event) => {
           quantity: i.quantity,
           price: i.price,
         }))),
+        // Nota general del pedido (opcional). Stripe limita cada valor de
+        // metadata a 500 caracteres, por eso acotamos aquí.
+        order_note: (orderNote || '').slice(0, 500),
       },
     }
 

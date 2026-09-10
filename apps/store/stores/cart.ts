@@ -27,6 +27,8 @@ export interface CartItem {
 export interface CartState {
   items: CartItem[]
   isOpen: boolean
+  /** Nota general del pedido (opcional, aplica a toda la compra) */
+  orderNote: string
 }
 
 // Helper para cargar del localStorage
@@ -53,10 +55,33 @@ function saveCart(items: CartItem[]) {
   }
 }
 
+// Helper para cargar/guardar la nota del pedido
+function loadOrderNote(): string {
+  if (import.meta.client) {
+    try {
+      return localStorage.getItem('pitaya-cart-note') || ''
+    } catch {
+      return ''
+    }
+  }
+  return ''
+}
+
+function saveOrderNote(note: string) {
+  if (import.meta.client) {
+    try {
+      localStorage.setItem('pitaya-cart-note', note || '')
+    } catch (e) {
+      console.warn('Error guardando nota del pedido:', e)
+    }
+  }
+}
+
 export const useCartStore = defineStore('cart', {
   state: (): CartState => ({
     items: [],
     isOpen: false,
+    orderNote: '',
   }),
 
   getters: {
@@ -78,6 +103,12 @@ export const useCartStore = defineStore('cart', {
   actions: {
     init() {
       this.items = loadCart()
+      this.orderNote = loadOrderNote()
+    },
+
+    setOrderNote(note: string) {
+      this.orderNote = note || ''
+      saveOrderNote(this.orderNote)
     },
 
     addItem(item: CartItem) {
@@ -114,7 +145,9 @@ export const useCartStore = defineStore('cart', {
 
     clearCart() {
       this.items = []
+      this.orderNote = ''
       saveCart(this.items)
+      saveOrderNote('')
     },
 
     toggleCart() {

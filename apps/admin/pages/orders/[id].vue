@@ -91,6 +91,12 @@ ue <template>
           <p v-if="order.customer_phone" class="text-sm text-gray-500">{{ order.customer_phone }}</p>
         </div>
 
+        <!-- 📝 Nota del cliente (aplica a CUALQUIER orden: retail y B2B) -->
+        <div v-if="order.notes" class="bg-white rounded-2xl border border-gray-200 p-6">
+          <h3 class="text-sm font-bold text-gray-900 mb-2">📝 Nota del cliente</h3>
+          <p class="text-sm text-gray-800 whitespace-pre-line bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">{{ order.notes }}</p>
+        </div>
+
         <!-- Info B2B / Evento -->
         <div v-if="isB2B" class="bg-white rounded-2xl border border-gray-200 p-6">
           <h3 class="text-sm font-bold text-gray-900 mb-3">
@@ -117,11 +123,13 @@ ue <template>
               <p class="text-xs text-gray-500 uppercase font-medium">Descuento B2B aplicado</p>
               <p class="text-green-700 font-bold mt-0.5">−{{ order.b2b_discount_percent }}%</p>
             </div>
-            <div v-if="order.admin_notes">
-              <p class="text-xs text-gray-500 uppercase font-medium">Notas</p>
-              <p class="text-gray-700 mt-0.5">{{ order.admin_notes }}</p>
-            </div>
           </div>
+        </div>
+
+        <!-- Notas internas (cualquier orden) -->
+        <div v-if="order.admin_notes" class="bg-white rounded-2xl border border-gray-200 p-6">
+          <h3 class="text-sm font-bold text-gray-900 mb-2">🗒️ Notas internas</h3>
+          <p class="text-gray-700 mt-0.5">{{ order.admin_notes }}</p>
         </div>
 
         <!-- Dirección de envío -->

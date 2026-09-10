@@ -27,3 +27,6 @@ packages/
 Publicar-*.xlsx
 *.csv
 /tmp/
+
+# Respaldos locales de datos (no versionar)
+backups/
