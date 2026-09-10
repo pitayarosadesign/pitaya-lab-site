@@ -100,7 +100,7 @@
               <td class="px-4 py-3">
                 <div class="flex items-center gap-3">
                   <div class="w-9 h-9 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
-                    <img v-if="item.image" :src="item.image" :alt="item.name" class="w-full h-full object-cover" />
+                    <img v-if="item.image" :src="useOptimizedImage(item.image, { width: 120, quality: 70, format: 'webp' })" :alt="item.name" class="w-full h-full object-cover" loading="lazy" />
                     <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-sm">📷</div>
                   </div>
                   <NuxtLink :to="`/products/${item.id}`" class="font-medium text-gray-900 hover:text-primary-600">

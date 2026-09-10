@@ -80,7 +80,7 @@
               <td class="px-4 py-3">
                 <div class="flex items-center gap-3">
                   <div class="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
-                    <img v-if="product.image" :src="product.image" :alt="product.name" class="w-full h-full object-cover" @error="onThumbError($event)" />
+                    <img v-if="product.image" :src="useOptimizedImage(product.image, { width: 200, quality: 70, format: 'webp' })" :alt="product.name" class="w-full h-full object-cover" loading="lazy" @error="onThumbError($event)" />
                     <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-lg">📷</div>
                   </div>
                   <div>

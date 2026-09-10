@@ -36,7 +36,7 @@
               <td class="px-4 py-3">
                 <div class="flex items-center gap-3">
                   <div class="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
-                    <img v-if="envase.image_url" :src="envase.image_url" :alt="envase.nombre" class="w-full h-full object-cover" />
+                    <img v-if="envase.image_url" :src="useOptimizedImage(envase.image_url, { width: 200, quality: 70, format: 'webp' })" :alt="envase.nombre" class="w-full h-full object-cover" loading="lazy" />
                     <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-xl">🧴</div>
                   </div>
                   <div>

@@ -46,7 +46,7 @@
       >
         <!-- Foto del producto -->
         <div v-if="review.image_url" class="aspect-[4/3] bg-gray-50 overflow-hidden">
-          <img :src="review.image_url" :alt="`Foto de ${review.name || 'cliente'}`" class="w-full h-full object-cover" />
+          <img :src="useOptimizedImage(review.image_url, { width: 300, quality: 75, format: 'webp' })" :alt="`Foto de ${review.name || 'cliente'}`" class="w-full h-full object-cover" loading="lazy" />
         </div>
 
         <div class="p-5">

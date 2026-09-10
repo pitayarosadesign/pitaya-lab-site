@@ -204,7 +204,7 @@
             @dragend="onDragEnd"
             @drop.prevent="onDrop(index)"
           >
-            <img :src="img.url || img.preview" :alt="'Imagen ' + (index + 1)" class="w-full h-full object-cover pointer-events-none" />
+            <img :src="img.url ? useOptimizedImage(img.url, { width: 300, quality: 70, format: 'webp' }) : img.preview" :alt="'Imagen ' + (index + 1)" class="w-full h-full object-cover pointer-events-none" loading="lazy" />
             <div v-if="img.is_primary" class="absolute top-1 left-1 bg-primary-600 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">Principal</div>
             <button type="button" @click="removeImage(index)" class="absolute top-1 right-1 bg-white/90 text-red-500 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -372,41 +372,45 @@
                       Imagen para este aroma <span class="text-gray-400 font-normal">(opcional · de la galería del producto)</span>
                     </label>
 
-                    <!-- Imagen seleccionada actualmente -->
-                    <div v-if="variantData[scent.id].imageUrl" class="flex items-center gap-3 mb-2">
-                      <div class="w-14 h-14 rounded-lg overflow-hidden border border-gray-200 bg-white flex-shrink-0">
-                        <img :src="variantData[scent.id].imageUrl" alt="Imagen del aroma" class="w-full h-full object-cover" />
+                    <!-- Imagen asignada + botón para abrir el selector en grande.
+                         Solo se pueden asignar imágenes YA subidas (con URL pública):
+                         las imágenes nuevas (solo preview local) todavía no tienen URL
+                         y asignarlas guardaría una blob: URL inválida, lo que rompe la
+                         imagen y produce el error 'Not allowed to load local resource'. -->
+                    <div class="flex items-center gap-3">
+                      <div class="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 bg-white flex-shrink-0 flex items-center justify-center">
+                        <img v-if="variantData[scent.id].imageUrl" :src="useOptimizedImage(variantData[scent.id].imageUrl, { width: 200, quality: 70, format: 'webp' })" alt="Imagen del aroma" class="w-full h-full object-cover" loading="lazy" />
+                        <span v-else class="text-gray-300 text-xl">🖼️</span>
                       </div>
                       <div class="flex-1 min-w-0">
-                        <p class="text-xs text-gray-600 font-medium">Imagen asignada a este aroma</p>
-                        <p class="text-[10px] text-gray-400">Se mostrará en la ficha del producto al seleccionar este aroma.</p>
+                        <div class="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            :disabled="!hasSelectableImages"
+                            @click="openImagePicker(scent.id)"
+                            class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            {{ variantData[scent.id].imageUrl ? 'Cambiar imagen' : 'Elegir imagen' }}
+                          </button>
+                          <button
+                            v-if="variantData[scent.id].imageUrl"
+                            type="button"
+                            @click="variantData[scent.id].imageUrl = ''"
+                            class="text-[11px] text-red-500 hover:text-red-700 font-medium"
+                          >
+                            Quitar
+                          </button>
+                        </div>
+                        <p class="text-[10px] text-gray-400 mt-1">
+                          Se mostrará en la ficha del producto al seleccionar este aroma.
+                        </p>
                       </div>
-                      <button
-                        type="button"
-                        @click="variantData[scent.id].imageUrl = ''"
-                        class="text-[11px] text-red-500 hover:text-red-700 font-medium flex-shrink-0"
-                      >
-                        Quitar
-                      </button>
                     </div>
-
-                    <!-- Selector de imágenes de la galería del producto -->
-                    <div v-if="form.images.length > 0" class="flex flex-wrap gap-2">
-                      <button
-                        v-for="(gimg, gIdx) in form.images"
-                        :key="gimg.id || gIdx"
-                        type="button"
-                        @click="variantData[scent.id].imageUrl = (gimg.url || gimg.preview)"
-                        class="w-12 h-12 rounded-lg overflow-hidden border-2 transition-all"
-                        :class="variantData[scent.id].imageUrl === (gimg.url || gimg.preview)
-                          ? 'border-primary-500 ring-2 ring-primary-200'
-                          : 'border-gray-200 hover:border-gray-300'"
-                        :title="'Usar imagen ' + (gIdx + 1)"
-                      >
-                        <img :src="gimg.url || gimg.preview" :alt="'Imagen ' + (gIdx + 1)" class="w-full h-full object-cover" />
-                      </button>
-                    </div>
-                    <p v-else class="text-[10px] text-gray-400">Sube imágenes en la sección "📸 Imágenes" para poder asignarlas a cada aroma.</p>
+                    <p v-if="!hasSelectableImages" class="text-[10px] text-gray-400 mt-1.5">
+                      {{ form.images.length === 0
+                        ? 'Sube imágenes en la sección "📸 Imágenes" para poder asignarlas a cada aroma.'
+                        : 'Las imágenes nuevas deben guardarse primero para poder asignarlas a un aroma.' }}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -439,6 +443,73 @@
     <div v-else-if="!loading" class="text-center py-16">
       <p class="text-gray-400">Producto no encontrado</p>
       <NuxtLink to="/products" class="text-primary-600 hover:text-primary-700 text-sm mt-2 inline-block">← Volver a productos</NuxtLink>
+    </div>
+
+    <!-- Modal: Selector de imagen para la variante (lightbox de la galería) -->
+    <div v-if="imagePicker.open" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black/50" @click="closeImagePicker"></div>
+      <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+        <!-- Encabezado -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">Elegir imagen para el aroma</h3>
+            <p class="text-xs text-gray-400 mt-0.5">Selecciona una foto de la galería del producto.</p>
+          </div>
+          <button @click="closeImagePicker" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <!-- Cuerpo: galería (izq) + vista grande (der) -->
+        <div class="flex-1 overflow-hidden flex flex-col md:flex-row">
+          <!-- Galería -->
+          <div class="flex-1 overflow-y-auto p-5">
+            <div v-if="selectableImages.length > 0" class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+              <button
+                v-for="(gimg, gIdx) in selectableImages"
+                :key="gimg.id || gIdx"
+                type="button"
+                @click="imagePicker.selected = gimg.url"
+                @dblclick="confirmImagePicker"
+                class="relative aspect-square rounded-xl overflow-hidden border-2 transition-all"
+                :class="imagePicker.selected === gimg.url
+                  ? 'border-primary-500 ring-2 ring-primary-200'
+                  : 'border-gray-200 hover:border-gray-300'"
+              >
+                <img :src="useOptimizedImage(gimg.url, { width: 400, quality: 75, format: 'webp' })" :alt="'Imagen ' + (gIdx + 1)" class="w-full h-full object-cover" loading="lazy" />
+                <span v-if="gimg.is_primary" class="absolute top-1 left-1 bg-primary-600 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">Principal</span>
+                <span v-if="imagePicker.selected === gimg.url" class="absolute bottom-1 right-1 bg-primary-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">✓</span>
+              </button>
+            </div>
+            <div v-else class="py-16 text-center text-gray-400 text-sm">
+              No hay imágenes subidas disponibles para asignar.
+            </div>
+          </div>
+
+          <!-- Vista grande -->
+          <div class="md:w-80 border-t md:border-t-0 md:border-l border-gray-100 p-5 flex flex-col">
+            <p class="text-xs font-semibold text-gray-500 mb-2">Vista previa</p>
+            <div class="flex-1 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center min-h-[200px]">
+              <img v-if="imagePicker.selected" :src="useOptimizedImage(imagePicker.selected, { width: 800, quality: 80, format: 'webp' })" alt="Vista previa" class="w-full h-full object-contain" />
+              <span v-else class="text-gray-300 text-3xl">🖼️</span>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-2">Doble clic en una imagen para asignarla directamente.</p>
+          </div>
+        </div>
+
+        <!-- Pie -->
+        <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100">
+          <button type="button" @click="closeImagePicker" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-800">Cancelar</button>
+          <button
+            type="button"
+            :disabled="!imagePicker.selected"
+            @click="confirmImagePicker"
+            class="px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            Usar esta imagen
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Modal: Nueva categoría -->
@@ -513,6 +584,34 @@ const loadingProfiles = ref(false)
 const selectedScentCount = computed(() => selectedScents.value.size)
 // Datos por variante: { [profileId]: { stock, sku, gtin } }
 const variantData = reactive({})
+
+// ===== Selector de imagen para la variante (lightbox) =====
+// Solo se pueden asignar imágenes ya subidas (con URL pública). Las imágenes
+// nuevas (solo preview local) no tienen URL todavía y asignarlas guardaría una
+// blob: URL inválida (rompe la imagen y da 'Not allowed to load local resource').
+const imagePicker = reactive({ open: false, scentId: null, selected: '' })
+
+const selectableImages = computed(() => form.images.filter(img => !!img.url))
+const hasSelectableImages = computed(() => selectableImages.value.length > 0)
+
+function openImagePicker(scentId) {
+  imagePicker.scentId = scentId
+  imagePicker.selected = variantData[scentId]?.imageUrl || ''
+  imagePicker.open = true
+}
+
+function closeImagePicker() {
+  imagePicker.open = false
+  imagePicker.scentId = null
+  imagePicker.selected = ''
+}
+
+function confirmImagePicker() {
+  if (!imagePicker.scentId || !imagePicker.selected) return
+  if (!variantData[imagePicker.scentId]) variantData[imagePicker.scentId] = {}
+  variantData[imagePicker.scentId].imageUrl = imagePicker.selected
+  closeImagePicker()
+}
 
 async function loadCategories() {
   try {

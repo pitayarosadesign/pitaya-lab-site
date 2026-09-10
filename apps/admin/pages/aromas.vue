@@ -59,7 +59,7 @@
             <td class="px-4 py-3">
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-lg bg-earth-100 flex items-center justify-center text-lg shrink-0 overflow-hidden" :title="a.name">
-                  <img v-if="a.image_url" :src="a.image_url" class="w-full h-full object-cover" :alt="a.name" />
+                  <img v-if="a.image_url" :src="useOptimizedImage(a.image_url, { width: 120, quality: 70, format: 'webp' })" class="w-full h-full object-cover" :alt="a.name" loading="lazy" />
                   <span v-else>{{ a.emoji || '🌸' }}</span>
                 </div>
                 <div>
