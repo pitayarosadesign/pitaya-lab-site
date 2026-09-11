@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
   )
 
   try {
-    const { id, product, images, variants, variantProfileIds } = body
+    const { id, product, images, variants, variantProfileIds, variantOptions } = body
 
     // 1. Actualizar producto
     const { error } = await supabaseAdmin
@@ -23,13 +23,19 @@ export default defineEventHandler(async (event) => {
 
     if (error) throw error
 
-    // 2. Gestionar variantes (aromas disponibles)
-    // Las variantes se basan en la selección de perfiles aromáticos
-    const isSelectionBased = Array.isArray(variantProfileIds)
-    const isManualVariants = Array.isArray(variants) && !isSelectionBased
+    // 2. Gestionar variantes.
+    //    Prioridad de modelos (un producto usa UNO solo):
+    //      a) variantOptions  → modelo flexible por dimensiones (Color, Tamaño…).
+    //      b) variantProfileIds → legacy: solo aroma (productos de tienda).
+    //      c) variants → legacy: variantes manuales de texto libre.
+    const hasVariantOptions = variantOptions && Array.isArray(variantOptions.combinations)
+    const isSelectionBased = !hasVariantOptions && Array.isArray(variantProfileIds)
+    const isManualVariants = !hasVariantOptions && !isSelectionBased && Array.isArray(variants)
 
     const baseSku = product?.sku || ''
-    if (isSelectionBased) {
+    if (hasVariantOptions) {
+      await syncVariantOptions(supabaseAdmin, id, variantOptions, baseSku)
+    } else if (isSelectionBased) {
       await syncVariantsByProfiles(supabaseAdmin, id, variantProfileIds, baseSku)
     } else if (isManualVariants) {
       await syncManualVariants(supabaseAdmin, id, variants, baseSku)
@@ -282,4 +288,74 @@ async function syncManualVariants(supabaseAdmin, productId, variants, baseSku = 
       await supabaseAdmin.from('product_variants').insert({ product_id: productId, ...variantData })
     }
   }
+}
+
+// ============================================
+// Sincronizar variantes por dimensiones (modelo flexible)
+// ============================================
+// Recibe { type1, type2, isAroma1, isAroma2, combinations: [...] } y
+// reemplaza por completo las variantes del producto. Cada combinación:
+//   { value1, value2, label, sku, price, stock }
+// Si una dimensión es Aroma, se vincula al perfil aromático por NOMBRE
+// (para que la tienda muestre la tarjeta olfativa).
+async function syncVariantOptions(supabaseAdmin, productId, variantOptions, baseSku = '') {
+  const { type1, type2, isAroma1, isAroma2 } = variantOptions
+  const combinations = Array.isArray(variantOptions.combinations) ? variantOptions.combinations : []
+
+  // Resolver id del perfil aromático por nombre (solo si la dimensión es Aroma)
+  const resolveProfileId = async (value, isAroma) => {
+    if (!isAroma || !value) return null
+    const { data } = await supabaseAdmin
+      .from('fragrance_profiles')
+      .select('id')
+      .eq('name', value)
+      .maybeSingle()
+    return data?.id || null
+  }
+
+  // 1. Borrar TODAS las variantes actuales del producto (reemplazo completo).
+  const { error: delError } = await supabaseAdmin
+    .from('product_variants')
+    .delete()
+    .eq('product_id', productId)
+  if (delError) throw delError
+
+  if (combinations.length === 0) return
+
+  // 2. Insertar una variante por cada combinación.
+  const rows = []
+  for (let i = 0; i < combinations.length; i++) {
+    const c = combinations[i]
+
+    // SKU: el capturado o generado de forma estable a partir del label.
+    const skuSuffix = String(c.label || `opcion-${i + 1}`)
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim()
+    const sku = c.sku || `${baseSku}-${skuSuffix}`.toUpperCase()
+
+    const profileId = (await resolveProfileId(c.value1, isAroma1)) || (await resolveProfileId(c.value2, isAroma2))
+
+    rows.push({
+      product_id: productId,
+      name: c.label,
+      sku,
+      fragrance_profile_id: profileId || null,
+      option_type_1: type1 || null,
+      option_value_1: c.value1 ?? null,
+      option_type_2: type2 || null,
+      option_value_2: c.value2 ?? null,
+      price: (c.price === null || c.price === undefined || c.price === '') ? null : parseFloat(c.price),
+      stock: (c.stock === undefined || c.stock === null || c.stock === '') ? 0 : (parseInt(c.stock) || 0),
+      sort_order: i,
+      is_active: true,
+    })
+  }
+
+  const { error: insError } = await supabaseAdmin
+    .from('product_variants')
+    .insert(rows)
+  if (insError) throw insError
 }
