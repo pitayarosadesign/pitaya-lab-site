@@ -261,8 +261,28 @@
         </div>
       </div>
 
-      <!-- Variantes (Aromas) -->
-      <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+      <!-- Variantes por dimensiones (Recuerdos / Eventos) -->
+      <div v-if="isEventChannel" class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900">🧩 Variantes del producto</h2>
+          <p class="text-sm text-gray-400 mt-0.5">
+            Crea las opciones de este recuerdo (ej. Tipo y Color). Cada combinación tendrá su propio precio y stock.
+          </p>
+        </div>
+        <VariantOptionsEditor
+          ref="variantEditorRef"
+          v-model:has-variants="useVariantOptions"
+          v-model:dimensions="variantDimensions"
+          v-model:combo-meta="variantComboMeta"
+          :scents="allScents"
+          :allow-aroma="false"
+          :base-sku="form.sku"
+          :loading-profiles="loadingProfiles"
+        />
+      </div>
+
+      <!-- Variantes (Aromas) — productos de tienda -->
+      <div v-if="!isEventChannel" class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
         <div class="flex items-center justify-between">
           <div>
             <h2 class="text-lg font-semibold text-gray-900">🧴 Disponible en estos Aromas</h2>
@@ -585,6 +605,15 @@ const selectedScentCount = computed(() => selectedScents.value.size)
 // Datos por variante: { [profileId]: { stock, sku, gtin } }
 const variantData = reactive({})
 
+// ===== Variantes por dimensiones (Recuerdos / Eventos) =====
+// El editor de dimensiones solo se usa en el canal "evento". En productos
+// de tienda se mantiene el editor de aromas legacy (intacto).
+const isEventChannel = computed(() => form.sales_channel === 'evento')
+const variantEditorRef = ref(null)
+const useVariantOptions = ref(false)
+const variantDimensions = ref([])
+const variantComboMeta = ref({})
+
 // ===== Selector de imagen para la variante (lightbox) =====
 // Solo se pueden asignar imágenes ya subidas (con URL pública). Las imágenes
 // nuevas (solo preview local) no tienen URL todavía y asignarlas guardaría una
@@ -711,6 +740,18 @@ async function loadProduct() {
         }
       }
       updateGroupCounts()
+    }
+
+    // Hidratar el editor de dimensiones (canal evento). El endpoint devuelve
+    // `variantOptions` reconstruido cuando el producto usa el modelo flexible.
+    if (data.variantOptions) {
+      useVariantOptions.value = true
+      variantDimensions.value = data.variantOptions.dimensions || []
+      const meta = {}
+      for (const c of (data.variantOptions.combinations || [])) {
+        if (c?.label) meta[c.label] = { price: c.price ?? '', stock: c.stock ?? '' }
+      }
+      variantComboMeta.value = meta
     }
 
     // Resolver el slug de la categoría a partir del category_id
@@ -947,6 +988,12 @@ async function handleSave() {
       })
     }
 
+    // Variantes por dimensiones (solo canal evento). Se envían como
+    // `variantOptions` y tienen prioridad sobre `variantProfileIds` en el API.
+    const variantOptions = isEventChannel.value && variantEditorRef.value
+      ? variantEditorRef.value.buildPayload()
+      : null
+
     await $fetch('/api/products/update', {
       method: 'PUT',
       body: {
@@ -976,7 +1023,10 @@ async function handleSave() {
           sales_channel: form.sales_channel,
         },
         images,
-        variantProfileIds,
+        // En evento enviamos variantOptions; en tienda, el modelo de aromas.
+        ...(isEventChannel.value
+          ? { variantOptions }
+          : { variantProfileIds }),
       },
     })
 
