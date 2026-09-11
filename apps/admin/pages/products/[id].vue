@@ -269,7 +269,7 @@
             Crea las opciones de este recuerdo (ej. Tipo y Color). Cada combinación tendrá su propio precio y stock.
           </p>
         </div>
-        <VariantOptionsEditor
+        <FormsVariantOptionsEditor
           ref="variantEditorRef"
           v-model:has-variants="useVariantOptions"
           v-model:dimensions="variantDimensions"
