@@ -716,6 +716,7 @@ function buildVariantOptionsPayload() {
     type1: dims[0] ? dimTypeName(dims[0]) : null,
     type2: dims[1] ? dimTypeName(dims[1]) : null,
     // Si la dimensión es Aroma, guardamos también el id del perfil aromático
+    
     // para poder vincular la variante a la fragancia (tarjeta olfativa, etc.)
     isAroma1: dims[0]?.type === 'Aroma',
     isAroma2: dims[1]?.type === 'Aroma',

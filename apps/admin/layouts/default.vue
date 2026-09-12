@@ -133,7 +133,6 @@ const navGroups = [
       { icon: '📦', label: 'Todos los productos', to: '/products' },
       { icon: '🗂️', label: 'Categorías', to: '/categories' },
       { icon: '🌾', label: 'Aromas', to: '/aromas' },
-      { icon: '🧴', label: 'Envases Recuerdos', to: '/recuerdo-envases' },
       { icon: '📦', label: 'Inventario', to: '/inventory' },
     ],
   },
