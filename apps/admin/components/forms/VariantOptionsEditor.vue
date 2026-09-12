@@ -161,12 +161,12 @@
  * libres: Color, Tamaño, Tipo…), generando combinaciones con precio/stock.
  *
  * Uso:
- *   <VariantOptionsEditor
+ *   <FormsVariantOptionsEditor
  *     v-model:has-variants="hasVariants"
  *     v-model:dimensions="dimensions"
  *     v-model:combo-meta="comboMeta"
  *     :scents="allScents"
- *     :allow-aroma="true"
+ *     :allow-aroma="false"
  *     :base-sku="form.sku"
  *   />
  *
