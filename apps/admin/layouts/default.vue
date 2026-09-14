@@ -31,7 +31,6 @@
               class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
               :class="isGroupActive(group) ? 'text-primary-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'"
             >
-              <span class="text-lg">{{ group.icon }}</span>
               <span class="flex-1 text-left">{{ group.label }}</span>
               <svg
                 class="w-4 h-4 transition-transform"
@@ -49,7 +48,6 @@
                 class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors"
                 :class="isActive(item.to) ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'"
               >
-                <span class="text-base">{{ item.icon }}</span>
                 {{ item.label }}
               </NuxtLink>
             </div>
@@ -62,7 +60,6 @@
             class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
             :class="isActive(group.to) ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'"
           >
-            <span class="text-lg">{{ group.icon }}</span>
             {{ group.label }}
           </NuxtLink>
         </template>
@@ -126,41 +123,41 @@ const sidebarOpen = ref(false)
 
 // Navegación agrupada. Los grupos con `children` se muestran como submenús.
 const navGroups = [
-  { icon: '📊', label: 'Dashboard', to: '/dashboard' },
+  { label: 'Dashboard', to: '/dashboard' },
   {
-    icon: '📦', label: 'Productos',
+    label: 'Productos',
     children: [
-      { icon: '📦', label: 'Todos los productos', to: '/products' },
-      { icon: '🗂️', label: 'Categorías', to: '/categories' },
-      { icon: '🌾', label: 'Aromas', to: '/aromas' },
-      { icon: '📦', label: 'Inventario', to: '/inventory' },
+      { label: 'Todos los productos', to: '/products' },
+      { label: 'Categorías', to: '/categories' },
+      { label: 'Aromas', to: '/aromas' },
+      { label: 'Inventario', to: '/inventory' },
     ],
   },
   {
-    icon: '🛒', label: 'Ventas',
+    label: 'Ventas',
     children: [
-      { icon: '🛒', label: 'Órdenes', to: '/orders' },
-      { icon: '👥', label: 'Clientes', to: '/customers' },
-      { icon: '🏷️', label: 'Cupones', to: '/coupons' },
-      { icon: '🏪', label: 'Showroom', to: '/commerce' },
+      { label: 'Órdenes', to: '/orders' },
+      { label: 'Clientes', to: '/customers' },
+      { label: 'Cupones', to: '/coupons' },
+      { label: 'Showroom', to: '/commerce' },
     ],
   },
   {
-    icon: '🎨', label: 'Sitio Web',
+    label: 'Sitio Web',
     children: [
-      { icon: '🎨', label: 'Editar Sitio Web', to: '/site' },
-      { icon: '📄', label: 'Páginas', to: '/paginas' },
-      { icon: '💬', label: 'Reseñas', to: '/reviews' },
+      { label: 'Editar Sitio Web', to: '/site' },
+      { label: 'Páginas', to: '/paginas' },
+      { label: 'Reseñas', to: '/reviews' },
     ],
   },
   {
-    icon: '📈', label: 'Análisis',
+    label: 'Análisis',
     children: [
-      { icon: '📈', label: 'Analíticas', to: '/analytics' },
-      { icon: '📡', label: 'Catálogos', to: '/catalog-feeds' },
+      { label: 'Analíticas', to: '/analytics' },
+      { label: 'Catálogos', to: '/catalog-feeds' },
     ],
   },
-  { icon: '⚙️', label: 'Configuración', to: '/settings' },
+  { label: 'Configuración', to: '/settings' },
 ]
 
 // Grupos abiertos (submenús desplegados)
