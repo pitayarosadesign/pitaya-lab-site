@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
-  const { category, featured, limit, search, channel = 'directa' } = getQuery(event)
+  const { category, featured, limit, search, channel } = getQuery(event)
 
   // Cliente con service role para leer productos (incluyendo inactivos si es necesario)
   const supabase = createClient(
@@ -14,9 +14,10 @@ export default defineEventHandler(async (event) => {
 
   try {
     // channel determina qué canal se consulta:
-    //   'directa' (default) -> producto público de menudeo
-    //   'evento'            -> recuerdos para el cotizador /b2b
-    //   'mayoreo'           -> reservado a futuro
+    //   sin canal          -> menudeo + eventos/recuerdos (catálogo público)
+    //   'directa'          -> producto público de menudeo
+    //   'evento'           -> recuerdos para el cotizador /b2b
+    //   'mayoreo'          -> reservado a futuro
     const allowed = ['directa', 'evento', 'mayoreo']
     const channelValue = allowed.includes(String(channel)) ? String(channel) : null
 
