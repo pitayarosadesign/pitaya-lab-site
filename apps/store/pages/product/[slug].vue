@@ -107,10 +107,9 @@
               Precio base del producto: <span class="font-semibold text-earth-600">${{ formatPrice(product.price) }}</span>
             </p>
 
-            <!-- 💼 Precio negocio (mayoreo) por volumen -->
+            <!-- Precio negocio (mayoreo) por volumen -->
             <div v-if="wholesaleConfig" class="mb-6 rounded-2xl border border-primary-100 bg-primary-50/50 p-5">
               <div class="flex items-center gap-2 mb-3">
-                <span class="text-lg">💼</span>
                 <h3 class="text-sm font-bold text-primary-800 uppercase tracking-wide">Precio negocio</h3>
               </div>
               <p class="text-sm text-earth-600 mb-3">

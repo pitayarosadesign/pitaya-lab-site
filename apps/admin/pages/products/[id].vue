@@ -231,7 +231,7 @@
       <!-- 💼 Mayoreo / Precio de Negocio -->
       <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
         <div>
-          <h2 class="text-lg font-semibold text-gray-900">💼 Mayoreo / Precio de Negocio</h2>
+          <h2 class="text-lg font-semibold text-gray-900">Mayoreo / Precio de Negocio</h2>
           <p class="text-sm text-gray-400 mt-0.5">
             Define tramos por cantidad. El catálogo mostrará automáticamente el "precio negocio" según el volumen.
           </p>
@@ -242,7 +242,7 @@
       <!-- Variantes por dimensiones (Recuerdos / Eventos) -->
       <div v-if="isEventChannel" class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
         <div>
-          <h2 class="text-lg font-semibold text-gray-900">🧩 Variantes del producto</h2>
+          <h2 class="text-lg font-semibold text-gray-900">Variantes del producto</h2>
           <p class="text-sm text-gray-400 mt-0.5">
             Crea las opciones de este recuerdo (ej. Tipo y Color). Cada combinación tendrá su propio precio y stock.
           </p>
@@ -262,7 +262,7 @@
       <!-- Personalización (Recuerdos / Eventos) -->
       <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
         <div>
-          <h2 class="text-lg font-semibold text-gray-900">🎨 Personalización</h2>
+          <h2 class="text-lg font-semibold text-gray-900">Personalización</h2>
           <p class="text-sm text-gray-400 mt-0.5">
             Permite que el cliente personalice este producto con campos de texto y/o subiendo un archivo.
           </p>

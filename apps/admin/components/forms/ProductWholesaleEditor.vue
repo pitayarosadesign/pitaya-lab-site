@@ -82,7 +82,7 @@
     </template>
 
     <p v-else class="text-xs text-gray-400">
-      💡 Actívalo para mostrar automáticamente el "precio negocio" en el catálogo y aplicar descuentos por volumen.
+      Actívalo para mostrar automáticamente el "precio negocio" en el catálogo y aplicar descuentos por volumen.
     </p>
   </div>
 </template>

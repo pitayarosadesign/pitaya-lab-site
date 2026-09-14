@@ -15,7 +15,7 @@
       <!-- Campos de texto -->
       <div class="border border-gray-100 rounded-xl p-4 space-y-3">
         <div class="flex items-center justify-between">
-          <h3 class="text-sm font-semibold text-gray-800">📝 Campos de texto</h3>
+          <h3 class="text-sm font-semibold text-gray-800">Campos de texto</h3>
           <button
             type="button"
             @click="addTextField"
@@ -63,7 +63,7 @@
             @change="setFile('enabled', $event.target.checked)"
             class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-400"
           />
-          <span class="text-sm font-semibold text-gray-800">📎 Permitir subir archivo</span>
+          <span class="text-sm font-semibold text-gray-800">Permitir subir archivo</span>
         </label>
 
         <template v-if="file.enabled">
@@ -113,7 +113,7 @@
     </template>
 
     <p v-else class="text-xs text-gray-400">
-      💡 Actívalo para recuerdos o productos que el cliente deba personalizar (texto y/o archivo).
+      Actívalo para recuerdos o productos que el cliente deba personalizar (texto y/o archivo).
     </p>
   </div>
 </template>

@@ -80,9 +80,9 @@
         <p class="text-xl font-bold text-earth-900">
           ${{ formatPrice(price) }} <span class="text-sm font-normal text-earth-400">MXN</span>
         </p>
-        <!-- 💼 Precio negocio (mayoreo) -->
+        <!-- Precio negocio (mayoreo) -->
         <p v-if="wholesaleBest" class="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-primary-700">
-          💼 Precio negocio: desde
+          Precio negocio: desde
           <span class="text-primary-800">${{ formatPrice(wholesaleBest.price) }}</span>
           <span class="font-normal text-earth-400">({{ wholesaleBest.min }}+ pzas)</span>
         </p>
@@ -211,7 +211,7 @@ function formatPrice(price) {
   return Number(price).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-// 💼 Precio negocio más bajo (tramo de mayor volumen), para mostrarlo en la tarjeta.
+// Precio negocio más bajo (tramo de mayor volumen), para mostrarlo en la tarjeta.
 const wholesaleBest = computed(() => {
   const cfg = normalizeWholesale(props.wholesale)
   if (!cfg) return null

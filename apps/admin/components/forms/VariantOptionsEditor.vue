@@ -24,7 +24,7 @@
       <div v-for="(dim, di) in dimensions" :key="di" class="border border-gray-100 rounded-xl p-4 space-y-3">
         <div class="flex items-center justify-between">
           <h3 class="text-sm font-semibold text-gray-800">
-            {{ dim.type === 'Aroma' ? '🌸 Aroma' : (dim.customName || 'Opción') }}
+            {{ dim.type === 'Aroma' ? 'Aroma' : (dim.customName || 'Opción') }}
           </h3>
           <button type="button" @click="removeDimension(di)" class="text-xs text-red-500 hover:text-red-700 font-medium">Quitar</button>
         </div>
@@ -98,7 +98,7 @@
                   type="button"
                   @click="toggleBulk(di)"
                   class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors whitespace-nowrap"
-                >📋 {{ dim.bulkOpen ? 'Ocultar' : 'Carga masiva' }}</button>
+                >{{ dim.bulkOpen ? 'Ocultar' : 'Carga masiva' }}</button>
               </div>
 
               <!-- Carga masiva: pega varios valores (coma o salto de línea) -->
@@ -178,7 +178,7 @@
     </template>
 
     <p v-if="!hasVariants" class="text-xs text-gray-400">
-      💡 Sin variantes, el producto se vende tal cual con su precio y stock generales.
+      Sin variantes, el producto se vende tal cual con su precio y stock generales.
     </p>
   </div>
 </template>
