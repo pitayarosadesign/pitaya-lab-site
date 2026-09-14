@@ -28,10 +28,7 @@
         </div>
         <select v-model="filterCategory" class="px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-primary-400">
           <option value="">Todas las categorías</option>
-          <option value="velas">Velas</option>
-          <option value="aceites">Aceites</option>
-          <option value="brumas">Brumas</option>
-          <option value="recuerdos">Recuerdos / Envases</option>
+          <option v-for="c in categories" :key="c.slug" :value="c.slug">{{ c.name }}</option>
         </select>
         <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
           <button @click="filterStatus = ''" class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors" :class="filterStatus === '' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'">Todos</button>
@@ -49,6 +46,12 @@
         <span class="text-sm text-gray-500">{{ selectedIds.length }} seleccionados</span>
         <button @click="batchAction('activate')" class="px-3 py-1.5 bg-green-50 text-green-700 text-xs font-medium rounded-lg hover:bg-green-100 transition-colors">✅ Activar</button>
         <button @click="batchAction('deactivate')" class="px-3 py-1.5 bg-yellow-50 text-yellow-700 text-xs font-medium rounded-lg hover:bg-yellow-100 transition-colors">⏸️ Desactivar</button>
+        <select v-model="bulkCategory" class="px-3 py-1.5 rounded-lg border border-gray-200 text-xs bg-white outline-none focus:border-primary-400">
+          <option value="">— Categoría —</option>
+          <option value="none">Sin categoría</option>
+          <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
+        </select>
+        <button @click="batchSetCategory" class="px-3 py-1.5 bg-primary-50 text-primary-700 text-xs font-medium rounded-lg hover:bg-primary-100 transition-colors">🏷️ Asignar categoría</button>
         <button @click="confirmDelete" class="px-3 py-1.5 bg-red-50 text-red-700 text-xs font-medium rounded-lg hover:bg-red-100 transition-colors">🗑️ Eliminar</button>
         <button @click="selectedIds = []" class="px-3 py-1.5 text-gray-400 text-xs font-medium hover:text-gray-600">Deseleccionar</button>
       </div>
@@ -184,6 +187,8 @@ const supabase = useSupabase()
 const products = ref([])
 const loading = ref(true)
 const selectedIds = ref([])
+const categories = ref([])
+const bulkCategory = ref('')
 
 // Filtros
 const search = ref('')
@@ -277,6 +282,30 @@ function confirmDelete() {
   }
 }
 
+async function batchSetCategory() {
+  if (selectedIds.value.length === 0) return
+  if (!bulkCategory.value) {
+    alert('Elige una categoría en el selector')
+    return
+  }
+  const label = bulkCategory.value === 'none'
+    ? 'sin categoría'
+    : (categories.value.find(c => c.id === bulkCategory.value)?.name || 'la categoría elegida')
+  if (!confirm(`¿Asignar "${label}" a ${selectedIds.value.length} producto(s)?`)) return
+
+  try {
+    await $fetch('/api/products/batch', {
+      method: 'POST',
+      body: { action: 'set_category', ids: selectedIds.value, categoryId: bulkCategory.value },
+    })
+    selectedIds.value = []
+    bulkCategory.value = ''
+    loadProducts()
+  } catch (e) {
+    alert('Error: ' + (e.data?.message || e.message))
+  }
+}
+
 // Exportación CSV con toda la información
 async function exportCSV() {
   exporting.value = true
@@ -362,6 +391,20 @@ async function handleImport() {
   }
 }
 
+async function loadCategories() {
+  try {
+    const { data, error } = await supabase
+      .from('product_categories')
+      .select('id, slug, name')
+      .order('name', { ascending: true })
+    if (error) throw error
+    categories.value = data || []
+  } catch (e) {
+    console.warn('No se pudieron cargar las categorías:', e.message)
+    categories.value = []
+  }
+}
+
 async function loadProducts() {
   loading.value = true
   try {
@@ -377,6 +420,7 @@ async function loadProducts() {
 
 onMounted(() => {
   loadProducts()
+  loadCategories()
   generateTemplateUrl()
 })
 

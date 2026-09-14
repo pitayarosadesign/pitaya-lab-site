@@ -34,6 +34,16 @@ export default defineEventHandler(async (event) => {
           .in('id', ids)
         break
 
+      case 'set_category': {
+        const categoryId = body.categoryId === 'none' ? null : body.categoryId
+        if (!categoryId) throw new Error('Falta la categoría')
+        result = await supabaseAdmin
+          .from('products')
+          .update({ category_id: categoryId })
+          .in('id', ids)
+        break
+      }
+
       case 'delete':
         // Eliminar imágenes primero
         for (const id of ids) {
