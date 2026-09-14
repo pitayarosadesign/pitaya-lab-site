@@ -335,6 +335,7 @@
               :price="product.price"
               :product-id="product.id"
               :fragrances="product.fragrances"
+              :wholesale="product.wholesale"
               :link-query="activeFragrance ? { aroma: selectedAroma?.slug || selectedAroma?.name } : null"
             />
           </div>

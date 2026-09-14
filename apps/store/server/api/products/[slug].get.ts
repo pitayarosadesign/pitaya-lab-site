@@ -102,6 +102,9 @@ export default defineEventHandler(async (event) => {
         freeShipping: product.free_shipping,
         gtin: product.gtin,
         brand: product.brand,
+        // 💼 Mayoreo / precio negocio y 🎨 personalización
+        wholesale: product.wholesale_tiers || null,
+        personalization: product.personalization || null,
         features: [],
       }
     }

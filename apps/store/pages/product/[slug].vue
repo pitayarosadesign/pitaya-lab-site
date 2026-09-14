@@ -107,6 +107,51 @@
               Precio base del producto: <span class="font-semibold text-earth-600">${{ formatPrice(product.price) }}</span>
             </p>
 
+            <!-- 💼 Precio negocio (mayoreo) por volumen -->
+            <div v-if="wholesaleConfig" class="mb-6 rounded-2xl border border-primary-100 bg-primary-50/50 p-5">
+              <div class="flex items-center gap-2 mb-3">
+                <span class="text-lg">💼</span>
+                <h3 class="text-sm font-bold text-primary-800 uppercase tracking-wide">Precio negocio</h3>
+              </div>
+              <p class="text-sm text-earth-600 mb-3">
+                Compra por volumen y obtén mejor precio. Aplica a cualquier cliente.
+              </p>
+
+              <!-- Tramos -->
+              <div class="space-y-1.5 mb-4">
+                <div
+                  v-for="t in wholesaleConfig.tiers"
+                  :key="t.min"
+                  class="flex items-center justify-between text-sm px-3 py-2 rounded-lg transition-colors"
+                  :class="activeTier && activeTier.min === t.min ? 'bg-primary-600 text-white font-semibold' : 'bg-white text-earth-600 border border-earth-100'"
+                >
+                  <span>Desde {{ t.min }} piezas</span>
+                  <span>{{ getTierDiscountLabel(wholesaleConfig, t) }} → ${{ formatPrice(getWholesaleUnitPrice(activePrice, wholesaleConfig, t.min)) }} c/u</span>
+                </div>
+              </div>
+
+              <!-- Calculadora rápida de volumen -->
+              <div class="flex items-center gap-3">
+                <label class="text-sm font-medium text-earth-700 whitespace-nowrap">Piezas:</label>
+                <input
+                  v-model.number="wholesaleQty"
+                  type="number"
+                  min="1"
+                  class="w-24 px-3 py-2 rounded-lg border border-earth-200 focus:border-primary-400 outline-none transition-all text-sm"
+                />
+                <div class="text-sm">
+                  <span class="text-earth-500">Unitario:</span>
+                  <span class="font-bold text-primary-700 ml-1">${{ formatPrice(wholesaleUnitPrice) }}</span>
+                </div>
+              </div>
+              <p v-if="wholesaleQty > 0" class="text-sm text-earth-600 mt-2">
+                Total: <span class="font-bold text-primary-800">${{ formatPrice(wholesaleQty * wholesaleUnitPrice) }}</span> MXN
+                <span v-if="wholesaleIsActive" class="text-green-600 font-semibold ml-1">
+                  (ahorras ${{ formatPrice(wholesaleQty * (activePrice - wholesaleUnitPrice)) }})
+                </span>
+              </p>
+            </div>
+
             <!-- Descripción -->
             <p class="text-earth-600 leading-relaxed mb-6">
               {{ product.description }}
@@ -497,6 +542,13 @@
 </template>
 
 <script setup>
+import {
+  normalizeWholesale,
+  getTierForQty,
+  getWholesaleUnitPrice,
+  getTierDiscountLabel,
+} from '~/composables/useWholesale'
+
 const route = useRoute()
 const supabase = useNuxtApp().$supabase
 const cart = useCartStore()
@@ -752,6 +804,13 @@ const activeSku = computed(() => {
   if (selectedVariant.value?.sku) return selectedVariant.value.sku
   return product.value?.sku || ''
 })
+
+// 💼 Mayoreo / precio negocio por volumen
+const wholesaleConfig = computed(() => normalizeWholesale(product.value?.wholesale))
+const wholesaleQty = ref(20)
+const activeTier = computed(() => getTierForQty(wholesaleConfig.value, wholesaleQty.value))
+const wholesaleUnitPrice = computed(() => getWholesaleUnitPrice(activePrice.value, wholesaleConfig.value, wholesaleQty.value))
+const wholesaleIsActive = computed(() => !!activeTier.value)
 
 // GTIN activo (el de la variante si existe)
 const activeGtin = computed(() => {
