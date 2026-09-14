@@ -18,14 +18,22 @@ export default defineEventHandler(async (event) => {
     //   'evento'            -> recuerdos para el cotizador /b2b
     //   'mayoreo'           -> reservado a futuro
     const allowed = ['directa', 'evento', 'mayoreo']
-    const channelValue = allowed.includes(String(channel)) ? String(channel) : 'directa'
+    const channelValue = allowed.includes(String(channel)) ? String(channel) : null
 
     let query = supabase
       .from('products')
       .select('*, product_categories(name, slug), product_images(url, alt_text, sort_order, is_primary), product_variants(id, name, image_url, fragrance_profile_id, fragrance_profiles(id, name, emoji, subtitle, slug, image_url, experience, notes, description))')
-      .eq('sales_channel', channelValue)
       .eq('is_active', true)
-      .order('sort_order', { ascending: true, nullsFirst: false })
+
+    // Sin canal explícito, el catálogo público muestra menudeo + eventos/recuerdos.
+    // Con `channel` explícito (evento/mayoreo/directa) se filtra solo ese canal.
+    if (channelValue) {
+      query = query.eq('sales_channel', channelValue)
+    } else {
+      query = query.in('sales_channel', ['directa', 'evento'])
+    }
+
+    query = query.order('sort_order', { ascending: true, nullsFirst: false })
 
     // Filtro por categoría
     if (category) {

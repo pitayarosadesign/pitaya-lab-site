@@ -98,10 +98,10 @@
           <label class="block text-sm font-medium text-gray-700 mb-1">Canal de venta</label>
           <select v-model="form.sales_channel" class="w-full md:max-w-sm px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all">
             <option value="directa">Menudeo (tienda pública / catálogo de la web)</option>
-            <option value="evento">Eventos / Recuerdos (solo cotizador /b2b)</option>
+            <option value="evento">Eventos / Recuerdos (catálogo y cotizador /b2b)</option>
             <option value="mayoreo">Comercial por volumen (reservado a futuro)</option>
           </select>
-          <p class="text-xs text-gray-400 mt-1">💡 Los de <b>Eventos</b> NO salen en el catálogo público ni en feeds: solo aparecen en el cotizador de recuerdos (/b2b).</p>
+          <p class="text-xs text-gray-400 mt-1">💡 Los de <b>Eventos</b> salen en el catálogo público (filtro "Recuerdos") y en el cotizador de recuerdos (/b2b), pero NO en los feeds.</p>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>

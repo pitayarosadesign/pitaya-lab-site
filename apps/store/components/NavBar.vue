@@ -34,14 +34,37 @@
 
         <!-- Navegación desktop -->
         <nav class="hidden md:flex items-center gap-7">
-          <NuxtLink
+          <div
             v-for="link in navLinks"
             :key="link.path"
-            :to="link.path"
-            class="text-sm font-medium text-earth-600 hover:text-primary-600 transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-primary-500 after:transition-all hover:after:w-full pb-1"
+            class="relative group"
           >
-            {{ link.label }}
-          </NuxtLink>
+            <NuxtLink
+              :to="link.path"
+              class="inline-flex items-center gap-1 text-sm font-medium text-earth-600 hover:text-primary-600 transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-primary-500 after:transition-all hover:after:w-full pb-1"
+            >
+              {{ link.label }}
+              <svg v-if="hasChildren(link)" class="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </NuxtLink>
+            <!-- Submenú -->
+            <div
+              v-if="hasChildren(link)"
+              class="absolute left-0 top-full pt-3 opacity-0 invisible translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-150 z-50"
+            >
+              <div class="bg-white rounded-xl border border-earth-100 shadow-lg py-2 min-w-[220px]">
+                <NuxtLink
+                  v-for="child in link.children"
+                  :key="child.path"
+                  :to="child.path"
+                  class="block px-4 py-2 text-sm text-earth-600 hover:bg-primary-50 hover:text-primary-700 transition-colors"
+                >
+                  {{ child.label }}
+                </NuxtLink>
+              </div>
+            </div>
+          </div>
           <!-- Carrito -->
           <button
             @click="cart.openCart()"
@@ -103,15 +126,24 @@
     >
       <div v-if="mobileMenuOpen" class="md:hidden bg-white border-t border-earth-100 shadow-xl max-h-[calc(100dvh-4rem)] overflow-y-auto">
         <nav class="px-4 py-2 space-y-1">
-          <NuxtLink
-            v-for="link in navLinks"
-            :key="link.path"
-            :to="link.path"
-            @click="mobileMenuOpen = false"
-            class="block py-3 text-earth-700 hover:text-primary-600 font-medium transition-colors border-b border-earth-50"
-          >
-            {{ link.label }}
-          </NuxtLink>
+          <template v-for="link in navLinks" :key="link.path">
+            <NuxtLink
+              :to="link.path"
+              @click="mobileMenuOpen = false"
+              class="block py-3 text-earth-700 hover:text-primary-600 font-medium transition-colors border-b border-earth-50"
+            >
+              {{ link.label }}
+            </NuxtLink>
+            <NuxtLink
+              v-for="child in link.children || []"
+              :key="child.path"
+              :to="child.path"
+              @click="mobileMenuOpen = false"
+              class="block py-2 pl-5 text-sm text-earth-500 hover:text-primary-600 transition-colors border-b border-earth-50"
+            >
+              {{ child.label }}
+            </NuxtLink>
+          </template>
           <button
             @click="mobileMenuOpen = false; cart.openCart()"
             class="flex items-center justify-between w-full py-3 text-earth-700 hover:text-primary-600 font-medium transition-colors"
@@ -151,6 +183,11 @@ const brand = reactive({ ...defaultBrand })
 // 🧭 Enlaces del menú (configurables desde el admin). El fallback vive en
 // utils/siteDefaults.ts y solo aplica si no hay `nav_links` en Supabase.
 const navLinks = ref(defaultNavLinks.map(link => ({ ...link })))
+
+// Indica si un enlace tiene sub-enlaces (submenú) para renderizar el dropdown.
+function hasChildren(link) {
+  return Array.isArray(link.children) && link.children.length > 0
+}
 
 // Estado de scroll: al bajar unos px se oculta la barra promocional y
 // se mantiene compacta la navbar para no tapar el contenido en móvil.
