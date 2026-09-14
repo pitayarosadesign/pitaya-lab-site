@@ -35,29 +35,45 @@
         <!-- Navegación desktop -->
         <nav class="hidden md:flex items-center gap-7">
           <div
-            v-for="link in navLinks"
+            v-for="(link, index) in navLinks"
             :key="link.path"
-            class="relative group"
+            class="relative"
+            @mouseenter="openMenuIndex = index"
+            @mouseleave="openMenuIndex = null"
           >
-            <NuxtLink
-              :to="link.path"
-              class="inline-flex items-center gap-1 text-sm font-medium text-earth-600 hover:text-primary-600 transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-primary-500 after:transition-all hover:after:w-full pb-1"
+            <!-- Con submenú: botón que abre el dropdown con hover o clic -->
+            <button
+              v-if="hasChildren(link)"
+              type="button"
+              @click="openMenuIndex = openMenuIndex === index ? null : index"
+              class="inline-flex items-center gap-1 text-sm font-medium text-earth-600 hover:text-primary-600 transition-colors pb-1"
             >
               {{ link.label }}
-              <svg v-if="hasChildren(link)" class="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-3 h-3 opacity-60 transition-transform" :class="openMenuIndex === index ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
               </svg>
+            </button>
+            <!-- Sin submenú: enlace normal -->
+            <NuxtLink
+              v-else
+              :to="link.path"
+              class="text-sm font-medium text-earth-600 hover:text-primary-600 transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-primary-500 after:transition-all hover:after:w-full pb-1"
+            >
+              {{ link.label }}
             </NuxtLink>
+
             <!-- Submenú -->
             <div
               v-if="hasChildren(link)"
-              class="absolute left-0 top-full pt-3 opacity-0 invisible translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-150 z-50"
+              v-show="openMenuIndex === index"
+              class="absolute left-0 top-full pt-3 z-50"
             >
               <div class="bg-white rounded-xl border border-earth-100 shadow-lg py-2 min-w-[220px]">
                 <NuxtLink
                   v-for="child in link.children"
                   :key="child.path"
                   :to="child.path"
+                  @click="openMenuIndex = null"
                   class="block px-4 py-2 text-sm text-earth-600 hover:bg-primary-50 hover:text-primary-700 transition-colors"
                 >
                   {{ child.label }}
@@ -171,6 +187,8 @@ const cart = useCartStore()
 const AMAZON_LINK = 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329?'
 
 const mobileMenuOpen = ref(false)
+// Índice del submenú abierto en la navegación desktop (hover o clic).
+const openMenuIndex = ref(null)
 
 // 🚚 Barra de envíos (configurable desde el admin). Por defecto DESACTIVADA
 // hasta que se cargue el registro `shipping_bar` de Supabase. Si no existe ese

@@ -3,7 +3,7 @@
     <div class="flex items-center justify-between">
       <div>
         <h2 class="text-lg font-bold text-gray-900">🧭 Menú de Navegación</h2>
-        <p class="text-sm text-gray-500 mt-0.5">Los enlaces de la barra superior. Puedes agregar sub-enlaces (submenú) a cada entrada.</p>
+        <p class="text-sm text-gray-500 mt-0.5">Los enlaces de la barra superior. Cada entrada puede tener un submenú (p. ej. Catálogo → categorías).</p>
       </div>
       <button
         @click="saveMenu"
@@ -36,10 +36,24 @@
 
         <!-- Submenú -->
         <div class="pl-6 border-l-2 border-primary-100 space-y-2">
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between gap-2">
             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Submenú</p>
-            <button type="button" @click="addChild(link)" class="text-xs font-medium text-primary-600 hover:text-primary-700">+ Agregar sub-enlace</button>
+            <div class="flex items-center gap-2">
+              <button type="button" @click="addAllCatalogPresets(link)" class="text-xs font-medium text-primary-600 hover:text-primary-700">+ Categorías y Todos</button>
+              <button type="button" @click="addChild(link)" class="text-xs font-medium text-primary-600 hover:text-primary-700">+ Sub-enlace manual</button>
+            </div>
           </div>
+
+          <!-- Preset rápido -->
+          <div class="flex items-center gap-2">
+            <select v-model="link._preset" class="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm bg-white">
+              <option value="">— Predefinido: todos / categoría —</option>
+              <option v-for="p in catalogPresets" :key="p.path" :value="p.path">{{ p.label }}</option>
+            </select>
+            <button type="button" @click="addChildPreset(link)" class="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-600 hover:bg-gray-100 transition-colors">+</button>
+          </div>
+
+          <!-- Hijos -->
           <div v-for="(child, ci) in link.children" :key="ci" class="flex items-center gap-2">
             <div class="flex flex-col gap-0.5">
               <button type="button" @click="moveChild(link, ci, -1)" :disabled="ci === 0" class="text-gray-400 hover:text-gray-600 disabled:opacity-25 text-xs leading-none" title="Subir">▲</button>
@@ -86,6 +100,7 @@ const links = ref([])
 const saving = ref(false)
 const preset = ref('')
 const customPages = ref([])
+const categories = ref([])
 
 // Páginas fijas de la tienda (rutas estáticas)
 const staticPages = [
@@ -100,6 +115,12 @@ const staticPages = [
   { label: 'FAQ', path: '/faq' },
 ]
 
+// Presets rápidos para submenús: "Todos los productos" + categorías del catálogo.
+const catalogPresets = computed(() => [
+  { label: 'Todos los productos', path: '/catalog' },
+  ...categories.value.map(c => ({ label: c.name, path: `/catalog?categoria=${c.slug}` })),
+])
+
 function normalizeLink(l) {
   return {
     label: l.label || '',
@@ -107,6 +128,7 @@ function normalizeLink(l) {
     children: Array.isArray(l.children)
       ? l.children.map(c => ({ label: c.label || '', path: c.path || '' }))
       : [],
+    _preset: '',
   }
 }
 
@@ -121,11 +143,11 @@ async function loadMenu() {
     if (data?.value && Array.isArray(data.value) && data.value.length) {
       links.value = data.value.map(normalizeLink)
     } else {
-      links.value = staticPages.map(p => ({ ...p, children: [] }))
+      links.value = staticPages.map(p => ({ ...p, children: [], _preset: '' }))
     }
   } catch (e) {
     console.warn('No se pudo cargar el menú:', e.message)
-    links.value = staticPages.map(p => ({ ...p, children: [] }))
+    links.value = staticPages.map(p => ({ ...p, children: [], _preset: '' }))
   }
 }
 
@@ -144,17 +166,30 @@ async function loadCustomPages() {
   }
 }
 
+async function loadCategories() {
+  try {
+    const { data, error } = await supabase
+      .from('product_categories')
+      .select('slug, name')
+      .order('name', { ascending: true })
+    if (error) throw error
+    categories.value = data || []
+  } catch (e) {
+    console.warn('No se pudieron cargar las categorías:', e.message)
+    categories.value = []
+  }
+}
+
 function addPreset() {
   if (!preset.value) return
   const existing = staticPages.find(p => p.path === preset.value)
   const custom = customPages.value.find(p => `/paginas/${p.slug}` === preset.value)
   const label = existing?.label || custom?.title || preset.value
-  // Evitar duplicados
   if (links.value.some(l => l.path === preset.value)) {
     alert('Ese enlace ya está en el menú')
     return
   }
-  links.value.push({ label, path: preset.value, children: [] })
+  links.value.push({ label, path: preset.value, children: [], _preset: '' })
   preset.value = ''
 }
 
@@ -183,6 +218,28 @@ function moveChild(link, ci, delta) {
   if (!Array.isArray(link.children) || to < 0 || to >= link.children.length) return
   const [moved] = link.children.splice(ci, 1)
   link.children.splice(to, 0, moved)
+}
+
+function addChildPreset(link) {
+  const presetPath = link._preset
+  if (!presetPath) return
+  const p = catalogPresets.value.find(c => c.path === presetPath)
+  if (!p) return
+  if (!Array.isArray(link.children)) link.children = []
+  if (!link.children.some(c => c.path === p.path)) {
+    link.children.push({ label: p.label, path: p.path })
+  }
+  link._preset = ''
+}
+
+function addAllCatalogPresets(link) {
+  if (!Array.isArray(link.children)) link.children = []
+  const existing = new Set(link.children.map(c => c.path))
+  for (const p of catalogPresets.value) {
+    if (!existing.has(p.path)) {
+      link.children.push({ label: p.label, path: p.path })
+    }
+  }
 }
 
 async function saveMenu() {
@@ -219,5 +276,6 @@ async function saveMenu() {
 onMounted(() => {
   loadMenu()
   loadCustomPages()
+  loadCategories()
 })
 </script>
