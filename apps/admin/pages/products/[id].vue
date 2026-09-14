@@ -228,37 +228,15 @@
         </div>
       </div>
 
-      <!-- 📦 Mayoreo -->
+      <!-- 💼 Mayoreo / Precio de Negocio -->
       <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-lg font-semibold text-gray-900">📦 Mayoreo</h2>
-            <p class="text-sm text-gray-400 mt-0.5">Configura si este producto participa en la calculadora de mayoreo B2B</p>
-          </div>
-          <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" v-model="form.wholesale_enabled" class="sr-only peer">
-            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-            <span class="ms-3 text-sm font-medium" :class="form.wholesale_enabled ? 'text-primary-600' : 'text-gray-400'">
-              {{ form.wholesale_enabled ? 'Disponible para mayoreo' : 'No disponible' }}
-            </span>
-          </label>
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900">💼 Mayoreo / Precio de Negocio</h2>
+          <p class="text-sm text-gray-400 mt-0.5">
+            Define tramos por cantidad. El catálogo mostrará automáticamente el "precio negocio" según el volumen.
+          </p>
         </div>
-
-        <div v-if="form.wholesale_enabled" class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Precio de mayoreo ($)</label>
-            <div class="relative">
-              <span class="absolute left-3 top-2.5 text-gray-400">$</span>
-              <input v-model="form.wholesale_price" type="number" step="0.01" min="0" placeholder="Opcional — usa el descuento por tier" class="w-full pl-8 pr-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all" />
-            </div>
-            <p class="text-xs text-gray-400 mt-1">Si lo dejas vacío, se aplica el descuento por tier al precio retail.</p>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad mínima</label>
-            <input v-model="form.wholesale_min_qty" type="number" min="1" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all" />
-            <p class="text-xs text-gray-400 mt-1">Mínimo de piezas para que aplique mayoreo (default: 20).</p>
-          </div>
-        </div>
+        <FormsProductWholesaleEditor v-model="form.wholesale_tiers" />
       </div>
 
       <!-- Variantes por dimensiones (Recuerdos / Eventos) -->
@@ -596,6 +574,7 @@ const form = reactive({
   is_active: true, is_featured: false, google_category: '', free_shipping: false,
   amazon_link: '', compare_at_price: '', cost_price: '',
   wholesale_enabled: false, wholesale_price: '', wholesale_min_qty: 20,
+  wholesale_tiers: null,
   category: '', sales_channel: 'directa',
   personalization: null,
 })
@@ -725,6 +704,7 @@ async function loadProduct() {
     form.wholesale_enabled = data.wholesale_enabled || false
     form.wholesale_price = data.wholesale_price || ''
     form.wholesale_min_qty = data.wholesale_min_qty || 20
+    form.wholesale_tiers = data.wholesale_tiers || null
     form.sales_channel = data.sales_channel || 'directa'
     form.personalization = data.personalization || null
     form.images = data.images || []
@@ -1032,6 +1012,7 @@ async function handleSave() {
           wholesale_enabled: form.wholesale_enabled,
           wholesale_price: form.wholesale_price ? parseFloat(form.wholesale_price) : null,
           wholesale_min_qty: parseInt(form.wholesale_min_qty) || 20,
+          wholesale_tiers: form.wholesale_tiers,
           category_id: categoryId,
           sales_channel: form.sales_channel,
           personalization: form.personalization,

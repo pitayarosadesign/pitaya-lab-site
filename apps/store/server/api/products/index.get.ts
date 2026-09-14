@@ -103,6 +103,9 @@ export default defineEventHandler(async (event) => {
         variantImageByFragrance,
         stock: p.stock,
         isFeatured: p.is_featured,
+        // Mayoreo / precio negocio por tramos de cantidad
+        wholesale: p.wholesale_tiers || null,
+        personalization: p.personalization || null,
         amazonLink: p.amazon_link,
         amazonAsin: p.amazon_asin,
         amazonPrice: p.amazon_price,
