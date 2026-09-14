@@ -42,27 +42,7 @@ const props = defineProps({
 const title = computed(() => props.content?.title || '¿Para quién es PITAYA LAB B2B?')
 const subtitle = computed(() => props.content?.subtitle || 'Tres formas de trabajar juntos, según tu tipo de negocio o evento.')
 
-// Contenido por defecto desde site_config (editable en el panel admin)
-const defaultCards = ref([])
-const loadedDefaults = ref(false)
-
-async function loadDefaults() {
-  if (loadedDefaults.value) return
-  loadedDefaults.value = true
-  // Cargar todos los defaults de una sola vez (compartido entre secciones)
-  const defaults = await useSectionDefaultsShared()
-  const sectionDefaults = defaults?.['b2b_audience']
-  if (sectionDefaults?.cards && Array.isArray(sectionDefaults.cards)) {
-    defaultCards.value = sectionDefaults.cards
-  }
-}
-
-onMounted(loadDefaults)
-
 const cards = computed(() => {
-  const items = props.content?.cards || []
-  if (items.length) return items
-  // Fallback: contenido editable desde site_config (si no hay configuración, se oculta la sección)
-  return defaultCards.value
+  return Array.isArray(props.content?.cards) ? props.content.cards : []
 })
 </script>

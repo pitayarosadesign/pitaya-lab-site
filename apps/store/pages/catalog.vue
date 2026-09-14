@@ -1208,9 +1208,24 @@ async function loadProducts() {
   }
 }
 
+// Aplicar categoría desde la URL (?categoria=slug) para enlaces directos del menú
+// (ej. /catalog?categoria=recuerdos). Se valida contra las categorías cargadas.
+function applyCategoryFromUrl() {
+  try {
+    const route = useRoute()
+    const slug = route.query.categoria
+    if (!slug || categories.value.length === 0) return
+    const target = String(slug).toLowerCase()
+    const exists = categories.value.some(c => c.id && String(c.id).toLowerCase() === target)
+    if (exists) activeCategory.value = target
+  } catch (e) {
+    console.warn('No se pudo aplicar la categoría desde la URL', e)
+  }
+}
+
 onMounted(() => {
   loadCatalogConfig()
-  loadCategories()
+  loadCategories().then(applyCategoryFromUrl)
   loadProducts()
   loadAromas().then(applyAromaFromUrl)
 })

@@ -4,12 +4,12 @@
     <section class="relative py-24 bg-gradient-to-b from-primary-50 to-white overflow-hidden">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="max-w-3xl mx-auto text-center">
-          <span class="text-primary-600 font-semibold text-sm uppercase tracking-wider">⭐ Reseña de producto</span>
+          <span class="text-primary-600 font-semibold text-sm uppercase tracking-wider">{{ pageContent.header.badge }}</span>
           <h1 class="text-4xl md:text-5xl font-serif font-bold text-earth-900 mt-3 mb-6">
-            Cuéntanos tu experiencia con <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-amber-500">PITAYA LAB</span>
+            {{ pageContent.header.title }} <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-amber-500">{{ pageContent.header.highlight }}</span>
           </h1>
           <p class="text-lg text-earth-600 leading-relaxed">
-            Tu opinión nos ayuda a seguir creando aromas que transformen hogares como el tuyo. ¡Gracias por compartirla! 💚
+            {{ pageContent.header.description }}
           </p>
         </div>
       </div>
@@ -27,16 +27,15 @@
                 <path fill-rule="evenodd" d="M12 2a10 10 0 100 20 10 10 0 000-20zm4.78 7.22a.75.75 0 010 1.06l-5 5a.75.75 0 01-1.06 0l-2.5-2.5a.75.75 0 011.06-1.06l1.97 1.97 4.47-4.47a.75.75 0 011.06 0z" clip-rule="evenodd"/>
               </svg>
             </div>
-            <h3 class="text-2xl font-serif font-bold text-earth-900 mb-3">¡Gracias por tu reseña! 💚</h3>
+            <h3 class="text-2xl font-serif font-bold text-earth-900 mb-3">{{ pageContent.success.title }}</h3>
             <p class="text-earth-500 max-w-md mx-auto">
-              Hemos recibido tu opinión. Pronto aparecerá publicada en nuestra página.
-              ¡Nos alegra mucho saber de ti!
+              {{ pageContent.success.description }}
             </p>
             <NuxtLink
-              to="/catalog"
+              :to="pageContent.success.button_link"
               class="inline-block mt-8 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold py-3 px-8 rounded-xl transition-all hover:shadow-lg hover:shadow-primary-200"
             >
-              Explorar más productos
+              {{ pageContent.success.button_text }}
             </NuxtLink>
           </div>
 
@@ -184,6 +183,44 @@ useSeoMeta({
   description: 'Cuéntanos tu experiencia con los productos PITAYA LAB. Tu opinión nos ayuda a mejorar y seguir creando aromas que transforman hogares.',
   robots: 'noindex, follow',
 })
+
+const supabase = useNuxtApp().$supabase
+
+// Contenido editorial de la página, editable desde el panel admin vía site_config.
+const pageContent = reactive({
+  header: {
+    badge: '⭐ Reseña de producto',
+    title: 'Cuéntanos tu experiencia con',
+    highlight: 'PITAYA LAB',
+    description: 'Tu opinión nos ayuda a seguir creando aromas que transformen hogares como el tuyo. ¡Gracias por compartirla! 💚',
+  },
+  success: {
+    title: '¡Gracias por tu reseña! 💚',
+    description: 'Hemos recibido tu opinión. Pronto aparecerá publicada en nuestra página. ¡Nos alegra mucho saber de ti!',
+    button_text: 'Explorar más productos',
+    button_link: '/catalog',
+  },
+})
+
+async function loadConfig() {
+  if (!supabase) return
+  try {
+    const { data, error } = await supabase
+      .from('site_config')
+      .select('key, value')
+      .eq('key', 'resena_page')
+      .maybeSingle()
+    if (error) throw error
+    if (data?.value) {
+      if (data.value.header) Object.assign(pageContent.header, data.value.header)
+      if (data.value.success) Object.assign(pageContent.success, data.value.success)
+    }
+  } catch (e) {
+    console.warn('Error cargando configuración de Reseña:', e.message)
+  }
+}
+
+onMounted(loadConfig)
 
 const form = reactive({
   name: '',

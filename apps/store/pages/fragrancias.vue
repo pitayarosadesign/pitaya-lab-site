@@ -5,16 +5,12 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="max-w-3xl mx-auto text-center">
           <span class="inline-flex items-center gap-1.5 text-primary-600 font-semibold text-sm uppercase tracking-wider">
-            🌸 Guía de Fragancias
+            {{ pageContent.header.badge }}
           </span>
           <h1 class="text-4xl md:text-5xl font-serif font-bold text-earth-900 mt-3 mb-6 leading-tight">
-            Encuentra tu <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-amber-500">aroma ideal</span>
+            {{ pageContent.header.title }} <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-amber-500">{{ pageContent.header.highlight }}</span>
           </h1>
-          <p class="text-lg text-earth-600 leading-relaxed">
-            Nuestras fragancias no son solo un producto: cada una es una historia sensorial. Aquí puedes
-            descubrirlas por su personalidad y ver <strong class="text-earth-800">en qué formato llevarla</strong>
-            (vela, aceite, bruma, jabón o crema).
-          </p>
+          <p class="text-lg text-earth-600 leading-relaxed" v-html="pageContent.header.description"></p>
         </div>
       </div>
     </section>
@@ -129,6 +125,35 @@
 </template>
 
 <script setup>
+const supabase = useNuxtApp().$supabase
+
+// Contenido editorial (encabezado) editable desde el panel admin vía site_config.
+const pageContent = reactive({
+  header: {
+    badge: '🌸 Guía de Fragancias',
+    title: 'Encuentra tu',
+    highlight: 'aroma ideal',
+    description: 'Nuestras fragancias no son solo un producto: cada una es una historia sensorial. Aquí puedes descubrirlas por su personalidad y ver <strong class="text-earth-800">en qué formato llevarla</strong> (vela, aceite, bruma, jabón o crema).',
+  },
+})
+
+async function loadPageContent() {
+  if (!supabase) return
+  try {
+    const { data, error } = await supabase
+      .from('site_config')
+      .select('key, value')
+      .eq('key', 'fragrancias_page')
+      .maybeSingle()
+    if (error) throw error
+    if (data?.value?.header) Object.assign(pageContent.header, data.value.header)
+  } catch (e) {
+    console.warn('Error cargando configuración de Fragancias:', e.message)
+  }
+}
+
+onMounted(loadPageContent)
+
 const loading = ref(true)
 const fragrances = ref([])
 const activeFiltro = ref('todas')

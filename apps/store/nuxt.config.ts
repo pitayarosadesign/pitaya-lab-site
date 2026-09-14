@@ -109,6 +109,11 @@ export default defineNuxtConfig({
     },
   ],
 
+  // Redirección legada (SEO): /recuerdos ahora es una categoría del catálogo
+  routeRules: {
+    '/recuerdos': { redirect: { to: '/catalog?categoria=recuerdos', statusCode: 301 } },
+  },
+
   sitemap: {
     hostname: 'https://www.pitayalab.com.mx',
     gzip: true,

@@ -73,7 +73,7 @@ const staticPages = [
   { label: 'Nuestra Filosofía', path: '/philosophy' },
   { label: 'Guía de Fragancias', path: '/fragrancias' },
   { label: 'Catálogo', path: '/catalog' },
-  { label: 'Recuerdos', path: '/recuerdos' },
+  { label: 'Recuerdos', path: '/catalog?categoria=recuerdos' },
   { label: 'Mayoreo & Corporativo', path: '/b2b' },
   { label: 'Contacto', path: '/contact' },
   { label: 'FAQ', path: '/faq' },

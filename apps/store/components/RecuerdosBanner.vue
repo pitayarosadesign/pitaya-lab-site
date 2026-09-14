@@ -28,7 +28,7 @@
               :style="{ width: `${100 / visibleCount}%` }"
             >
               <NuxtLink
-                to="/recuerdos"
+                to="/catalog?categoria=recuerdos"
                 class="block bg-white/10 backdrop-blur-sm border border-white/15 rounded-3xl overflow-hidden hover:bg-white/15 hover:border-amber-300/40 transition-all group h-full"
               >
                 <div class="aspect-square overflow-hidden bg-white/5">
@@ -78,7 +78,7 @@
       <!-- CTA principal -->
       <div class="text-center mt-10">
         <NuxtLink
-          to="/recuerdos"
+          to="/catalog?categoria=recuerdos"
           class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-earth-900 font-semibold px-8 py-4 rounded-full transition-all hover:shadow-xl hover:shadow-amber-500/30"
         >
           💍 Arma tu recuerdo personalizado

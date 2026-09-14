@@ -1,5 +1,7 @@
 <template>
   <div class="max-w-5xl mx-auto space-y-6">
+    <EditorPageTabs active="paginas" />
+
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>

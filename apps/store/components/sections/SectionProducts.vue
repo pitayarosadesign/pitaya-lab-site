@@ -57,11 +57,35 @@ const curatedIds = computed(() => {
   return Array.isArray(ids) && ids.length ? ids.filter(Boolean) : []
 })
 
-// Carga los productos. Si hay `product_ids` (curated) carga SOLO esos en el
-// orden elegido; si no, carga los primeros `max_products` activos de venta
-// directa ordenados por sort_order (comportamiento por defecto).
+// Ids de "recomendados" (selección manual global en site_config).
+const recommendedIds = ref([])
+
+async function loadRecommendedIds() {
+  if (!supabase) return
+  try {
+    const { data, error } = await supabase
+      .from('site_config')
+      .select('value')
+      .eq('key', 'recommended_products')
+      .maybeSingle()
+    if (error) throw error
+    const ids = data?.value
+    recommendedIds.value = Array.isArray(ids) ? ids.filter(Boolean) : []
+  } catch (e) {
+    console.warn('Error cargando productos recomendados:', e.message)
+    recommendedIds.value = []
+  }
+}
+
+// Carga los productos. Prioridad: `product_ids` (curated por sección) → ids
+// "recomendados" (site_config) → primeros `max_products` activos por sort_order.
 async function loadProducts() {
   if (!supabase) return
+
+  // Los "recomendados" (site_config) son el default; una selección manual
+  // en la propia sección (product_ids) tiene prioridad sobre ellos.
+  await loadRecommendedIds()
+  const ids = curatedIds.value.length ? curatedIds.value : recommendedIds.value
 
   try {
     // Subconsulta al catálogo restringida a productos de venta directa + activos.
@@ -71,8 +95,8 @@ async function loadProducts() {
       .eq('sales_channel', 'directa')
       .eq('is_active', true)
 
-    if (curatedIds.value.length) {
-      query = query.in('id', curatedIds.value)
+    if (ids.length) {
+      query = query.in('id', ids)
       // Sin límite: mostramos exactamente la selección; el orden se respeta abajo.
     } else {
       query = query.order('sort_order', { ascending: true }).limit(maxProducts.value)
@@ -81,7 +105,7 @@ async function loadProducts() {
     const { data, error } = await query
     if (error) throw error
 
-    // Ordenar según la selección curada (Supabase `.in()` no garantiza el orden).
+    // Ordenar según la selección manual (Supabase `.in()` no garantiza el orden).
     let list = (data || []).map(p => {
       const primaryImg = p.product_images?.find(img => img.is_primary) || p.product_images?.[0]
       return {
@@ -98,9 +122,9 @@ async function loadProducts() {
       }
     })
 
-    if (curatedIds.value.length) {
+    if (ids.length) {
       const byId = new Map(list.map(p => [p.dbId, p]))
-      list = curatedIds.value.map(id => byId.get(id)).filter(Boolean)
+      list = ids.map(id => byId.get(id)).filter(Boolean)
     }
 
     products.value = list

@@ -54,33 +54,9 @@ useSeoMeta({
 
 const supabase = useNuxtApp().$supabase
 
-// Cargar secciones dinámicas desde la base de datos
-const sections = ref([])
-const loading = ref(true)
-
-async function loadSections() {
-  if (!supabase) {
-    loading.value = false
-    return
-  }
-
-  try {
-    const { data, error } = await supabase
-      .from('page_sections')
-      .select('*')
-      .eq('page', 'home')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true })
-
-    if (error) throw error
-    sections.value = data || []
-  } catch (e) {
-    console.warn('Error cargando secciones, usando fallback:', e.message)
-    sections.value = []
-  } finally {
-    loading.value = false
-  }
-}
+// Secciones dinámicas de la portada (page_sections). El composable compartido
+// se encarga de cargarlas; si quedan vacías, la plantilla muestra el fallback.
+const { sections, loading } = usePageSections('home')
 
 // 🏷️ JSON-LD Schema para SEO - Organization
 const schemaOrg = computed(() => ({
@@ -151,7 +127,5 @@ useHead({
   ],
 })
 
-onMounted(async () => {
-  await Promise.all([loadSections(), loadProductsForSchema()])
-})
+onMounted(loadProductsForSchema)
 </script>

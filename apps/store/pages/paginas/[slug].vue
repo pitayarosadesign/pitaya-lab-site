@@ -51,13 +51,15 @@ const route = useRoute()
 const supabase = useNuxtApp().$supabase
 
 const page = ref(null)
-const sections = ref([])
 const loading = ref(true)
+
+// Secciones de la página (page_sections), cargadas por el composable
+// compartido. Se recargan automáticamente al cambiar el slug de la ruta.
+const { sections } = usePageSections(computed(() => String(route.params.slug || '').trim()))
 
 async function loadPage() {
   loading.value = true
   page.value = null
-  sections.value = []
 
   if (!supabase) {
     loading.value = false
@@ -82,17 +84,6 @@ async function loadPage() {
     }
 
     page.value = pageData
-
-    // 2. Cargar sus secciones activas
-    const { data: secData, error: secError } = await supabase
-      .from('page_sections')
-      .select('*')
-      .eq('page', slug)
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true })
-
-    if (secError) throw secError
-    sections.value = secData || []
   } catch (e) {
     console.warn(`Error cargando página ${route.params.slug}:`, e.message)
     page.value = null

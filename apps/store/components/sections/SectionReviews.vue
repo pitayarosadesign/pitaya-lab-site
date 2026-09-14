@@ -93,23 +93,9 @@ const props = defineProps({
 // Cliente Supabase público (anon). Con RLS solo lee las reseñas aprobadas.
 const supabase = useNuxtApp().$supabase
 
-// Defaults desde site_config (editable en el panel admin)
-const defaultReviews = ref([])
-const loadedDefaults = ref(false)
 // Reseñas de clientes aprobadas (tabla `reviews`)
 const clientReviews = ref([])
 const loadedClient = ref(false)
-
-async function loadDefaults() {
-  if (loadedDefaults.value) return
-  loadedDefaults.value = true
-  // Cargar todos los defaults de una sola vez (compartido entre secciones)
-  const defaults = await useSectionDefaultsShared()
-  const sectionDefaults = defaults?.reviews
-  if (sectionDefaults?.items && Array.isArray(sectionDefaults.items)) {
-    defaultReviews.value = sectionDefaults.items
-  }
-}
 
 // Carga las reseñas de clientes APROBADAS desde la tabla `reviews`
 async function loadClientReviews() {
@@ -140,18 +126,13 @@ async function loadClientReviews() {
   }
 }
 
-onMounted(() => {
-  loadDefaults()
-  loadClientReviews()
-})
+onMounted(loadClientReviews)
 
 const reviews = computed(() => {
-  // Combinar: reseñas manuales (editadas) + reseñas aprobadas de clientes
-  const manual = Array.isArray(props.content.items) ? props.content.items
-    : (defaultReviews.value.length ? defaultReviews.value : [])
-
+  // Combinar: reseñas manuales (editadas en page_sections) + reseñas aprobadas de clientes
+  const manual = Array.isArray(props.content.items) ? props.content.items : []
   const combined = [...clientReviews.value, ...manual]
-  return combined.length ? combined : defaultReviews.value
+  return combined
 })
 
 const reviewsContainer = ref(null)

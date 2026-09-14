@@ -18,33 +18,9 @@ const props = defineProps({
   settings: { type: Object, default: () => ({}) },
 })
 
-// Contenido por defecto desde site_config (editable en el panel admin)
-const defaultFaqs = ref([])
-const defaultTitle = ref('')
-const loadedDefaults = ref(false)
-
-async function loadDefaults() {
-  if (loadedDefaults.value) return
-  loadedDefaults.value = true
-  // Cargar todos los defaults de una sola vez (compartido entre secciones)
-  const defaults = await useSectionDefaultsShared()
-  const sectionDefaults = defaults?.['b2b_faq']
-  if (sectionDefaults?.faqs && Array.isArray(sectionDefaults.faqs)) {
-    defaultFaqs.value = sectionDefaults.faqs
-  }
-  if (sectionDefaults?.title) {
-    defaultTitle.value = sectionDefaults.title
-  }
-}
-
-onMounted(loadDefaults)
-
-const title = computed(() => props.content?.title || defaultTitle.value)
+const title = computed(() => props.content?.title || '')
 
 const faqs = computed(() => {
-  const items = props.content?.faqs || []
-  if (items.length) return items
-  // Fallback: contenido editable desde site_config (si no hay configuración, se oculta la sección)
-  return defaultFaqs.value
+  return Array.isArray(props.content?.faqs) ? props.content.faqs : []
 })
 </script>

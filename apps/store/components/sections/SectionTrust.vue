@@ -54,28 +54,7 @@ const props = defineProps({
   settings: { type: Object, default: () => ({}) },
 })
 
-// Contenido por defecto desde site_config (editable en el panel admin)
-const defaultFeatures = ref([])
-const loadedDefaults = ref(false)
-
-async function loadDefaults() {
-  if (loadedDefaults.value) return
-  loadedDefaults.value = true
-  // Cargar todos los defaults de una sola vez (compartido entre secciones)
-  const defaults = await useSectionDefaultsShared()
-  const sectionDefaults = defaults?.trust
-  if (sectionDefaults?.features && Array.isArray(sectionDefaults.features)) {
-    defaultFeatures.value = sectionDefaults.features
-  }
-}
-
-onMounted(loadDefaults)
-
 const features = computed(() => {
-  if (Array.isArray(props.content.features) && props.content.features.length > 0) {
-    return props.content.features
-  }
-  // Fallback: contenido editable desde site_config (si no hay configuración, se oculta la sección)
-  return defaultFeatures.value
+  return Array.isArray(props.content.features) ? props.content.features : []
 })
 </script>

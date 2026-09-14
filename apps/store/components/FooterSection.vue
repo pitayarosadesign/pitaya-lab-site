@@ -100,23 +100,17 @@
 </template>
 
 <script setup>
+import { defaultBrand, defaultNavLinks } from '~/utils/siteDefaults'
+
 const AMAZON_LINK = 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329?'
 
 // 🏷️ Marca configurable desde el admin
-const brand = reactive({
-  name: 'PITAYA LAB',
-  tagline: 'Fragancias que conectan',
-  logo_url: '/images/brand/logo-pitayalab.png',
-})
+const brand = reactive({ ...defaultBrand })
 
-const navLinks = ref([
-  { path: '/about', label: 'Sobre Nosotros' },
-  { path: '/philosophy', label: 'Nuestra Filosofía' },
-  { path: '/catalog', label: 'Catálogo' },
-  { path: '/recuerdos', label: 'Recuerdos' },
-  { path: '/b2b', label: 'Mayoreo & Corporativo' },
-  { path: '/faq', label: 'Preguntas Frecuentes' },
-])
+// 🧭 El footer usa los mismos enlaces que el menú superior (sin "Inicio").
+// El fallback vive en utils/siteDefaults.ts y solo aplica si no hay
+// `nav_links` en Supabase.
+const navLinks = ref(defaultNavLinks.filter(link => link.path !== '/').map(link => ({ ...link })))
 
 onMounted(async () => {
   if (!import.meta.client) return

@@ -52,27 +52,8 @@ const props = defineProps({
   settings: { type: Object, default: () => ({}) },
 })
 
-// Defaults desde site_config (editable en el panel admin)
-const defaultCta = ref({})
-const loadedDefaults = ref(false)
-
-async function loadDefaults() {
-  if (loadedDefaults.value) return
-  loadedDefaults.value = true
-  // Cargar todos los defaults de una sola vez (compartido entre secciones)
-  const defaults = await useSectionDefaultsShared()
-  const sectionDefaults = defaults?.cta
-  if (sectionDefaults) {
-    defaultCta.value = sectionDefaults
-  }
-}
-
-onMounted(loadDefaults)
-
-// Contenido efectivo: prioriza el de la sección, si no usa el default de site_config
-const effectiveContent = computed(() => {
-  return { ...defaultCta.value, ...props.content }
-})
+// Contenido efectivo: viene de page_sections (única fuente de verdad)
+const effectiveContent = computed(() => props.content || {})
 
 function isWhatsAppLink(link) {
   return /^https?:\/\/wa\.me\//i.test(link || '')

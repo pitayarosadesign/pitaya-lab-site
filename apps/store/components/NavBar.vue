@@ -133,6 +133,8 @@
 </template>
 
 <script setup>
+import { defaultBrand, defaultShippingBar, defaultNavLinks } from '~/utils/siteDefaults'
+
 const cart = useCartStore()
 const AMAZON_LINK = 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329?'
 
@@ -140,32 +142,15 @@ const mobileMenuOpen = ref(false)
 
 // 🚚 Barra de envíos (configurable desde el admin). Por defecto DESACTIVADA
 // hasta que se cargue el registro `shipping_bar` de Supabase. Si no existe ese
-// registro, la barra NO se muestra (evita que una barra "fija" no poder quitar).
-const shippingBar = reactive({
-  enabled: false,
-  free_shipping_min: 200,
-  shipping_fee: 50,
-  couriers: ['Paquete Express', 'Estafeta', 'FedEx'],
-  delivery_days: '3 a 5 días hábiles',
-})
+// registro, la barra NO se muestra.
+const shippingBar = reactive({ ...defaultShippingBar })
 
 // 🏷️ Marca (logo, nombre, eslogan) configurable desde el admin
-const brand = reactive({
-  name: 'PITAYA LAB',
-  tagline: 'Fragancias que conectan',
-  logo_url: '/images/brand/logo-pitayalab.png',
-})
+const brand = reactive({ ...defaultBrand })
 
-// 🧭 Enlaces del menú (configurables desde el admin)
-const navLinks = ref([
-  { path: '/', label: 'Inicio' },
-  { path: '/about', label: 'Sobre Nosotros' },
-  { path: '/philosophy', label: 'Nuestra Filosofía' },
-  { path: '/fragrancias', label: 'Guía de Fragancias' },
-  { path: '/catalog', label: 'Catálogo' },
-  { path: '/recuerdos', label: 'Recuerdos' },
-  { path: '/b2b', label: 'Mayoreo & Corporativo' },
-])
+// 🧭 Enlaces del menú (configurables desde el admin). El fallback vive en
+// utils/siteDefaults.ts y solo aplica si no hay `nav_links` en Supabase.
+const navLinks = ref(defaultNavLinks.map(link => ({ ...link })))
 
 // Estado de scroll: al bajar unos px se oculta la barra promocional y
 // se mantiene compacta la navbar para no tapar el contenido en móvil.
