@@ -75,7 +75,7 @@
 
             <!-- Valores personalizados (si tipo = custom) -->
             <div v-else>
-              <div class="flex flex-wrap gap-2">
+              <div v-if="dim.customValues.length > 0" class="flex flex-wrap gap-2">
                 <span
                   v-for="(val, vi) in dim.customValues"
                   :key="vi"
@@ -94,6 +94,37 @@
                   @keyup.enter="addDimValue(di)"
                 />
                 <button type="button" @click="addDimValue(di)" class="px-3 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700">+ Agregar</button>
+                <button
+                  type="button"
+                  @click="toggleBulk(di)"
+                  class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors whitespace-nowrap"
+                >📋 {{ dim.bulkOpen ? 'Ocultar' : 'Carga masiva' }}</button>
+              </div>
+
+              <!-- Carga masiva: pega varios valores (coma o salto de línea) -->
+              <div v-if="dim.bulkOpen" class="mt-2 rounded-lg border border-primary-100 bg-primary-50/40 p-3 space-y-2">
+                <p class="text-xs text-gray-500">
+                  Pega tus valores separados por <b>coma</b> o <b>salto de línea</b>:
+                </p>
+                <textarea
+                  v-model="dim.bulkText"
+                  rows="5"
+                  placeholder="Rojo&#10;Azul&#10;Verde&#10;&#10;O: Rojo, Azul, Verde"
+                  class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm font-mono"
+                ></textarea>
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    @click="applyBulk(di)"
+                    class="px-3 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700"
+                  >Agregar todos</button>
+                  <button
+                    type="button"
+                    @click="dim.bulkOpen = false"
+                    class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50"
+                  >Cancelar</button>
+                  <span class="text-xs text-gray-400 ml-auto">{{ bulkCount(dim) }} valor(es) detectado(s)</span>
+                </div>
               </div>
             </div>
           </div>
@@ -231,6 +262,8 @@ function addDimension() {
     scentIds: [],         // ids de aromas seleccionados (si type === 'Aroma')
     customValues: [],     // valores personalizados (si type === 'custom')
     newValue: '',         // input temporal para agregar valor
+    bulkOpen: false,      // ¿panel de carga masiva abierto?
+    bulkText: '',         // texto pegado para carga masiva
   })
 }
 
@@ -270,6 +303,36 @@ function addDimValue(di) {
   const v = (dim.newValue || '').trim()
   if (v && !dim.customValues.includes(v)) dim.customValues.push(v)
   dim.newValue = ''
+}
+
+// ===== Carga masiva de valores =====
+// Divide el texto pegado por coma o salto de línea, limpia espacios y
+// agrega los valores sin duplicados (ni contra los ya existentes).
+function parseBulk(text) {
+  return String(text || '')
+    .split(/[\n,]+/)
+    .map(s => s.trim())
+    .filter(Boolean)
+}
+
+function bulkCount(dim) {
+  return parseBulk(dim?.bulkText).length
+}
+
+function toggleBulk(di) {
+  const dim = dimensions.value[di]
+  if (!dim) return
+  dim.bulkOpen = !dim.bulkOpen
+}
+
+function applyBulk(di) {
+  const dim = dimensions.value[di]
+  if (!dim) return
+  for (const v of parseBulk(dim.bulkText)) {
+    if (!dim.customValues.includes(v)) dim.customValues.push(v)
+  }
+  dim.bulkText = ''
+  dim.bulkOpen = false
 }
 
 // Combinaciones generadas (producto cartesiano de las dimensiones).
