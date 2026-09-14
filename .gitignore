@@ -18,6 +18,9 @@ apps/admin/.output
 *.swp
 *.swo
 
+# Agente (logs de sesión)
+.deep-copilot/
+
 
 # System files
 Users/
