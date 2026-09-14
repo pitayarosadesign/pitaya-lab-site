@@ -82,22 +82,28 @@ async function loadRecommendedIds() {
 async function loadProducts() {
   if (!supabase) return
 
-  // Los "recomendados" (site_config) son el default; una selección manual
-  // en la propia sección (product_ids) tiene prioridad sobre ellos.
+  // Prioridad de la sección:
+  //   1) product_ids (selección manual)  2) category_slug (filtro por categoría)
+  //   3) recommended_products (global)   4) automático (primeros por sort_order)
   await loadRecommendedIds()
   const ids = curatedIds.value.length ? curatedIds.value : recommendedIds.value
+  const categorySlug = String(props.content.category_slug || '').trim()
 
   try {
-    // Subconsulta al catálogo restringida a productos de venta directa + activos.
+    // Catálogo visible: menudeo + eventos/recuerdos, solo activos.
     let query = supabase
       .from('products')
-      .select('*, product_categories(name), product_images(url, is_primary, sort_order)')
-      .eq('sales_channel', 'directa')
+      .select('*, product_categories(name, slug), product_images(url, is_primary, sort_order)')
+      .in('sales_channel', ['directa', 'evento'])
       .eq('is_active', true)
 
     if (ids.length) {
       query = query.in('id', ids)
       // Sin límite: mostramos exactamente la selección; el orden se respeta abajo.
+    } else if (categorySlug) {
+      query = query.eq('product_categories.slug', categorySlug)
+        .order('sort_order', { ascending: true })
+        .limit(maxProducts.value)
     } else {
       query = query.order('sort_order', { ascending: true }).limit(maxProducts.value)
     }
@@ -136,5 +142,4 @@ async function loadProducts() {
 
 onMounted(loadProducts)
 </script>
-
 
