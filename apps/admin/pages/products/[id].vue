@@ -281,6 +281,17 @@
         />
       </div>
 
+      <!-- Personalización (Recuerdos / Eventos) -->
+      <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900">🎨 Personalización</h2>
+          <p class="text-sm text-gray-400 mt-0.5">
+            Permite que el cliente personalice este producto con campos de texto y/o subiendo un archivo.
+          </p>
+        </div>
+        <FormsProductPersonalizationEditor v-model="form.personalization" />
+      </div>
+
       <!-- Variantes (Aromas) — productos de tienda -->
       <div v-if="!isEventChannel" class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
         <div class="flex items-center justify-between">
@@ -586,6 +597,7 @@ const form = reactive({
   amazon_link: '', compare_at_price: '', cost_price: '',
   wholesale_enabled: false, wholesale_price: '', wholesale_min_qty: 20,
   category: '', sales_channel: 'directa',
+  personalization: null,
 })
 
 // Categorías cargadas dinámicamente desde la base de datos
@@ -714,6 +726,7 @@ async function loadProduct() {
     form.wholesale_price = data.wholesale_price || ''
     form.wholesale_min_qty = data.wholesale_min_qty || 20
     form.sales_channel = data.sales_channel || 'directa'
+    form.personalization = data.personalization || null
     form.images = data.images || []
 
     // Pre-seleccionar las variantes (aromas) existentes del producto
@@ -1021,6 +1034,7 @@ async function handleSave() {
           wholesale_min_qty: parseInt(form.wholesale_min_qty) || 20,
           category_id: categoryId,
           sales_channel: form.sales_channel,
+          personalization: form.personalization,
         },
         images,
         // En evento enviamos variantOptions; en tienda, el modelo de aromas.
