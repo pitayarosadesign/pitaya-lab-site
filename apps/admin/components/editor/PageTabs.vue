@@ -39,7 +39,6 @@ const tabs = [
   { key: 'faq', label: 'FAQ', icon: '❓', to: '/site/faq' },
   { key: 'contact', label: 'Contacto', icon: '✉️', to: '/site/contact' },
   { key: 'resena', label: 'Reseñas', icon: '⭐', to: '/site/resena' },
-  { key: 'fragrancias', label: 'Fragancias', icon: '🌸', to: '/site/fragrancias' },
   { key: 'recomendados', label: 'Recomendados', icon: '🏆', to: '/site/recomendados' },
   { key: 'paginas', label: 'Páginas', icon: '📄', to: '/paginas' },
   { key: 'legal', label: 'Legal', icon: '📜', to: '/site/legal' },

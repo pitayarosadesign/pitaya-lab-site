@@ -57,7 +57,6 @@
 const STATIC_PAGES = [
   { path: '/about', label: 'Sobre Nosotros' },
   { path: '/philosophy', label: 'Nuestra Filosofía' },
-  { path: '/fragrancias', label: 'Guía de Fragancias' },
   { path: '/catalog', label: 'Catálogo' },
   { path: '/b2b', label: 'Mayoreo & Corporativo' },
   { path: '/faq', label: 'Preguntas Frecuentes' },

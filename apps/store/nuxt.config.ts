@@ -84,6 +84,9 @@ export default defineNuxtConfig({
     '/sitemap.xml': { redirect: '/api/seo/sitemap.xml' },
     '/merchant-feed.xml': { redirect: '/api/merchant/feed.xml' },
     '/meta-catalog.json': { redirect: '/api/meta/catalog.json' },
+    // Redirecciones legadas (SEO)
+    '/recuerdos': { redirect: { to: '/catalog?categoria=recuerdos', statusCode: 301 } },
+    '/fragrancias': { redirect: { to: '/catalog', statusCode: 301 } },
   },
 
   // 🖼️ OG Image - Desactiva la generación dinámica (cero warnings)
@@ -109,11 +112,6 @@ export default defineNuxtConfig({
     },
   ],
 
-  // Redirección legada (SEO): /recuerdos ahora es una categoría del catálogo
-  routeRules: {
-    '/recuerdos': { redirect: { to: '/catalog?categoria=recuerdos', statusCode: 301 } },
-  },
-
   sitemap: {
     hostname: 'https://www.pitayalab.com.mx',
     gzip: true,
@@ -123,4 +121,3 @@ export default defineNuxtConfig({
     },
   }
 })
-

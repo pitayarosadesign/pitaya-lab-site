@@ -218,10 +218,25 @@
             </p>
           </div>
 
+          <!-- Filtro por familia olfativa -->
+          <div v-if="galleryFamilyOptions.length > 1" class="flex items-center gap-2 overflow-x-auto pb-4 justify-center">
+            <button
+              v-for="f in galleryFamilyOptions"
+              :key="f.key"
+              @click="activeGalleryFamily = f.key"
+              class="px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors border shrink-0"
+              :class="activeGalleryFamily === f.key
+                ? 'bg-primary-600 text-white border-primary-600'
+                : 'bg-white text-earth-600 border-earth-200 hover:border-primary-300'"
+            >
+              {{ f.emoji }} {{ f.label }} <span class="opacity-70 text-xs">({{ f.count }})</span>
+            </button>
+          </div>
+
           <!-- Grid de aromas -->
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             <button
-              v-for="aroma in aromas"
+              v-for="aroma in filteredGalleryAromas"
               :key="aroma.id"
               @click="selectAroma(aroma)"
               class="group bg-white rounded-2xl border border-earth-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 hover:border-primary-300 transition-all text-left"
@@ -255,27 +270,6 @@
               </div>
             </button>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 🌸 Puente de descubrimiento → Guía (visible cuando el bloque olfativo NO está incrustado) -->
-    <section
-      v-if="!loading && !catalogConfig.blocks.olfactory.enabled && aromas.length > 0"
-      class="pt-10 pb-2"
-    >
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-earth-100 bg-earth-50/40 px-5 py-4">
-          <div>
-            <p class="text-[11px] font-semibold text-earth-500 uppercase tracking-wider">¿Buscas por fragancia?</p>
-            <p class="text-sm text-earth-600 mt-0.5">Explora cada aroma por su personalidad y descubre en qué formato llevarla.</p>
-          </div>
-          <NuxtLink
-            to="/fragrancias"
-            class="inline-flex items-center gap-2 rounded-full bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold px-5 py-2.5 transition-colors whitespace-nowrap"
-          >
-            🌸 Ir a la Guía de Fragancias
-          </NuxtLink>
         </div>
       </div>
     </section>
@@ -685,13 +679,12 @@ const catalogConfig = reactive({
   blocks: {
     header: { enabled: true, compact: false },
     filters: { enabled: true },
-    // Los bloques editoriales (galería de aromas e "guía por mood") se desactivan
-    // por defecto: el catálogo debe mostrar PRODUCTOS. El descubrimiento por
-    // fragancia vive en /fragrancias. Puedes reactivarlos desde el panel admin
-    // (site_config > catalog_page.blocks) si un layout lo necesita incrustado.
-    olfactory: { enabled: false },
+    // La galería de aromas y la "guía por mood" viven embebidas en el catálogo
+    // (el descubrimiento por fragancia ya no ocupa una página aparte). Se pueden
+    // apagar desde el panel admin (site_config > catalog_page.blocks).
+    olfactory: { enabled: true },
     grid: { enabled: true },
-    scent_guide: { enabled: false },
+    scent_guide: { enabled: true },
     cta: { enabled: true },
     recuerdos: { enabled: true },
   },
@@ -806,6 +799,29 @@ const availableAromaIds = computed(() => {
 
 // Aromas visibles: solo los que tienen al menos un producto disponible.
 const aromas = computed(() => aromasRaw.value.filter(a => availableAromaIds.value.has(a.id)))
+
+// Familias olfativas para el filtro de la galería de aromas embebida
+const GALLERY_FAMILIES = {
+  floral: { label: 'Floral', emoji: '🌸' },
+  oriental: { label: 'Oriental', emoji: '✨' },
+  amaderada: { label: 'Amaderada', emoji: '🪵' },
+  citrica: { label: 'Cítrica', emoji: '🍋' },
+}
+const activeGalleryFamily = ref('todas')
+
+const galleryFamilyOptions = computed(() => {
+  const opts = [{ key: 'todas', label: 'Todas', emoji: '🌸', count: aromas.value.length }]
+  Object.entries(GALLERY_FAMILIES).forEach(([key, v]) => {
+    const count = aromas.value.filter(a => a.family === key).length
+    if (count > 0) opts.push({ key, label: v.label, emoji: v.emoji, count })
+  })
+  return opts
+})
+
+const filteredGalleryAromas = computed(() => {
+  if (activeGalleryFamily.value === 'todas') return aromas.value
+  return aromas.value.filter(a => a.family === activeGalleryFamily.value)
+})
 
 // Todos los aromas (para el selector desplegable)
 const allAromas = computed(() => aromas.value)
@@ -936,6 +952,7 @@ async function loadAromas() {
       name: p.name,
       slug: p.slug || '',
       emoji: p.emoji || '🌸',
+      family: p.olfactive_family || '',
       description: p.experience || p.subtitle || p.description || '',
       image: p.image_url,
       subtitle: p.subtitle || '',

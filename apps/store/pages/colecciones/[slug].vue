@@ -71,7 +71,7 @@
                   to="/fragrancias"
                   class="inline-flex items-center justify-center w-full mt-5 px-4 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium transition-colors"
                 >
-                  Explorar guía de fragancias →
+                  Explorar aromas →
                 </NuxtLink>
               </div>
             </div>
@@ -101,7 +101,7 @@
     <div v-else-if="!loading" class="py-32 text-center">
       <p class="text-5xl mb-4">🌸</p>
       <p class="text-earth-600 text-lg">Perfil aromático no encontrado.</p>
-      <NuxtLink to="/fragrancias" class="inline-block mt-4 text-primary-600 hover:underline font-medium">← Explorar la guía de fragancias</NuxtLink>
+      <NuxtLink to="/catalog" class="inline-block mt-4 text-primary-600 hover:underline font-medium">← Explorar aromas</NuxtLink>
     </div>
   </div>
 </template>

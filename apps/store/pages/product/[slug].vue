@@ -181,14 +181,14 @@
                   <h3 class="text-sm font-semibold text-earth-700">Opciones:</h3>
                   <NuxtLink
                     v-if="flexibleDimensions[0]?.type === 'Aroma'"
-                    to="/fragrancias"
+                    to="/catalog"
                     class="text-[11px] font-medium text-primary-600 hover:text-primary-700 inline-flex items-center gap-1"
-                    title="Descubre cada fragancia y en qué productos está disponible"
+                    title="Descubre cada aroma en el catálogo"
                   >
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
                     </svg>
-                    Guía de fragancias
+                    Explorar aromas
                   </NuxtLink>
                 </div>
 
@@ -218,14 +218,14 @@
                 <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
                   <h3 class="text-sm font-semibold text-earth-700">Elige tu aroma:</h3>
                   <NuxtLink
-                    to="/fragrancias"
+                    to="/catalog"
                     class="text-[11px] font-medium text-primary-600 hover:text-primary-700 inline-flex items-center gap-1"
-                    title="Descubre cada fragancia y en qué productos está disponible"
+                    title="Descubre cada aroma en el catálogo"
                   >
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
                     </svg>
-                    Guía de fragancias
+                    Explorar aromas
                   </NuxtLink>
                 </div>
                 <div class="flex flex-wrap gap-2">
