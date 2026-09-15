@@ -383,6 +383,27 @@
 
             <!-- Botones de acción -->
             <div class="space-y-3">
+              <!-- Cantidad -->
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-sm font-semibold text-earth-700">Cantidad</span>
+                <div class="flex items-center border border-earth-200 rounded-xl bg-white">
+                  <button
+                    type="button"
+                    @click="decrementQty"
+                    :disabled="quantity <= 1"
+                    class="w-10 h-11 flex items-center justify-center text-earth-500 hover:text-earth-700 disabled:opacity-30 transition-colors"
+                    aria-label="Disminuir cantidad"
+                  >−</button>
+                  <span class="w-10 text-center text-base font-bold text-earth-800">{{ quantity }}</span>
+                  <button
+                    type="button"
+                    @click="incrementQty"
+                    class="w-10 h-11 flex items-center justify-center text-earth-500 hover:text-earth-700 transition-colors"
+                    aria-label="Aumentar cantidad"
+                  >+</button>
+                </div>
+              </div>
+
               <!-- Agregar al carrito -->
               <button
                 @click="addToCart"
@@ -543,6 +564,8 @@
               :product-id="rp.id"
               :badge="rp.badge"
               :is-featured="rp.isFeatured"
+              :prep-days-min="rp.prepDaysMin"
+              :prep-days-max="rp.prepDaysMax"
             />
           </div>
         </div>
@@ -903,6 +926,17 @@ function formatPrice(price) {
   return Number(price).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
+// Cantidad seleccionada
+const quantity = ref(1)
+
+function decrementQty() {
+  quantity.value = Math.max(1, quantity.value - 1)
+}
+
+function incrementQty() {
+  quantity.value = quantity.value + 1
+}
+
 // Agregar al carrito
 function addToCart() {
   if (!product.value || !isPurchasable.value) return
@@ -923,12 +957,15 @@ function addToCart() {
       name: selectedVariant.value.name,
       sku: selectedVariant.value.sku,
     } : null,
-    quantity: 1,
+    quantity: quantity.value,
     // 🚚 true = sobre pedido (sin stock disponible) → se prepara en taller
     backorder: currentStock.value <= 0,
+    prepDaysMin: product.value.prepDaysMin ?? null,
+    prepDaysMax: product.value.prepDaysMax ?? null,
   }
 
   cartStore.addItem(cartItem)
+  quantity.value = 1
 
   // 🎉 Toast de confirmación con miniatura y acciones
   showAddToast.value = true

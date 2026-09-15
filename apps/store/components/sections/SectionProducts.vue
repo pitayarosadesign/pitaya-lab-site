@@ -24,6 +24,8 @@
           :product-id="product.id"
           :badge="product.badge"
           :is-featured="product.isFeatured"
+          :prep-days-min="product.prepDaysMin"
+          :prep-days-max="product.prepDaysMax"
         />
       </div>
 

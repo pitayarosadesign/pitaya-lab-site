@@ -54,6 +54,7 @@
                   </p>
                   <p v-if="c.parent_id" class="text-xs text-gray-400">Subcategoría de {{ parentName(c.parent_id) }}</p>
                   <p v-else-if="c.description" class="text-xs text-gray-400 truncate max-w-[280px]">{{ c.description }}</p>
+                  <p v-if="c.prep_days_min != null || c.prep_days_max != null" class="text-xs text-primary-600 font-medium">⏱ Prep: {{ prepLabel(c) }}</p>
                 </div>
               </div>
             </td>
@@ -117,6 +118,15 @@
           </div>
 
           <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">Preparación (días hábiles) <span class="text-gray-300">(opcional · heredan los productos sin valor propio)</span></label>
+            <div class="grid grid-cols-2 gap-3">
+              <input v-model.number="form.prep_days_min" type="number" min="0" placeholder="Mín. ej. 2" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 focus:outline-none text-sm" />
+              <input v-model.number="form.prep_days_max" type="number" min="0" placeholder="Máx. ej. 4" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 focus:outline-none text-sm" />
+            </div>
+            <p class="text-xs text-gray-400 mt-1">Ej. recuerdos: 4 días hábiles.</p>
+          </div>
+
+          <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1">Categoría padre <span class="text-gray-300">(opcional · para subcategorías)</span></label>
             <select v-model="form.parent_id" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 focus:outline-none text-sm bg-white">
               <option value="">— Ninguna (categoría principal) —</option>
@@ -161,6 +171,7 @@ const emptyForm = () => ({
   name: '', slug: '', description: '',
   image_url: '', imagePreview: null,
   parent_id: '', is_active: true,
+  prep_days_min: null, prep_days_max: null,
 })
 const form = reactive(emptyForm())
 
@@ -174,6 +185,15 @@ const parentOptions = computed(() =>
 
 function parentName(id) {
   return categories.value.find(c => c.id === id)?.name || '—'
+}
+
+function prepLabel(c) {
+  const min = c.prep_days_min
+  const max = c.prep_days_max
+  if (min != null && max != null) return min === max ? `${min} día${min === 1 ? '' : 's'}` : `${min}–${max} días`
+  if (min != null) return `desde ${min} días`
+  if (max != null) return `hasta ${max} días`
+  return ''
 }
 
 async function loadData() {
@@ -207,6 +227,8 @@ function openEdit(c) {
   form.imagePreview = c.image_url || null
   form.parent_id = c.parent_id || ''
   form.is_active = c.is_active !== false
+  form.prep_days_min = c.prep_days_min ?? null
+  form.prep_days_max = c.prep_days_max ?? null
   showModal.value = true
 }
 
@@ -274,6 +296,8 @@ async function saveForm() {
       image_url: imageUrl || null,
       parent_id: form.parent_id || null,
       is_active: form.is_active,
+      prep_days_min: form.prep_days_min === '' || form.prep_days_min == null ? null : Number(form.prep_days_min),
+      prep_days_max: form.prep_days_max === '' || form.prep_days_max == null ? null : Number(form.prep_days_max),
     }
 
     if (editingId.value) {

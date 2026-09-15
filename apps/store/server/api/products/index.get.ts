@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
 
     let query = supabase
       .from('products')
-      .select('*, product_categories(name, slug), product_images(url, alt_text, sort_order, is_primary), product_variants(id, name, image_url, fragrance_profile_id, fragrance_profiles(id, name, emoji, subtitle, slug, image_url, experience, notes, description))')
+      .select('*, product_categories(name, slug, prep_days_min, prep_days_max), product_images(url, alt_text, sort_order, is_primary), product_variants(id, name, image_url, fragrance_profile_id, fragrance_profiles(id, name, emoji, subtitle, slug, image_url, experience, notes, description))')
       .eq('is_active', true)
 
     // Sin canal explícito, el catálogo público muestra menudeo + eventos/recuerdos.
@@ -113,6 +113,8 @@ export default defineEventHandler(async (event) => {
         stock: p.stock,
         isFeatured: p.is_featured,
         badge: p.badge || null,
+        prepDaysMin: p.prep_days_min ?? p.product_categories?.prep_days_min ?? null,
+        prepDaysMax: p.prep_days_max ?? p.product_categories?.prep_days_max ?? null,
         // Mayoreo / precio negocio por tramos de cantidad
         wholesale: p.wholesale_tiers || null,
         personalization: p.personalization || null,

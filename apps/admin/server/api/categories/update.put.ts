@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   )
 
   try {
-    const { id, name, slug, description, image_url, parent_id, is_active } = body
+    const { id, name, slug, description, image_url, parent_id, is_active, prep_days_min, prep_days_max } = body
 
     if (!id) {
       throw createError({ statusCode: 400, message: 'El id de la categoría es obligatorio' })
@@ -34,6 +34,8 @@ export default defineEventHandler(async (event) => {
         image_url: image_url || null,
         parent_id: parent_id || null,
         is_active: is_active !== false,
+        prep_days_min: prep_days_min === '' || prep_days_min == null ? null : Number(prep_days_min),
+        prep_days_max: prep_days_max === '' || prep_days_max == null ? null : Number(prep_days_max),
       })
       .eq('id', id)
       .select()

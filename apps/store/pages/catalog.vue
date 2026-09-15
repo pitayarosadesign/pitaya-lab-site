@@ -338,6 +338,8 @@
               :wholesale="product.wholesale"
               :badge="product.badge"
               :is-featured="product.isFeatured"
+              :prep-days-min="product.prepDaysMin"
+              :prep-days-max="product.prepDaysMax"
               :link-query="activeFragrance ? { aroma: selectedAroma?.slug || selectedAroma?.name } : null"
             />
           </div>

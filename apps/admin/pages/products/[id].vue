@@ -137,6 +137,14 @@
             <p class="text-xs text-gray-400 mt-1">Se muestra sobre la imagen de la tarjeta. Vacío = sin distintivo (o "Best Seller" si está destacado).</p>
           </div>
           <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Preparación (días hábiles)</label>
+            <div class="grid grid-cols-2 gap-2">
+              <input v-model.number="form.prep_days_min" type="number" min="0" placeholder="Mín (hereda)" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all" />
+              <input v-model.number="form.prep_days_max" type="number" min="0" placeholder="Máx (hereda)" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all" />
+            </div>
+            <p class="text-xs text-gray-400 mt-1">Vacío = heredar de la categoría. Ej. recuerdos: 4 días hábiles.</p>
+          </div>
+          <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Categoría de Google</label>
             <select v-model="form.google_category" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all">
               <option value="">Seleccionar</option>
@@ -587,6 +595,8 @@ const form = reactive({
   wholesale_enabled: false, wholesale_price: '', wholesale_min_qty: 20,
   wholesale_tiers: null,
   category: '', sales_channel: 'directa', badge: '',
+  prep_days_min: null,
+  prep_days_max: null,
   personalization: null,
 })
 
@@ -718,6 +728,9 @@ async function loadProduct() {
     form.wholesale_tiers = data.wholesale_tiers || null
     form.sales_channel = data.sales_channel || 'directa'
     form.personalization = data.personalization || null
+    form.badge = data.badge || ''
+    form.prep_days_min = data.prep_days_min ?? null
+    form.prep_days_max = data.prep_days_max ?? null
     form.images = data.images || []
 
     // Pre-seleccionar las variantes (aromas) existentes del producto
@@ -1027,6 +1040,8 @@ async function handleSave() {
           category_id: categoryId,
           sales_channel: form.sales_channel,
           badge: form.badge || null,
+          prep_days_min: form.prep_days_min === '' || form.prep_days_min == null ? null : Number(form.prep_days_min),
+          prep_days_max: form.prep_days_max === '' || form.prep_days_max == null ? null : Number(form.prep_days_max),
           personalization: form.personalization,
         },
         images,

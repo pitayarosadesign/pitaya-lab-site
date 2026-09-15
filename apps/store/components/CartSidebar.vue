@@ -10,7 +10,7 @@
     <!-- Sidebar (z-[60]) -->
     <div
       v-if="isMounted"
-      class="fixed top-0 right-0 z-[60] h-full w-full max-w-md bg-white shadow-2xl transform transition-transform duration-300 ease-out"
+      class="fixed top-0 right-0 z-[60] h-dvh w-full max-w-md bg-white shadow-2xl transform transition-transform duration-300 ease-out"
       :class="cart.isOpen ? 'translate-x-0' : 'translate-x-full'"
     >
       <!-- Header -->
@@ -190,84 +190,19 @@
         </div>
 
         <!-- Footer con total y checkout (STICKY - siempre visible) -->
-        <div v-if="cart.hasItems" class="border-t border-earth-100 px-6 py-4 bg-white flex-shrink-0 pb-6 shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
-          <!-- ✅ Total -->
-          <div class="flex items-center justify-between mb-2">
-            <div>
-              <span class="text-sm font-medium text-earth-500">Total</span>
-              <p class="text-xl font-bold text-earth-900">${{ formatPrice(cart.totalPrice + shippingCost) }}</p>
-            </div>
+        <div v-if="cart.hasItems" class="border-t border-earth-100 px-4 sm:px-6 py-4 bg-white flex-shrink-0 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+          <!-- ✅ Total + entrega estimada (compacto, siempre visible) -->
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-sm font-medium text-earth-500">Total</span>
+            <span class="text-xl font-bold text-earth-900">${{ formatPrice(cart.totalPrice + shippingCost) }}</span>
           </div>
+          <p v-if="deliveryConfig.enabled && deliveryEstimate" class="text-[12px] text-earth-500 mb-3">
+            <span class="mr-1">{{ deliveryEstimate.hasBackorder ? '📦' : '🚚' }}</span>
+            Recíbelo antes del
+            <strong class="text-earth-700 whitespace-nowrap">{{ deliveryDeadlineText }}</strong>
+          </p>
 
-          <!-- 🚚 Fecha estimada de recepción (recíbelo antes de) -->
-          <div
-            v-if="deliveryConfig.enabled && deliveryEstimate"
-            class="rounded-xl border mb-3 px-3 py-2.5"
-            :class="deliveryEstimate.hasBackorder
-              ? 'bg-amber-50/70 border-amber-200 text-amber-800'
-              : 'bg-primary-50/60 border-primary-100 text-primary-800'"
-          >
-            <!-- Leyenda principal: recíbelo antes de -->
-            <p class="text-[13px] font-bold leading-snug">
-              <span class="mr-1">{{ deliveryEstimate.hasBackorder ? '📦' : '🚚' }}</span>
-              Recíbelo antes del
-              <span class="whitespace-nowrap">{{ deliveryDeadlineText }}</span>
-            </p>
-
-            <!-- Rango fino (opcional) -->
-            <p v-if="deliveryRangeText" class="text-[11px] font-normal opacity-90 mt-1">
-              {{ deliveryRangeText }}
-            </p>
-            <p class="text-[11px] font-normal opacity-90 mt-0.5" :class="deliveryEstimate.hasBackorder ? 'text-amber-700' : ''">
-              {{
-                deliveryEstimate.hasBackorder
-                  ? 'Incluye artículos que se preparan en taller (2-3 días hábiles), además del tiempo de envío.'
-                  : 'Órdenes pagadas antes de la 1:00 pm se envían el mismo día. De lo contrario, al siguiente día hábil.'
-              }}
-            </p>
-          </div>
-
-          <!-- 📝 Nota del pedido (opcional · aplica a toda la compra) -->
-          <div class="mb-3">
-            <button
-              type="button"
-              @click="showOrderNote = !showOrderNote"
-              class="w-full flex items-center justify-between text-xs font-medium text-earth-500 hover:text-primary-600 transition-colors py-1.5"
-              :aria-expanded="showOrderNote"
-            >
-              <span class="inline-flex items-center gap-1">
-                📝 {{ cart.orderNote ? 'Editar nota del pedido' : 'Agregar nota al pedido' }}
-                <span class="text-earth-400 font-normal">(opcional)</span>
-              </span>
-              <svg class="w-3.5 h-3.5 transition-transform" :class="showOrderNote ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-              </svg>
-            </button>
-            <div v-show="showOrderNote" class="mt-2">
-              <textarea
-                :value="cart.orderNote"
-                @input="cart.setOrderNote($event.target.value)"
-                rows="2"
-                maxlength="500"
-                placeholder="Ej: dejar en portería, instrucciones de entrega, dedicatoria general…"
-                class="w-full px-3 py-2 rounded-xl border border-earth-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none text-sm resize-none transition-all"
-              ></textarea>
-              <p class="text-[10px] text-earth-400 mt-1 text-right">{{ (cart.orderNote || '').length }}/500</p>
-            </div>
-          </div>
-
-          <!-- 🔒 Pago seguro con Stripe -->
-          <div class="flex items-center justify-center gap-2 mb-3 text-[11px] text-earth-500">
-            <svg class="w-3.5 h-3.5 text-green-600 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
-            </svg>
-            <span class="inline-flex items-center gap-1">
-              <span class="font-semibold text-[#635BFF]">Stripe</span>
-              : Pago 100% seguro con tarjeta de crédito o débito
-            </span>
-          </div>
-
-          <!-- Botón de pago con Stripe -->
+          <!-- Botón de pago -->
           <button
             @click="handleCheckout"
             :disabled="checkoutLoading"
@@ -280,52 +215,101 @@
             <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
             </svg>
-            {{ checkoutLoading ? 'Procesando...' : 'Pagar con Stripe' }}
+            {{ checkoutLoading ? 'Procesando...' : 'Ir a pagar' }}
           </button>
 
-          <!-- 🧾 Desglose detallado (colapsable) -->
+          <!-- 🧾 Detalles (colapsable): entrega, nota, desglose y confianza -->
           <div class="mt-2">
             <button
               @click="showPaymentDetails = !showPaymentDetails"
-              class="w-full flex items-center justify-between text-xs font-medium text-earth-500 hover:text-primary-600 transition-colors py-1.5"
-              aria-expanded="showPaymentDetails"
+              class="w-full flex items-center justify-between text-xs font-medium text-earth-500 hover:text-primary-600 transition-colors py-2"
+              :aria-expanded="showPaymentDetails"
             >
-              <span>{{ showPaymentDetails ? 'Ocultar detalles' : 'Ver detalles de la compra' }}</span>
-              <svg
-                class="w-4 h-4 transition-transform duration-300"
-                :class="showPaymentDetails ? 'rotate-180' : ''"
-                fill="none" stroke="currentColor" viewBox="0 0 24 24"
-              >
+              <span>{{ showPaymentDetails ? 'Ocultar detalles' : 'Ver detalles del pedido' }}</span>
+              <svg class="w-4 h-4 transition-transform duration-300" :class="showPaymentDetails ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
               </svg>
             </button>
 
-            <div v-if="showPaymentDetails" class="pt-2">
-              <!-- Subtotal -->
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-earth-600">Subtotal</span>
-                <span class="text-base font-semibold text-earth-900">${{ cart.formattedTotal }}</span>
-              </div>
-              <!-- Envío -->
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-earth-600">Envío</span>
-                <span v-if="shippingCost > 0" class="text-sm font-medium text-earth-900">${{ formatPrice(shippingCost) }}</span>
-                <span v-else class="text-sm font-medium text-green-600">Gratis</span>
-              </div>
-              <div class="flex items-center justify-between mb-2 pt-2 border-t border-earth-100">
-                <span class="text-base font-bold text-earth-800">Total</span>
-                <span class="text-base font-bold text-earth-900">${{ formatPrice(cart.totalPrice + shippingCost) }}</span>
-              </div>
-              <p class="text-[11px] text-earth-400 mb-2">
-                IVA incluido · Envío a todo México
-              </p>
-              <!-- Info de envío -->
-              <div class="bg-primary-50 rounded-xl p-3 mb-3 text-xs text-primary-700">
-                <p class="flex items-center gap-1.5 font-medium">
-                  <span>🚚</span>
-                  <span>Envío gratis en compras mayores a <strong>${{ formatPrice(FREE_SHIPPING_THRESHOLD) }} MXN</strong></span>
+            <div v-if="showPaymentDetails" class="pt-2 space-y-3">
+              <!-- Fecha estimada de recepción -->
+              <div
+                v-if="deliveryConfig.enabled && deliveryEstimate"
+                class="rounded-xl border px-3 py-2.5 text-xs"
+                :class="deliveryEstimate.hasBackorder
+                  ? 'bg-amber-50/70 border-amber-200 text-amber-800'
+                  : 'bg-primary-50/60 border-primary-100 text-primary-800'"
+              >
+                <p class="font-bold leading-snug">
+                  <span class="mr-1">{{ deliveryEstimate.hasBackorder ? '📦' : '🚚' }}</span>
+                  Recíbelo antes del <span class="whitespace-nowrap">{{ deliveryDeadlineText }}</span>
                 </p>
-                <p class="text-primary-500 mt-0.5">Menores a ${{ formatPrice(FREE_SHIPPING_THRESHOLD) }}: solo ${{ formatPrice(SHIPPING_COST) }}</p>
+                <p v-if="deliveryRangeText" class="font-normal opacity-90 mt-1">{{ deliveryRangeText }}</p>
+                <p class="font-normal opacity-90 mt-0.5">
+                  {{
+                    deliveryEstimate.hasBackorder
+                      ? 'Incluye artículos que se preparan en taller, además del tiempo de envío.'
+                      : 'Órdenes pagadas antes de la 1:00 pm se envían el mismo día. De lo contrario, al siguiente día hábil.'
+                  }}
+                </p>
+              </div>
+
+              <!-- 📝 Nota del pedido -->
+              <div>
+                <button
+                  type="button"
+                  @click="showOrderNote = !showOrderNote"
+                  class="w-full flex items-center justify-between text-xs font-medium text-earth-500 hover:text-primary-600 transition-colors py-1.5"
+                  :aria-expanded="showOrderNote"
+                >
+                  <span class="inline-flex items-center gap-1">
+                    📝 {{ cart.orderNote ? 'Editar nota del pedido' : 'Agregar nota al pedido' }}
+                    <span class="text-earth-400 font-normal">(opcional)</span>
+                  </span>
+                  <svg class="w-3.5 h-3.5 transition-transform" :class="showOrderNote ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </button>
+                <div v-show="showOrderNote" class="mt-2">
+                  <textarea
+                    :value="cart.orderNote"
+                    @input="cart.setOrderNote($event.target.value)"
+                    rows="2"
+                    maxlength="500"
+                    placeholder="Ej: dejar en portería, instrucciones de entrega, dedicatoria general…"
+                    class="w-full px-3 py-2 rounded-xl border border-earth-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none text-sm resize-none transition-all"
+                  ></textarea>
+                  <p class="text-[10px] text-earth-400 mt-1 text-right">{{ (cart.orderNote || '').length }}/500</p>
+                </div>
+              </div>
+
+              <!-- Desglose -->
+              <div class="border-t border-earth-100 pt-3">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm font-medium text-earth-600">Subtotal</span>
+                  <span class="text-sm font-semibold text-earth-900">${{ cart.formattedTotal }}</span>
+                </div>
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm font-medium text-earth-600">Envío</span>
+                  <span v-if="shippingCost > 0" class="text-sm font-medium text-earth-900">${{ formatPrice(shippingCost) }}</span>
+                  <span v-else class="text-sm font-medium text-green-600">Gratis</span>
+                </div>
+                <div class="flex items-center justify-between pt-2 border-t border-earth-100">
+                  <span class="text-base font-bold text-earth-800">Total</span>
+                  <span class="text-base font-bold text-earth-900">${{ formatPrice(cart.totalPrice + shippingCost) }}</span>
+                </div>
+                <p class="text-[11px] text-earth-400 mt-1">IVA incluido · Envío a todo México</p>
+              </div>
+
+              <!-- 🔒 Confianza de pago -->
+              <div class="flex items-center justify-center gap-2 text-[11px] text-earth-500">
+                <svg class="w-3.5 h-3.5 text-green-600 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                </svg>
+                <span class="inline-flex items-center gap-1">
+                  <span class="font-semibold text-[#635BFF]">Stripe</span>
+                  : Pago 100% seguro con tarjeta de crédito o débito
+                </span>
               </div>
             </div>
           </div>
@@ -333,7 +317,7 @@
           <!-- Seguir comprando -->
           <button
             @click="cart.closeCart()"
-            class="w-full mt-1 inline-flex items-center justify-center gap-2 text-xs font-medium text-earth-500 hover:text-primary-600 py-1.5 rounded-xl transition-colors"
+            class="w-full mt-2 inline-flex items-center justify-center gap-2 text-xs font-medium text-earth-500 hover:text-primary-600 py-1.5 rounded-xl transition-colors"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12h16m0 0l-6-6m6 6l-6 6"/>
@@ -446,10 +430,26 @@ const deliveryEstimate = ref(null)
 // ¿Algún artículo del carrito es sobre pedido?
 const cartHasBackorder = computed(() => cart.items.some(i => i.backorder))
 
+// Días de preparación efectivos del carrito: el máximo entre los ítems
+// (el ítem que más tarda en prepararse manda sobre la fecha de entrega).
+const cartPrepDays = computed(() => {
+  let min = null
+  let max = null
+  cart.items.forEach((i) => {
+    if (typeof i.prepDaysMin === 'number' && (min === null || i.prepDaysMin > min)) min = i.prepDaysMin
+    if (typeof i.prepDaysMax === 'number' && (max === null || i.prepDaysMax > max)) max = i.prepDaysMax
+  })
+  return { min, max }
+})
+
 // Fecha estimada (se recalcula cuando cambia el carrito o el corte)
 const delivery = computed(() => {
   const cfg = { ...deliveryConfig } // merge reactivo plano
-  return estimateDelivery({ isBackorder: cartHasBackorder.value }, cfg)
+  return estimateDelivery({
+    isBackorder: cartHasBackorder.value,
+    prepDaysMin: cartPrepDays.value.min ?? undefined,
+    prepDaysMax: cartPrepDays.value.max ?? undefined,
+  }, cfg)
 })
 
 // Texto principal

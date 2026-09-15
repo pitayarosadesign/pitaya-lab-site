@@ -113,10 +113,12 @@ export function calculateShipDate(
  * Regresa fechas en días hábiles desde la fecha de envío.
  *
  * @param opts.isBackorder — true si el carrito contiene al menos un sobre pedido
+ * @param opts.prepDaysMin — días hábiles de preparación del carrito (override por producto/categoría)
+ * @param opts.prepDaysMax — días hábiles de preparación del carrito (override por producto/categoría)
  * @param opts.now — fecha de referencia (default: new Date())
  */
 export function estimateDelivery(
-  opts: { isBackorder?: boolean; now?: Date } = {},
+  opts: { isBackorder?: boolean; now?: Date; prepDaysMin?: number; prepDaysMax?: number } = {},
   cfg = DEFAULT_DELIVERY_CONFIG
 ) {
   const now = opts.now || new Date()
@@ -138,8 +140,12 @@ export function estimateDelivery(
   // Constructor: cuándo "empieza la cuenta". Con envío mismo día + corte OK:
   //   la cuenta de tránsito inicia hoy. Si pasó el corte o sobre pedido, inicia
   //   al siguiente día hábil (prep + envío).
-  const prepMin = isBackorder ? cfg.prepDaysMin : 0
-  const prepMax = isBackorder ? cfg.prepDaysMax : 0
+  const prepMin = isBackorder
+    ? (typeof opts.prepDaysMin === 'number' ? opts.prepDaysMin : cfg.prepDaysMin)
+    : 0
+  const prepMax = isBackorder
+    ? (typeof opts.prepDaysMax === 'number' ? opts.prepDaysMax : cfg.prepDaysMax)
+    : 0
 
   // Base: si hay sobre pedido siempre arranca mañana (siguiente hábil) porque
   //   ya no se despacha hoy. Si stock y antes del corte → arranca hoy.

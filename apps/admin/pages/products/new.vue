@@ -51,6 +51,14 @@
               <option value="Últimas piezas"></option>
             </datalist>
           </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Preparación (días hábiles)</label>
+            <div class="grid grid-cols-2 gap-2">
+              <input v-model.number="form.prep_days_min" type="number" min="0" placeholder="Mín (hereda)" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+              <input v-model.number="form.prep_days_max" type="number" min="0" placeholder="Máx (hereda)" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+            </div>
+            <p class="text-xs text-gray-400 mt-1">Vacío = heredar de la categoría. Ej. recuerdos: 4 días hábiles.</p>
+          </div>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Canal de venta *</label>
@@ -775,6 +783,8 @@ async function handleSave() {
           category_id: categoryId,
           sales_channel: form.sales_channel,
           badge: form.badge || null,
+          prep_days_min: form.prep_days_min === '' || form.prep_days_min == null ? null : Number(form.prep_days_min),
+          prep_days_max: form.prep_days_max === '' || form.prep_days_max == null ? null : Number(form.prep_days_max),
           price: parseFloat(form.price),
           compare_at_price: form.compare_at_price ? parseFloat(form.compare_at_price) : null,
           cost_price: form.cost_price ? parseFloat(form.cost_price) : null,

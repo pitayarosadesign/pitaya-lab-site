@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   )
 
   try {
-    const { name, slug, description } = body
+    const { name, slug, description, prep_days_min, prep_days_max } = body
 
     if (!name || !slug) {
       throw createError({
@@ -40,6 +40,8 @@ export default defineEventHandler(async (event) => {
         name,
         slug,
         description: description || null,
+        prep_days_min: prep_days_min === '' || prep_days_min == null ? null : Number(prep_days_min),
+        prep_days_max: prep_days_max === '' || prep_days_max == null ? null : Number(prep_days_max),
         sort_order: nextOrder,
         is_active: true,
       })

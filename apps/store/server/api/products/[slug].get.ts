@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
 
     const { data: product, error } = await supabase
       .from('products')
-      .select('*, product_categories(name, slug), product_images(url, alt_text, sort_order, is_primary), product_variants(*, product_id, fragrance_profile_id, fragrance_profiles(name, emoji, subtitle, slug, image_url, experience, notes, description, inspiracion, olfactive_family))')
+      .select('*, product_categories(name, slug, prep_days_min, prep_days_max), product_images(url, alt_text, sort_order, is_primary), product_variants(*, product_id, fragrance_profile_id, fragrance_profiles(name, emoji, subtitle, slug, image_url, experience, notes, description, inspiracion, olfactive_family))')
       .in('sales_channel', ['directa', 'evento'])
       .eq('slug', cleanSlug)
       .eq('is_active', true)
@@ -92,6 +92,8 @@ export default defineEventHandler(async (event) => {
         allowBackorder: product.allow_backorder,
         isFeatured: product.is_featured,
         badge: product.badge || null,
+        prepDaysMin: product.prep_days_min ?? product.product_categories?.prep_days_min ?? null,
+        prepDaysMax: product.prep_days_max ?? product.product_categories?.prep_days_max ?? null,
         amazonLink: product.amazon_link,
         amazonAsin: product.amazon_asin,
         amazonPrice: product.amazon_price,

@@ -102,12 +102,41 @@
       </div>
 
       <!-- Botones de acción -->
-      <div class="mt-auto flex gap-2">
+      <div class="mt-auto space-y-2">
+        <!-- Cantidad + Agregar al carrito -->
+        <div class="flex items-stretch gap-2">
+          <div class="flex items-center border border-earth-200 rounded-xl bg-white shrink-0">
+            <button
+              type="button"
+              @click="decrement"
+              :disabled="qty <= 1"
+              class="w-8 h-11 flex items-center justify-center text-earth-500 hover:text-earth-700 disabled:opacity-30 transition-colors"
+              aria-label="Disminuir cantidad"
+            >−</button>
+            <span class="w-8 text-center text-sm font-bold text-earth-800">{{ qty }}</span>
+            <button
+              type="button"
+              @click="increment"
+              class="w-8 h-11 flex items-center justify-center text-earth-500 hover:text-earth-700 transition-colors"
+              aria-label="Aumentar cantidad"
+            >+</button>
+          </div>
+          <button
+            @click="addToCart"
+            class="flex-1 inline-flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 rounded-xl text-sm font-semibold transition-all hover:shadow-lg hover:shadow-primary-200 active:scale-95"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/>
+            </svg>
+            Agregar
+          </button>
+        </div>
+
         <!-- Botón Ver detalle (outline) -->
         <NuxtLink
           v-if="productSlug"
           :to="productLink"
-          class="flex-1 inline-flex items-center justify-center gap-2 border-2 border-earth-200 hover:border-primary-300 text-earth-600 hover:text-primary-700 bg-white hover:bg-primary-50/50 px-4 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95"
+          class="w-full inline-flex items-center justify-center gap-2 border border-earth-200 hover:border-primary-300 text-earth-600 hover:text-primary-700 bg-white hover:bg-primary-50/50 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all active:scale-95"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -115,18 +144,6 @@
           </svg>
           Ver detalle
         </NuxtLink>
-
-        <!-- Botón Agregar al carrito (icono verde tipo Amazon) -->
-        <button
-          @click="addToCart"
-          class="w-12 h-12 flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 text-white transition-all hover:shadow-lg hover:shadow-primary-200 active:scale-95 flex-shrink-0"
-          :title="'Agregar al carrito'"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/>
-          </svg>
-        </button>
-
       </div>
 
       <!-- Toast de confirmación -->
@@ -201,6 +218,14 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  prepDaysMin: {
+    type: Number,
+    default: null
+  },
+  prepDaysMax: {
+    type: Number,
+    default: null
+  },
   // Query opcional a añadir al enlace de detalle (ej. preselección de aroma)
   linkQuery: {
     type: Object,
@@ -209,6 +234,15 @@ const props = defineProps({
 })
 
 const showToast = ref(false)
+const qty = ref(1)
+
+function decrement() {
+  qty.value = Math.max(1, qty.value - 1)
+}
+
+function increment() {
+  qty.value = qty.value + 1
+}
 
 // Imagen optimizada (redimensionada/comprimida por Supabase) para carga rápida
 const optimizedImageUrl = computed(() =>
@@ -254,8 +288,12 @@ function addToCart() {
     price: props.price,
     image: props.imageUrl,
     variant: null,
-    quantity: 1,
+    quantity: qty.value,
+    prepDaysMin: props.prepDaysMin,
+    prepDaysMax: props.prepDaysMax,
   })
+
+  qty.value = 1
 
   // Mostrar toast
   showToast.value = true
