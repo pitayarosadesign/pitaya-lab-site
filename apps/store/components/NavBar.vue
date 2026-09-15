@@ -4,13 +4,22 @@
     <!-- ✅ Barra promocional de envíos (configurable desde el admin).
          Se oculta al hacer scroll para no tapar contenido en móvil/desktop. -->
     <div
-      v-if="shippingBar.enabled && !scrolled"
-      class="bg-gradient-to-r from-primary-900 via-primary-800 to-primary-900 text-white text-center text-xs sm:text-sm py-2 px-4 leading-relaxed transition-all duration-300 overflow-hidden"
-      :class="scrolled ? 'max-h-0 py-0 opacity-0' : 'max-h-16 opacity-100'"
+      v-if="shippingBarActive && !scrolled"
+      class="text-white text-center text-xs sm:text-sm py-2 px-4 leading-relaxed transition-all duration-300 overflow-hidden"
+      :class="[
+        scrolled ? 'max-h-0 py-0 opacity-0' : 'max-h-16 opacity-100',
+        !shippingBar.bg_color ? 'bg-gradient-to-r from-primary-900 via-primary-800 to-primary-900' : '',
+      ]"
+      :style="shippingBar.bg_color ? { background: shippingBar.bg_color } : null"
     >
       <p class="flex items-center justify-center gap-1.5 flex-wrap">
         <span class="hidden sm:inline">🚚</span>
         <span class="font-semibold">{{ shippingBarMessage }}</span>
+        <a
+          v-if="shippingBar.cta_text && shippingBar.cta_link"
+          :href="shippingBar.cta_link"
+          class="font-semibold underline underline-offset-2 hover:opacity-80"
+        >{{ shippingBar.cta_text }}</a>
       </p>
     </div>
     <div class="bg-white/90 backdrop-blur-md border-b border-earth-100">
@@ -237,6 +246,15 @@ const shippingBarMessage = computed(() => {
   return tpl
     .replace(/\{monto\}/g, monto)
     .replace(/\{mensajerias\}/g, mensajerias)
+})
+
+// Barra activa solo si está habilitada y dentro de su rango de fechas (si lo tiene).
+const shippingBarActive = computed(() => {
+  if (!shippingBar.enabled) return false
+  const now = Date.now()
+  if (shippingBar.start_at && new Date(shippingBar.start_at).getTime() > now) return false
+  if (shippingBar.end_at && new Date(shippingBar.end_at).getTime() < now) return false
+  return true
 })
 
 // Cargar configuración de envíos desde Supabase

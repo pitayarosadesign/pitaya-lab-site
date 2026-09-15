@@ -535,18 +535,11 @@
           </div>
         </div>
       </div>
-
-      <!-- ============================== -->
-      <!-- 🧭 MENÚ DE NAVEGACIÓN -->
-      <!-- ============================== -->
-      <NavMenuEditor />
     </div>
   </div>
 </template>
 
 <script setup>
-import NavMenuEditor from '../components/editor/NavMenuEditor.vue'
-
 useSeoMeta({ title: 'Configuración | PITAYA LAB' })
 
 const supabase = useSupabase()

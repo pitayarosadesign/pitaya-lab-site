@@ -17,6 +17,11 @@ export const defaultShippingBar = {
   couriers: ['Paquete Express', 'Estafeta', 'FedEx'],
   delivery_days: '3 a 5 días hábiles',
   message: 'Envío gratis en compras mayores a {monto} • {mensajerias}',
+  cta_text: '',
+  cta_link: '',
+  bg_color: '',
+  start_at: '',
+  end_at: '',
 }
 
 // Enlaces del menú superior (configurables en el admin vía site_config.nav_links).

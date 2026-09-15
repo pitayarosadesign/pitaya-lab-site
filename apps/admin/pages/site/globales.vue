@@ -3,9 +3,9 @@
     <!-- Encabezado -->
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">🌐 Editor del Sitio Web</h1>
+        <h1 class="text-2xl font-bold text-gray-900">🧭 Elementos Globales</h1>
         <p class="text-sm text-gray-400 mt-1">
-          Gestiona las páginas y las secciones de tu tienda. Arrastra para reordenar, haz clic para editar.
+          Barra promocional, menú de navegación y visibilidad de páginas fijas. Todo lo que aparece en toda la tienda.
         </p>
       </div>
       <a
@@ -22,20 +22,22 @@
     </div>
 
     <!-- Navegación por páginas -->
-    <EditorPageTabs active="home" />
+    <EditorPageTabs active="globales" />
 
-    <!-- Editor de secciones dinámicas (la portada se arma desde page_sections) -->
-    <EditorSectionsEditor page="home" />
+    <!-- Barra promocional superior -->
+    <EditorShippingBarEditor />
+
+    <!-- Visibilidad de páginas fijas -->
+    <EditorStaticPagesEditor />
+
+    <!-- Menú de navegación -->
+    <EditorNavMenuEditor />
   </div>
 </template>
 
 <script setup>
-// La página de portada se edita mediante el sistema dinámico de secciones (page_sections).
-// SectionsEditor gestiona crear, editar, reordenar, activar y eliminar cada sección.
-// Las secciones de la promoción / historically hardcodeadas viven ahora en page_sections.
+useSeoMeta({ title: 'Elementos Globales | PITAYA LAB' })
 
-// URL de la tienda pública (para el link "Ver sitio")
 const config = useRuntimeConfig()
 const storeUrl = config.public.storeUrl
 </script>
-

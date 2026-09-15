@@ -47,6 +47,28 @@
           <label class="block text-sm font-medium text-gray-700 mb-1">Mensajerías (separadas por coma)</label>
           <input v-model="couriersText" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
         </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Texto del botón (CTA)</label>
+          <input v-model="config.cta_text" type="text" placeholder="Ej. Ver envíos" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Enlace del botón (CTA)</label>
+          <input v-model="config.cta_link" type="text" placeholder="/catalog o https://..." class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm font-mono" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Color de fondo <span class="text-gray-400 text-xs">(hex, opcional)</span></label>
+          <input v-model="config.bg_color" type="text" placeholder="#0f766e" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
+          <p class="text-xs text-gray-400 mt-1">Vacío = usa el degradado verde por defecto.</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Inicio <span class="text-gray-400 text-xs">(opcional)</span></label>
+          <input v-model="config.start_at" type="datetime-local" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Fin <span class="text-gray-400 text-xs">(opcional)</span></label>
+          <input v-model="config.end_at" type="datetime-local" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
+          <p class="text-xs text-gray-400 mt-1">La barra solo se muestra dentro de este rango de fechas.</p>
+        </div>
       </div>
 
       <!-- Botón guardar -->
@@ -77,6 +99,11 @@ const config = reactive({
   couriers: ['Paquete Express', 'Estafeta', 'FedEx'],
   delivery_days: '3 a 5 días hábiles',
   message: 'Envío gratis en compras mayores a {monto} • {mensajerias}',
+  cta_text: '',
+  cta_link: '',
+  bg_color: '',
+  start_at: '',
+  end_at: '',
 })
 
 const couriersText = computed({

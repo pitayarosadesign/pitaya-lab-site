@@ -30,6 +30,7 @@ function go(to) {
 
 const tabs = [
   { key: 'home', label: 'Portada', icon: '🏠', to: '/site' },
+  { key: 'globales', label: 'Globales', icon: '🧭', to: '/site/globales' },
   { key: 'catalog', label: 'Catálogo', icon: '🛍️', to: '/site/catalog' },
   { key: 'product', label: 'Producto', icon: '🏷️', to: '/site/product' },
   { key: 'about', label: 'Sobre Nosotros', icon: '📖', to: '/site/about' },
