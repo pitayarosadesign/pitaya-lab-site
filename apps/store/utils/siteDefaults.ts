@@ -8,6 +8,8 @@ export const defaultBrand = {
   name: 'PITAYA LAB',
   tagline: 'Fragancias que conectan',
   logo_url: '/images/brand/logo-pitayalab.png',
+  logo_svg: '',
+  logo_color: '',
 }
 
 export const defaultShippingBar = {

@@ -5,9 +5,8 @@
         <!-- Marca -->
         <div>
           <div class="flex items-center gap-3 mb-4">
-            <img
-              :src="brand.logo_url"
-              :alt="brand.name"
+            <BrandLogo
+              :brand="brand"
               class="h-10 w-10 rounded-full object-cover shadow-md"
             />
             <div>

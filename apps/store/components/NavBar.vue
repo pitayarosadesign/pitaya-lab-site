@@ -27,9 +27,8 @@
       <div class="flex items-center justify-between h-16 md:h-20">
         <!-- Logo -->
         <NuxtLink to="/" class="flex items-center gap-2 md:gap-3 group min-w-0">
-          <img
-            :src="brand.logo_url"
-            :alt="brand.name"
+          <BrandLogo
+            :brand="brand"
             class="h-9 w-9 md:h-10 md:w-10 rounded-full object-cover shadow-md group-hover:shadow-lg transition-all flex-shrink-0"
           />
           <div class="hidden sm:block min-w-0">
