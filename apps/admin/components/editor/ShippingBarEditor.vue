@@ -34,10 +34,12 @@
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Monto mínimo envío gratis ($)</label>
           <input v-model.number="config.free_shipping_min" type="number" min="0" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
+          <p class="text-xs text-gray-400 mt-1">Fuente de verdad del carrito (progreso de envío gratis).</p>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Costo de envío menor ($)</label>
           <input v-model.number="config.shipping_fee" type="number" min="0" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
+          <p class="text-xs text-gray-400 mt-1">Fuente de verdad del carrito (costo de envío base).</p>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Tiempo estimado</label>

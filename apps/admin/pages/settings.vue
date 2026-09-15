@@ -67,36 +67,19 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Envío gratis desde ($)</label>
-              <input
-                v-model="shipping.freeShippingMin"
-                type="number"
-                min="0"
-                class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Costo de envío base ($)</label>
-              <input
-                v-model="shipping.shippingFee"
-                type="number"
-                min="0"
-                class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Código postal origen</label>
-              <input
-                v-model="shipping.originZip"
-                type="text"
-                placeholder="Ej: 77500"
-                maxlength="5"
-                class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm font-mono"
-              />
-            </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Código postal origen</label>
+            <input
+              v-model="shipping.originZip"
+              type="text"
+              placeholder="Ej: 77500"
+              maxlength="5"
+              class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm font-mono"
+            />
           </div>
+          <p class="text-xs text-gray-400">
+            El monto de envío gratis y el costo de envío se configuran en <b>Editor del Sitio → Globales</b> (barra promocional), que es lo que usa el carrito.
+          </p>
 
           <div class="flex items-center gap-3 pt-2">
             <label class="flex items-center gap-2 cursor-pointer">
@@ -572,15 +555,14 @@ const shipping = reactive({
   enviaApiKey: '',
   maxDeliveryDays: 4,
   preferredCarriers: ['PaqueteExpress', 'Estafeta', 'FedEx'],
-  freeShippingMin: 200,
-  shippingFee: 75,
   originZip: '',
   useEnviaApi: false,
 })
 
-// 🚚 Configuración de envíos (envia.com, paqueterías, montos).
-// NOTA: la barra promocional superior se edita en "Editor del Sitio"
-// (componente ShippingBarEditor), no aquí.
+// 🚚 Configuración de envíos (envia.com y paqueterías).
+// NOTA: el monto de envío gratis y el costo de envío ya no viven aquí;
+// se configuran en Editor del Sitio → Globales (barra promocional),
+// porque es el valor que el carrito usa como fuente de verdad.
 
 const apiKeys = reactive({
   resend: '',
@@ -707,8 +689,6 @@ async function saveShippingConfig() {
       enviaApiKey: shipping.enviaApiKey,
       maxDeliveryDays: Number(shipping.maxDeliveryDays),
       preferredCarriers: shipping.preferredCarriers,
-      freeShippingMin: Number(shipping.freeShippingMin),
-      shippingFee: Number(shipping.shippingFee),
       originZip: shipping.originZip,
       useEnviaApi: shipping.useEnviaApi,
     })
