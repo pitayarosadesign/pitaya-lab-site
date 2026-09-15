@@ -89,7 +89,7 @@
 </template>
 
 <script setup>
-useSeoMeta({
+usePageSeo('/faq', {
   title: 'Preguntas Frecuentes | PITAYA LAB',
   description: 'Resuelve tus dudas sobre productos PITAYA LAB: envíos, formas de uso, ingredientes, Amazon Prime y más.',
   ogTitle: 'FAQ | PITAYA LAB - Preguntas Frecuentes',

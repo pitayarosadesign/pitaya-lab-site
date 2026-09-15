@@ -108,7 +108,7 @@
 </template>
 
 <script setup>
-useSeoMeta({
+usePageSeo('/philosophy', {
   title: 'Nuestra Filosofía | PITAYA LAB',
   description: 'Conoce la filosofía de PITAYA LAB: productos botánicos biodegradables que cuidan de ti y del planeta. Velas de soya, aceites y brumas ecológicas.',
   ogTitle: 'Filosofía PITAYA LAB | Cuidado Natural del Hogar',

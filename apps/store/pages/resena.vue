@@ -178,7 +178,7 @@
 </template>
 
 <script setup>
-useSeoMeta({
+usePageSeo('/resena', {
   title: 'Reseñas | PITAYA LAB',
   description: 'Cuéntanos tu experiencia con los productos PITAYA LAB. Tu opinión nos ayuda a mejorar y seguir creando aromas que transforman hogares.',
   robots: 'noindex, follow',

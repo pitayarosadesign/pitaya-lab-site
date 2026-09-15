@@ -41,7 +41,7 @@
 </template>
 
 <script setup>
-useSeoMeta({
+usePageSeo('/terms', {
   title: 'Términos y Condiciones | PITAYA LAB',
   description: 'Términos y condiciones de uso del sitio web de PITAYA LAB. Productos botánicos biodegradables para el hogar.',
   ogTitle: 'Términos y Condiciones | PITAYA LAB',

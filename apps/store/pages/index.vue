@@ -45,7 +45,7 @@
 // Todo el contenido proviene de Supabase: page_sections para el layout
 // de la página y products para el JSON-LD de Store.
 
-useSeoMeta({
+usePageSeo('/', {
   title: 'PITAYA LAB | Velas de Soya, Aceites Aromáticos y Brumas Ecológicas',
   description: 'Descubre PITAYA LAB: productos botánicos biodegradables. Velas de soya perfumadas, aceites aromáticos y brumas que transforman tu hogar.',
   ogTitle: 'PITAYA LAB | Fragancias que conectan con la naturaleza',

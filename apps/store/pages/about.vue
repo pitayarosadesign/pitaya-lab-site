@@ -153,7 +153,7 @@ async function loadConfig() {
 
 onMounted(loadConfig)
 
-useSeoMeta({
+usePageSeo('/about', {
   title: 'Sobre Nosotros | PITAYA LAB',
   description: 'Conoce la historia de PITAYA LAB, una marca mexicana de productos botánicos biodegradables. Velas de soya, aceites aromáticos y brumas ecológicas.',
   ogTitle: 'Sobre PITAYA LAB | Productos Botánicos Mexicanos',

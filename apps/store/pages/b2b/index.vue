@@ -100,7 +100,7 @@ import SectionB2BFaq from '~/components/sections/SectionB2BFaq.vue'
 import SectionImageText from '~/components/sections/SectionImageText.vue'
 import SectionCta from '~/components/sections/SectionCta.vue'
 
-useSeoMeta({
+usePageSeo('/b2b', {
   title: 'Mayoreo & Corporativo B2B | PITAYA LAB',
   description: 'PITAYA LAB B2B: Precios de mayoreo por volumen (hasta 35% dto.), recuerdos personalizados para bodas y eventos, amenities para hoteles y etiquetado privado. Fragrancias botánicas inspiradas en la alta hotelería.',
   ogTitle: 'Mayoreo & Corporativo B2B | PITAYA LAB',

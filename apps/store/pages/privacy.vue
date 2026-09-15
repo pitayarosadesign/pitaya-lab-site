@@ -41,7 +41,7 @@
 </template>
 
 <script setup>
-useSeoMeta({
+usePageSeo('/privacy', {
   title: 'Aviso de Privacidad | PITAYA LAB',
   description: 'Conoce el aviso de privacidad de PITAYA LAB. Protegemos tus datos personales conforme a la legislación mexicana.',
   ogTitle: 'Aviso de Privacidad | PITAYA LAB',

@@ -664,7 +664,7 @@
 </template>
 
 <script setup>
-useSeoMeta({
+usePageSeo('/catalog', {
   title: 'Catálogo de Productos | PITAYA LAB',
   description: 'Explora nuestro catálogo completo de velas de soya perfumadas, aceites aromáticos para difusores y brumas aromáticas. Productos botánicos biodegradables.',
   ogTitle: 'Catálogo PITAYA LAB | Velas, Aceites y Brumas',

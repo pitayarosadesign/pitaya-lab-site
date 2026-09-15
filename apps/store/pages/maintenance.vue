@@ -70,7 +70,7 @@
 </template>
 
 <script setup>
-useSeoMeta({
+usePageSeo('/maintenance', {
   title: 'Mantenimiento | PITAYA LAB',
   robots: 'noindex, nofollow',
 })

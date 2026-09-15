@@ -30,6 +30,9 @@
     <!-- Barra promocional superior -->
     <EditorShippingBarEditor />
 
+    <!-- SEO de páginas fijas -->
+    <EditorSeoEditor />
+
     <!-- Visibilidad de páginas fijas -->
     <EditorStaticPagesEditor />
 

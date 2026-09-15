@@ -153,7 +153,7 @@
 <script setup>
 import emailjs from '@emailjs/browser'
 
-useSeoMeta({
+usePageSeo('/contact', {
   title: 'Contacto | PITAYA LAB',
   description: 'Buzón de mensajes de PITAYA LAB. Envíanos tus comentarios, dudas o aclaraciones. Te responderemos a la brevedad.',
   ogTitle: 'Contacto | PITAYA LAB',
