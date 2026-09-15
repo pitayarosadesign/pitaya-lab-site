@@ -149,6 +149,11 @@
           </div>
 
           <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">Descripción <span class="font-normal text-gray-400">(sección "La experiencia")</span></label>
+            <textarea v-model="form.description" rows="3" placeholder="Texto largo que aparece en la sección 'La experiencia' de la página del aroma…" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 focus:outline-none text-sm" />
+          </div>
+
+          <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1">Notas aromáticas <span class="font-normal text-gray-400">(SAL/COR/FONDO separadas por /)</span></label>
             <textarea v-model="form.notes" rows="2" placeholder="SAL. Cítricos / COR. Florales / FONDO. Maderas" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 focus:outline-none text-sm" />
           </div>
@@ -217,7 +222,7 @@ const editingId = ref(null)
 
 const emptyForm = () => ({
   name: '', slug: '', emoji: '🌸', subtitle: '',
-  experience: '', notes: '', inspiracion: '',
+  description: '', experience: '', notes: '', inspiracion: '',
   olfactive_family: '', collection_tag: '',
   image_url: '', imagePreview: null, is_active: true,
 })
@@ -278,6 +283,7 @@ function openEdit(a) {
   form.slug = a.slug || ''
   form.emoji = a.emoji || '🌸'
   form.subtitle = a.subtitle || ''
+  form.description = a.description || ''
   form.experience = a.experience || ''
   form.notes = a.notes || ''
   form.inspiracion = a.inspiracion || ''
@@ -402,6 +408,7 @@ async function saveForm() {
       slug: slugFinal,
       emoji: form.emoji || '🌸',
       subtitle: form.subtitle || null,
+      description: form.description || null,
       experience: form.experience || null,
       notes: form.notes || null,
       inspiracion: form.inspiracion || null,
