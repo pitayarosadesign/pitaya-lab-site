@@ -336,6 +336,8 @@
               :product-id="product.id"
               :fragrances="product.fragrances"
               :wholesale="product.wholesale"
+              :badge="product.badge"
+              :is-featured="product.isFeatured"
               :link-query="activeFragrance ? { aroma: selectedAroma?.slug || selectedAroma?.name } : null"
             />
           </div>

@@ -22,6 +22,8 @@
           :product-slug="product.slug || product.id"
           :price="product.price"
           :product-id="product.id"
+          :badge="product.badge"
+          :is-featured="product.isFeatured"
         />
       </div>
 
@@ -125,6 +127,8 @@ async function loadProducts() {
         image: primaryImg?.url || null,
         amazonLink: p.amazon_link || 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329',
         category: p.product_categories?.name || '',
+        badge: p.badge || null,
+        isFeatured: p.is_featured,
       }
     })
 

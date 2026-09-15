@@ -112,6 +112,7 @@ export default defineEventHandler(async (event) => {
         variantImageByFragrance,
         stock: p.stock,
         isFeatured: p.is_featured,
+        badge: p.badge || null,
         // Mayoreo / precio negocio por tramos de cantidad
         wholesale: p.wholesale_tiers || null,
         personalization: p.personalization || null,

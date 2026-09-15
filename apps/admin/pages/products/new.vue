@@ -41,6 +41,16 @@
               </button>
             </div>
           </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Distintivo <span class="text-gray-400 font-normal">(opcional)</span></label>
+            <input v-model="form.badge" list="badge-presets" type="text" placeholder="Ej. Nuevo, Best Seller, Edición Limitada…" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+            <datalist id="badge-presets">
+              <option value="Nuevo"></option>
+              <option value="Best Seller"></option>
+              <option value="Edición Limitada"></option>
+              <option value="Últimas piezas"></option>
+            </datalist>
+          </div>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Canal de venta *</label>
@@ -521,6 +531,7 @@ const form = reactive({
   sku: '',
   category: '',
   sales_channel: 'directa',
+  badge: '',
   description: '',
   long_description: '',
   images: [],
@@ -763,6 +774,7 @@ async function handleSave() {
           long_description: form.long_description,
           category_id: categoryId,
           sales_channel: form.sales_channel,
+          badge: form.badge || null,
           price: parseFloat(form.price),
           compare_at_price: form.compare_at_price ? parseFloat(form.compare_at_price) : null,
           cost_price: form.cost_price ? parseFloat(form.cost_price) : null,

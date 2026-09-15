@@ -532,6 +532,8 @@
               :product-slug="rp.slug"
               :price="rp.price"
               :product-id="rp.id"
+              :badge="rp.badge"
+              :is-featured="rp.isFeatured"
             />
           </div>
         </div>

@@ -18,6 +18,11 @@
         decoding="async"
         itemprop="image"
       />
+      <span
+        v-if="displayBadge"
+        class="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide text-white shadow-sm"
+        :class="badgeStyle"
+      >{{ displayBadge }}</span>
       <div class="absolute inset-0 bg-gradient-to-t from-earth-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
     </NuxtLink>
     <div v-else class="relative overflow-hidden aspect-square bg-earth-50">
@@ -29,6 +34,11 @@
         decoding="async"
         itemprop="image"
       />
+      <span
+        v-if="displayBadge"
+        class="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide text-white shadow-sm"
+        :class="badgeStyle"
+      >{{ displayBadge }}</span>
     </div>
 
     <!-- Información del producto -->
@@ -182,6 +192,14 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
+  badge: {
+    type: String,
+    default: ''
+  },
+  isFeatured: {
+    type: Boolean,
+    default: false
+  },
   // Query opcional a añadir al enlace de detalle (ej. preselección de aroma)
   linkQuery: {
     type: Object,
@@ -220,6 +238,18 @@ const wholesaleBest = computed(() => {
     min: top.min,
     price: getBestWholesaleUnitPrice(props.price, cfg),
   }
+})
+
+// Distintivo visible: el badge manual o, si está vacío, "Best Seller" para destacados.
+const displayBadge = computed(() => props.badge || (props.isFeatured ? 'Best Seller' : ''))
+
+const badgeStyle = computed(() => {
+  const b = (displayBadge.value || '').toLowerCase()
+  if (b.includes('nuevo')) return 'bg-emerald-500'
+  if (b.includes('best') || b.includes('más vendido') || b.includes('mas vendido')) return 'bg-amber-500'
+  if (b.includes('edición') || b.includes('edicion') || b.includes('limitada')) return 'bg-violet-600'
+  if (b.includes('última') || b.includes('ultima') || b.includes('piezas')) return 'bg-rose-500'
+  return 'bg-primary-600'
 })
 
 function addToCart() {

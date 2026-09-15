@@ -126,6 +126,17 @@
             </div>
           </div>
           <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">🏷️ Distintivo</label>
+            <input v-model="form.badge" list="badge-presets" type="text" placeholder="Nuevo, Best Seller…" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all" />
+            <datalist id="badge-presets">
+              <option value="Nuevo"></option>
+              <option value="Best Seller"></option>
+              <option value="Edición Limitada"></option>
+              <option value="Últimas piezas"></option>
+            </datalist>
+            <p class="text-xs text-gray-400 mt-1">Se muestra sobre la imagen de la tarjeta. Vacío = sin distintivo (o "Best Seller" si está destacado).</p>
+          </div>
+          <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Categoría de Google</label>
             <select v-model="form.google_category" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all">
               <option value="">Seleccionar</option>
@@ -575,7 +586,7 @@ const form = reactive({
   amazon_link: '', compare_at_price: '', cost_price: '',
   wholesale_enabled: false, wholesale_price: '', wholesale_min_qty: 20,
   wholesale_tiers: null,
-  category: '', sales_channel: 'directa',
+  category: '', sales_channel: 'directa', badge: '',
   personalization: null,
 })
 
@@ -1015,6 +1026,7 @@ async function handleSave() {
           wholesale_tiers: form.wholesale_tiers,
           category_id: categoryId,
           sales_channel: form.sales_channel,
+          badge: form.badge || null,
           personalization: form.personalization,
         },
         images,
