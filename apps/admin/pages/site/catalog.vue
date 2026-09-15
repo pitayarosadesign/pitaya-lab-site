@@ -52,6 +52,7 @@ const config = reactive({
     grid: { enabled: true },
     scent_guide: { enabled: true },
     cta: { enabled: true },
+    recuerdos: { enabled: true },
   },
   scent_guide: {
     enabled: true,
@@ -65,6 +66,12 @@ const config = reactive({
     description: 'Haz clic en cualquier producto o visita nuestra tienda oficial en Amazon México.',
     button_text: 'Ir a la Tienda en Amazon',
     button_link: 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329',
+  },
+  recuerdos: {
+    badge: '💍 Recuerdos para Eventos',
+    title: 'Cotiza Recuerdos para tus Eventos',
+    description: 'Bodas, XV años, baby showers y eventos corporativos. Personaliza tu recuerdo con tu aroma y diseño favorito.',
+    cta_text: '💍 Arma tu recuerdo personalizado',
   },
 })
 
@@ -84,6 +91,7 @@ async function loadConfig() {
       }
       Object.assign(config.scent_guide, data.value.scent_guide)
       Object.assign(config.cta, data.value.cta)
+      if (data.value.recuerdos) Object.assign(config.recuerdos, data.value.recuerdos)
       // Compatibilidad: scent_guide.enabled top-level → blocks.scent_guide
       if (data.value.scent_guide && typeof data.value.scent_guide.enabled === 'boolean') {
         config.blocks.scent_guide.enabled = data.value.scent_guide.enabled

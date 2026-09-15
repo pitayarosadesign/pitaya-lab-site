@@ -4,13 +4,13 @@
       <!-- Encabezado -->
       <div class="text-center mb-10">
         <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-amber-300 text-sm font-medium mb-4">
-          💍 Recuerdos para Eventos
+          {{ badge }}
         </span>
         <h2 class="text-3xl md:text-4xl font-serif font-bold text-white mb-3">
-          Cotiza Recuerdos para tus Eventos
+          {{ title }}
         </h2>
         <p class="text-primary-100 max-w-2xl mx-auto">
-          Bodas, XV años, baby showers y eventos corporativos. Personaliza tu recuerdo con tu aroma y diseño favorito.
+          {{ description }}
         </p>
       </div>
 
@@ -81,7 +81,7 @@
           to="/catalog?categoria=recuerdos"
           class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-earth-900 font-semibold px-8 py-4 rounded-full transition-all hover:shadow-xl hover:shadow-amber-500/30"
         >
-          💍 Arma tu recuerdo personalizado
+          {{ ctaText }}
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
           </svg>
@@ -93,6 +93,13 @@
 
 <script setup>
 import { formatMXN } from '~/composables/useB2B'
+
+const props = defineProps({
+  badge: { type: String, default: '💍 Recuerdos para Eventos' },
+  title: { type: String, default: 'Cotiza Recuerdos para tus Eventos' },
+  description: { type: String, default: 'Bodas, XV años, baby showers y eventos corporativos. Personaliza tu recuerdo con tu aroma y diseño favorito.' },
+  ctaText: { type: String, default: '💍 Arma tu recuerdo personalizado' },
+})
 
 const recuerdos = ref([])
 const currentIndex = ref(0)

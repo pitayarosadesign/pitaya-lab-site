@@ -346,7 +346,13 @@
     </section>
 
     <!-- 💍 Banner / carrusel de Recuerdos para Eventos (debajo de los productos normales) -->
-    <RecuerdosBanner />
+    <RecuerdosBanner
+      v-if="catalogConfig.blocks.recuerdos.enabled"
+      :badge="catalogConfig.recuerdos.badge"
+      :title="catalogConfig.recuerdos.title"
+      :description="catalogConfig.recuerdos.description"
+      :cta-text="catalogConfig.recuerdos.cta_text"
+    />
 
     <!-- 🎯 Guía de Aromas por Mood -->
     <section v-if="catalogConfig.blocks.scent_guide.enabled" class="py-16 bg-gradient-to-b from-white to-primary-50/30">
@@ -685,6 +691,7 @@ const catalogConfig = reactive({
     grid: { enabled: true },
     scent_guide: { enabled: false },
     cta: { enabled: true },
+    recuerdos: { enabled: true },
   },
   scent_guide: {
     enabled: false,
@@ -698,6 +705,12 @@ const catalogConfig = reactive({
     description: 'Haz clic en cualquier producto o visita nuestra tienda oficial en Amazon México.',
     button_text: 'Ir a la Tienda en Amazon',
     button_link: 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329',
+  },
+  recuerdos: {
+    badge: '💍 Recuerdos para Eventos',
+    title: 'Cotiza Recuerdos para tus Eventos',
+    description: 'Bodas, XV años, baby showers y eventos corporativos. Personaliza tu recuerdo con tu aroma y diseño favorito.',
+    cta_text: '💍 Arma tu recuerdo personalizado',
   },
 })
 
@@ -729,6 +742,7 @@ async function loadCatalogConfig() {
       }
       Object.assign(catalogConfig.scent_guide, data.value.scent_guide)
       Object.assign(catalogConfig.cta, data.value.cta)
+      if (data.value.recuerdos) Object.assign(catalogConfig.recuerdos, data.value.recuerdos)
       // Mantener compatibilidad: scent_guide.enabled desde el top-level si no vino en blocks
       if (data.value.scent_guide && typeof data.value.scent_guide.enabled === 'boolean') {
         catalogConfig.blocks.scent_guide.enabled = data.value.scent_guide.enabled
