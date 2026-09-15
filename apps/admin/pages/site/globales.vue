@@ -24,6 +24,9 @@
     <!-- Navegación por páginas -->
     <EditorPageTabs active="globales" />
 
+    <!-- Marca (nombre, eslogan, logo) -->
+    <EditorBrandEditor />
+
     <!-- Barra promocional superior -->
     <EditorShippingBarEditor />
 
