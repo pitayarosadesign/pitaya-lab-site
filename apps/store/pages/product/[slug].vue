@@ -318,7 +318,7 @@
               <!-- Sobre pedido (sin stock) -->
               <span v-if="currentStock <= 0" class="flex items-center gap-1.5 text-amber-600">
                 <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-                {{ productConfig.backorder_message }}
+                {{ productBackorderText }}
               </span>
               <span v-if="product.freeShipping" class="flex items-center gap-1.5 text-primary-600">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -340,7 +340,7 @@
               <p class="text-[13px] leading-snug">
                 <template v-if="productIsBackorder">
                   <span class="font-semibold">Sobre pedido:</span>
-                  se prepara en taller 2-3 días hábiles. Recíbelo antes del
+                  se prepara en taller {{ productPrepText }}. Recíbelo antes del
                   <strong class="whitespace-nowrap">{{ productDeliveryDeadlineText }}</strong>.
                 </template>
                 <template v-else>
@@ -877,7 +877,11 @@ const currentStock = computed(() => {
 // ===== 🚚 Entrega estimada (página de producto) =====
 const productIsBackorder = computed(() => currentStock.value <= 0)
 const productDelivery = computed(() =>
-  estimateDelivery({ isBackorder: productIsBackorder.value })
+  estimateDelivery({
+    isBackorder: productIsBackorder.value,
+    prepDaysMin: product.value?.prepDaysMin ?? undefined,
+    prepDaysMax: product.value?.prepDaysMax ?? undefined,
+  })
 )
 const productDeliveryDeadlineText = computed(() =>
   productDelivery.value ? formatDeliveryDeadline(productDelivery.value) : ''
@@ -885,6 +889,26 @@ const productDeliveryDeadlineText = computed(() =>
 const productDeliveryRangeText = computed(() =>
   productDelivery.value ? formatDeliveryRange(productDelivery.value) : ''
 )
+
+// Texto legible de preparación en taller (sobre pedido). Usa la preparación
+// real del producto/categoría; si no hay valor, cae al default 2-3 días.
+const productPrepText = computed(() => {
+  const min = product.value?.prepDaysMin ?? 2
+  const max = product.value?.prepDaysMax ?? 3
+  if (min === max) {
+    return min === 1 ? '1 día hábil' : `${min} días hábiles`
+  }
+  return `${min}-${max} días hábiles`
+})
+
+// Mensaje de "sobre pedido": usa la preparación real si está configurada;
+// si no, cae al copy configurable de la página de producto.
+const productBackorderText = computed(() => {
+  const hasPrep = product.value?.prepDaysMin != null || product.value?.prepDaysMax != null
+  return hasPrep
+    ? `Sobre pedido: se prepara en taller en ${productPrepText.value}`
+    : productConfig.backorder_message
+})
 
 // ¿Se puede comprar? Siempre se puede agregar al carrito.
 // Si no hay stock, se trata como pedido sobre pedido (preparación en taller).
