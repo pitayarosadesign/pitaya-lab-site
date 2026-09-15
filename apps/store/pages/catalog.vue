@@ -771,8 +771,23 @@ const hasActiveFilters = computed(() => activeFilterCount.value > 0)
 // Productos desde API
 const products = ref([])
 
-// Perfiles aromáticos (fragancias disponibles) cargados desde la base de datos
-const aromas = ref([])
+// Perfiles aromáticos crudos (fragancias activas) desde la base de datos
+const aromasRaw = ref([])
+
+// Ids de fragancias presentes en al menos un producto activo del catálogo.
+// Se usa para ocultar aromas que no tienen productos disponibles.
+const availableAromaIds = computed(() => {
+  const ids = new Set()
+  for (const p of products.value) {
+    for (const f of (p.fragrances || [])) {
+      if (f.id) ids.add(f.id)
+    }
+  }
+  return ids
+})
+
+// Aromas visibles: solo los que tienen al menos un producto disponible.
+const aromas = computed(() => aromasRaw.value.filter(a => availableAromaIds.value.has(a.id)))
 
 // Todos los aromas (para el selector desplegable)
 const allAromas = computed(() => aromas.value)
@@ -898,7 +913,7 @@ async function loadAromas() {
       .order('sort_order', { ascending: true })
     if (error) throw error
     // Mapear a la forma esperada por la plantilla
-    aromas.value = (data || []).map(p => ({
+    aromasRaw.value = (data || []).map(p => ({
       id: p.id,
       name: p.name,
       slug: p.slug || '',
@@ -1223,10 +1238,10 @@ function applyCategoryFromUrl() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   loadCatalogConfig()
   loadCategories().then(applyCategoryFromUrl)
-  loadProducts()
-  loadAromas().then(applyAromaFromUrl)
+  await Promise.all([loadProducts(), loadAromas()])
+  applyAromaFromUrl()
 })
 </script>

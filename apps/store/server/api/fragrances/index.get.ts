@@ -96,7 +96,8 @@ export default defineEventHandler(async (event) => {
       }
     })
 
-    return { fragrances: all }
+    // Ocultar perfiles que no tienen ningún producto activo disponible.
+    return { fragrances: all.filter(f => f.disponibles.length > 0) }
   } catch (e) {
     throw createError({ statusCode: 500, message: e.message })
   }
