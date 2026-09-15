@@ -38,6 +38,9 @@
 
     <!-- Menú de navegación -->
     <EditorNavMenuEditor />
+
+    <!-- Pie de página -->
+    <EditorFooterEditor />
   </div>
 </template>
 

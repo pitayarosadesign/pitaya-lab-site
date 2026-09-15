@@ -15,7 +15,7 @@
             </div>
           </div>
           <p class="text-sm text-earth-400 leading-relaxed">
-            Productos botánicos biodegradables que transforman tu hogar en una experiencia sensorial única.
+            {{ footer.description }}
           </p>
           
         </div>
@@ -61,7 +61,7 @@
               </NuxtLink>
             </li>
             <li>
-              <a :href="AMAZON_LINK" target="_blank" rel="noopener noreferrer" class="text-sm text-earth-400 hover:text-amber-400 transition-colors flex items-center gap-2">
+              <a :href="footer.amazon_link" target="_blank" rel="noopener noreferrer" class="text-sm text-earth-400 hover:text-amber-400 transition-colors flex items-center gap-2">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M13.483 0a1.374 1.374 0 0 0-.961.438L7.116 6.226l-3.854 4.126a1.375 1.375 0 0 0 0 1.994l2.414 2.585a1.375 1.375 0 0 0 1.994 0l3.779-3.788-3.787 3.787-2.414-2.585a1.374 1.374 0 0 1 0-1.994l3.705-3.964 3.675-3.675a1.375 1.375 0 0 0-.044-1.92A1.374 1.374 0 0 0 13.483 0zm-1.587 2.585-3.673 3.675 3.673 3.675h7.252v-1.53h-5.733l-2.358-2.585 2.358-2.585h5.733v-1.53h-7.252z"/>
                 </svg>
@@ -71,9 +71,9 @@
           </ul>
 
           <!-- 🌍 Stripe Climate -->
-          <div class="mt-6 pt-6 border-t border-earth-800">
+          <div v-if="footer.show_stripe" class="mt-6 pt-6 border-t border-earth-800">
             <a
-              href="https://climate.stripe.com/Ul0lzt"
+              :href="footer.stripe_link"
               target="_blank"
               rel="noopener noreferrer"
               class="group inline-flex items-center gap-2 text-sm text-earth-400 hover:text-primary-400 transition-colors"
@@ -99,12 +99,13 @@
 </template>
 
 <script setup>
-import { defaultBrand, defaultNavLinks } from '~/utils/siteDefaults'
-
-const AMAZON_LINK = 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329?'
+import { defaultBrand, defaultFooter, defaultNavLinks } from '~/utils/siteDefaults'
 
 // 🏷️ Marca configurable desde el admin
 const brand = reactive({ ...defaultBrand })
+
+// 🦶 Contenido del footer (descripción y enlaces), editable desde el admin
+const footer = reactive({ ...defaultFooter })
 
 // 🧭 El footer usa los mismos enlaces que el menú superior (sin "Inicio").
 // El fallback vive en utils/siteDefaults.ts y solo aplica si no hay
@@ -120,7 +121,9 @@ onMounted(async () => {
     const rows = Array.isArray(data) ? data : []
     const brandRow = rows.find(r => r.key === 'brand')
     const navRow = rows.find(r => r.key === 'nav_links')
+    const footerRow = rows.find(r => r.key === 'footer')
     if (brandRow?.value) Object.assign(brand, brandRow.value)
+    if (footerRow?.value) Object.assign(footer, footerRow.value)
     if (navRow?.value && Array.isArray(navRow.value) && navRow.value.length) {
       // El footer excluye "Inicio" pero usa el resto de los links configurados
       navLinks.value = navRow.value.filter(l => l.path !== '/')

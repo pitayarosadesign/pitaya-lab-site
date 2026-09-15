@@ -12,6 +12,13 @@ export const defaultBrand = {
   logo_color: '',
 }
 
+export const defaultFooter = {
+  description: 'Productos botánicos biodegradables que transforman tu hogar en una experiencia sensorial única.',
+  amazon_link: 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329?',
+  stripe_link: 'https://climate.stripe.com/Ul0lzt',
+  show_stripe: true,
+}
+
 export const defaultShippingBar = {
   enabled: false,
   free_shipping_min: 200,
