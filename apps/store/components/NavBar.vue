@@ -10,10 +10,7 @@
     >
       <p class="flex items-center justify-center gap-1.5 flex-wrap">
         <span class="hidden sm:inline">🚚</span>
-        <span class="font-semibold">Envío gratis</span>
-        <span>en compras mayores a</span>
-        <span class="font-bold text-amber-300">${{ formatPrice(shippingBar.free_shipping_min) }} MXN</span>
-        <span class="hidden sm:inline">• {{ shippingBar.couriers.join(', ') }}</span>
+        <span class="font-semibold">{{ shippingBarMessage }}</span>
       </p>
     </div>
     <div class="bg-white/90 backdrop-blur-md border-b border-earth-100">
@@ -230,6 +227,17 @@ function onScroll() {
 function formatPrice(price) {
   return Number(price).toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }
+
+// Mensaje de la barra promocional. `shippingBar.message` es una plantilla
+// editable en el editor de sitio; se sustituyen {monto} y {mensajerias}.
+const shippingBarMessage = computed(() => {
+  const tpl = shippingBar.message || 'Envío gratis en compras mayores a {monto}'
+  const monto = `$${formatPrice(shippingBar.free_shipping_min)} MXN`
+  const mensajerias = (shippingBar.couriers || []).join(', ')
+  return tpl
+    .replace(/\{monto\}/g, monto)
+    .replace(/\{mensajerias\}/g, mensajerias)
+})
 
 // Cargar configuración de envíos desde Supabase
 async function loadShippingBar() {

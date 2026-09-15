@@ -91,6 +91,7 @@ export default defineEventHandler(async (event) => {
         trackInventory: product.track_inventory,
         allowBackorder: product.allow_backorder,
         isFeatured: product.is_featured,
+        badge: product.badge || null,
         amazonLink: product.amazon_link,
         amazonAsin: product.amazon_asin,
         amazonPrice: product.amazon_price,

@@ -76,6 +76,15 @@
 
           <!-- Columna derecha: Información -->
           <div class="flex flex-col">
+            <!-- Distintivo -->
+            <span
+              v-if="productBadge"
+              class="inline-flex items-center w-fit px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide text-white mb-3"
+              :class="productBadgeClass"
+            >
+              {{ productBadge }}
+            </span>
+
             <!-- Categoría -->
             <span class="text-primary-600 font-semibold text-sm uppercase tracking-wider mb-2">
               {{ product.category || 'Producto' }}
@@ -549,6 +558,7 @@ import {
   getWholesaleUnitPrice,
   getTierDiscountLabel,
 } from '~/composables/useWholesale'
+import { badgeLabel, badgeClass } from '~/composables/useBadge'
 
 const route = useRoute()
 const supabase = useNuxtApp().$supabase
@@ -562,6 +572,10 @@ const product = ref(null)
 const loading = ref(true)
 const error = ref(false)
 const selectedVariant = ref(null)
+
+// Distintivo del producto (badge manual o "Best Seller" si es destacado).
+const productBadge = computed(() => badgeLabel(product.value?.badge, product.value?.isFeatured))
+const productBadgeClass = computed(() => badgeClass(productBadge.value))
 
 // Configuración editable de la página de producto (desde site_config key "product_page").
 // Permite personalizar mensajes de stock / sobre pedido desde el panel admin.

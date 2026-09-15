@@ -26,6 +26,11 @@
 
       <!-- Opciones (deshabilitadas si está inactiva) -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4" :class="{ 'opacity-50 pointer-events-none': !config.enabled }">
+        <div class="md:col-span-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Mensaje de la barra</label>
+          <input v-model="config.message" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
+          <p class="text-xs text-gray-400 mt-1.5">Usa <code class="text-[11px]">{monto}</code> para el mínimo de envío gratis y <code class="text-[11px]">{mensajerias}</code> para las paqueterías.</p>
+        </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Monto mínimo envío gratis ($)</label>
           <input v-model.number="config.free_shipping_min" type="number" min="0" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
@@ -71,6 +76,7 @@ const config = reactive({
   shipping_fee: 50,
   couriers: ['Paquete Express', 'Estafeta', 'FedEx'],
   delivery_days: '3 a 5 días hábiles',
+  message: 'Envío gratis en compras mayores a {monto} • {mensajerias}',
 })
 
 const couriersText = computed({
