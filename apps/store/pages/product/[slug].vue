@@ -346,7 +346,11 @@
                 <template v-else>
                   <span class="font-semibold">Recíbelo antes del</span>
                   <strong class="whitespace-nowrap">{{ productDeliveryDeadlineText }}</strong>.
-                  <span class="block mt-0.5 opacity-90">Preparación {{ productPrepText }} + envío de 2 a 5 días hábiles · pedidos antes de la 1:00 pm se preparan el mismo día.</span>
+                  <template v-if="cutoffUrgencyText">
+                    <span class="block mt-0.5 opacity-90">Preparación {{ productPrepText }} + envío de 2 a 5 días hábiles.</span>
+                    <span class="block mt-0.5 font-semibold">{{ cutoffUrgencyText }}</span>
+                  </template>
+                  <span v-else class="block mt-0.5 opacity-90">Preparación {{ productPrepText }} + envío de 2 a 5 días hábiles · pedidos en día hábil antes de la 1:00 pm se preparan el mismo día.</span>
                 </template>
               </p>
             </div>
@@ -875,16 +879,51 @@ const currentStock = computed(() => {
 
 // ===== 🚚 Entrega estimada (página de producto) =====
 const productIsBackorder = computed(() => currentStock.value <= 0)
+
+// Reloj local para el contador de urgencia del corte. Se mantiene solo en
+// cliente para evitar desajustes de zona horaria en SSR.
+const isMounted = ref(false)
+const nowTick = ref(new Date())
+let deliveryTickTimer = null
+
 const productDelivery = computed(() =>
   estimateDelivery({
     isBackorder: productIsBackorder.value,
     prepDaysMin: product.value?.prepDaysMin ?? undefined,
     prepDaysMax: product.value?.prepDaysMax ?? undefined,
+    now: nowTick.value,
   })
 )
 const productDeliveryDeadlineText = computed(() =>
   productDelivery.value ? formatDeliveryDeadline(productDelivery.value) : ''
 )
+
+// Contador de urgencia: cuánto falta para el corte de preparación del mismo
+// día. Solo aplica en día hábil, antes del corte (se muestra solo con stock).
+const cutoffCountdown = computed(() => {
+  if (!isMounted.value) return null
+  const now = nowTick.value
+  const dow = now.getDay()
+  if (dow === 0 || dow === 6) return null
+  const cutoff = new Date(now)
+  cutoff.setHours(DEFAULT_DELIVERY_CONFIG.sameDayCutoffHour, DEFAULT_DELIVERY_CONFIG.sameDayCutoffMinute, 0, 0)
+  const diff = cutoff.getTime() - now.getTime()
+  if (diff <= 0) return null
+  const totalMin = Math.floor(diff / 60000)
+  return { hours: Math.floor(totalMin / 60), minutes: totalMin % 60 }
+})
+
+const cutoffUrgencyText = computed(() => {
+  const c = cutoffCountdown.value
+  if (!c) return ''
+  return `Quedan ${formatCountdown(c.hours, c.minutes)} para que tu pedido se prepare hoy mismo.`
+})
+
+function formatCountdown(hours, minutes) {
+  if (hours > 0 && minutes > 0) return `${hours} h ${minutes} min`
+  if (hours > 0) return `${hours} ${hours === 1 ? 'hora' : 'horas'}`
+  return `${minutes} min`
+}
 
 // Texto legible de preparación en taller (sobre pedido). Usa la preparación
 // real del producto/categoría; si no hay valor, cae al default 1-2 días.
@@ -1148,11 +1187,18 @@ useHead({
 })
 
 onMounted(() => {
+  isMounted.value = true
+  nowTick.value = new Date()
+  deliveryTickTimer = setInterval(() => {
+    nowTick.value = new Date()
+  }, 30000)
+
   loadProductConfig()
   loadProduct()
 })
 
 onUnmounted(() => {
+  if (deliveryTickTimer) clearInterval(deliveryTickTimer)
   clearTimeout(toastTimer.value)
 })
 </script>
