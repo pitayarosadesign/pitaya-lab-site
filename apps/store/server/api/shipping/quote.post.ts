@@ -54,5 +54,5 @@ export default defineEventHandler(async (event) => {
     parcels
   )
 
-  return { rates }
+  return { rates, parcels_count: parcels.length }
 })

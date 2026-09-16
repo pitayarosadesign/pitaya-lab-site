@@ -144,3 +144,52 @@ export async function quoteSkydropx(
 
   throw createError({ statusCode: 502, message: 'La cotización de Skydropx no se completó a tiempo' })
 }
+
+export interface SkydropxShipmentResult {
+  id: string
+  carrier: string
+  trackingNumber: string | null
+  status: string | null
+}
+
+export async function createSkydropxShipment(params: {
+  rateId: string
+  packageCount: number
+  recipient: { name: string; street: string; phone: string; email: string }
+}): Promise<SkydropxShipmentResult> {
+  const token = await getSkydropxToken()
+  const fromId = await getOriginTemplateId()
+
+  const packages = Array.from({ length: Math.max(1, params.packageCount) }, (_, i) => ({
+    package_number: String(i + 1),
+    package_protected: false,
+  }))
+
+  const res = await skydropxFetch<any>('/shipments', token, {
+    method: 'POST',
+    body: {
+      shipment: {
+        rate_id: params.rateId,
+        unique_shipment: true,
+        printing_format: 'standard',
+        address_from: { address_template_id: fromId },
+        address_to: {
+          name: params.recipient.name,
+          street1: params.recipient.street,
+          phone: params.recipient.phone,
+          email: params.recipient.email,
+          company: params.recipient.name,
+        },
+        packages,
+      },
+    },
+  })
+
+  const attrs = res?.data?.attributes || res?.attributes || res || {}
+  return {
+    id: attrs.id || res?.data?.id || '',
+    carrier: attrs.carrier_name || '',
+    trackingNumber: attrs.master_tracking_number || null,
+    status: attrs.workflow_status || null,
+  }
+}

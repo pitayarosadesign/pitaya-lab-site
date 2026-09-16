@@ -512,6 +512,7 @@ const shippingRates = ref([])
 const selectedRateId = ref(null)
 const quoting = ref(false)
 const quoteError = ref('')
+const quoteParcelsCount = ref(0)
 
 const selectedRate = computed(() => shippingRates.value.find((r) => r.id === selectedRateId.value) || null)
 
@@ -536,6 +537,7 @@ async function quoteShipping() {
       },
     })
     shippingRates.value = res.rates || []
+    quoteParcelsCount.value = res.parcels_count || cart.items.length
     if (shippingRates.value.length) selectedRateId.value = shippingRates.value[0].id
   } catch (e) {
     quoteError.value = e?.data?.message || e?.message || 'No se pudo cotizar el envío'
@@ -642,6 +644,8 @@ async function handleCheckout() {
         items: cart.getCheckoutItems(),
         shippingCost: shippingCost.value, // ← Enviamos el costo de envío
         shippingCarrier: selectedRate.value ? `${selectedRate.value.carrierDisplay} - ${selectedRate.value.service}` : '',
+        skydropxRateId: selectedRate.value ? selectedRate.value.id : '',
+        skydropxParcelsCount: quoteParcelsCount.value,
         orderNote: cart.orderNote || '', // ← Nota general del pedido (opcional)
         successUrl: `${window.location.origin}/checkout/success`,
         cancelUrl: `${window.location.origin}/checkout/cancel`,

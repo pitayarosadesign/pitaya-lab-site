@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 import { Resend } from 'resend'
+import { createSkydropxShipment } from '../../utils/skydropx'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -263,6 +264,51 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // 🚚 Crear la guía en Skydropx automáticamente tras el pago
+  async function createSkydropxLabel(orderId: string, orderNumber: string, session: Stripe.Checkout.Session) {
+    const rateId = session.metadata?.skydropx_rate_id
+    if (!rateId) {
+      console.log(`ℹ️ Orden ${orderNumber}: sin cotización Skydropx, no se crea guía automática`)
+      return
+    }
+
+    const shipping = session.shipping_details
+    const name = shipping?.name || session.customer_details?.name || 'Cliente'
+    const street = [shipping?.address?.line1, shipping?.address?.line2].filter(Boolean).join(' ')
+    const phone = shipping?.phone || session.customer_details?.phone || ''
+    const email = session.customer_details?.email || session.customer_email || ''
+    const packageCount = Number(session.metadata?.skydropx_parcels_count) || 1
+
+    try {
+      const result = await createSkydropxShipment({
+        rateId,
+        packageCount,
+        recipient: { name, street: street || 'Dirección pendiente', phone, email },
+      })
+
+      const { error } = await supabaseAdmin
+        .from('orders')
+        .update({
+          shipping_carrier: result.carrier || null,
+          tracking_number: result.trackingNumber,
+          skydropx_shipment_id: result.id || null,
+          shipping_status: result.status || 'created',
+          shipped_at: result.trackingNumber ? new Date().toISOString() : null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', orderId)
+
+      if (error) {
+        console.error('Error guardando guía Skydropx:', error.message)
+      } else {
+        console.log(`✅ Guía Skydropx creada para ${orderNumber}: ${result.trackingNumber || 'sin tracking aún'} (${result.carrier})`)
+      }
+    } catch (e: any) {
+      // No romper el webhook si la guía falla; la orden ya está pagada.
+      console.error(`⚠️ No se pudo crear la guía Skydropx para ${orderNumber}:`, e?.message || e)
+    }
+  }
+
   try {
     const signature = event.node.req.headers['stripe-signature']
 
@@ -326,6 +372,7 @@ export default defineEventHandler(async (event) => {
               customer_email: session.customer_details?.email || order.customer_email,
               customer_name: session.customer_details?.name || order.customer_name,
               customer_phone: session.customer_details?.phone || null,
+              shipping_cost: session.total_details?.amount_shipping ? session.total_details.amount_shipping / 100 : 0,
               shipping_address: session.shipping_details || {},
               paid_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
@@ -338,6 +385,11 @@ export default defineEventHandler(async (event) => {
           }
 
           console.log(`✅ Orden ${order.order_number} pagada con éxito`)
+
+          // 🚚 Crear guía Skydropx (solo si no tiene tracking previo)
+          if (!order.tracking_number) {
+            await createSkydropxLabel(order.id, order.order_number, session)
+          }
 
           // Crear/actualizar el cliente en la tabla customers
           await upsertCustomer({
@@ -404,7 +456,7 @@ export default defineEventHandler(async (event) => {
           }
           const orderNumber = `PIT-${nextNumber}`
 
-          const { error: insertError } = await supabaseAdmin
+          const { data: newOrder, error: insertError } = await supabaseAdmin
             .from('orders')
             .insert({
               order_number: orderNumber,
@@ -418,14 +470,22 @@ export default defineEventHandler(async (event) => {
               items: items,
               subtotal: session.amount_subtotal ? session.amount_subtotal / 100 : 0,
               total: session.amount_total ? session.amount_total / 100 : 0,
+              shipping_cost: session.total_details?.amount_shipping ? session.total_details.amount_shipping / 100 : 0,
               shipping_address: session.shipping_details || {},
               notes: session.metadata?.order_note || null,
               paid_at: new Date().toISOString(),
             })
+            .select('id')
+            .single()
 
           if (insertError) {
             console.error('Error creando orden:', insertError.message)
             throw createError({ statusCode: 500, message: `Error creando orden: ${insertError.message}` })
+          }
+
+          // 🚚 Crear guía Skydropx automáticamente
+          if (newOrder?.id) {
+            await createSkydropxLabel(newOrder.id, orderNumber, session)
           }
 
           // Crear/actualizar el cliente en la tabla customers

@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   )
 
   try {
-    const { items, successUrl, cancelUrl, customerEmail, shippingCost, orderNote, shippingCarrier } = body
+    const { items, successUrl, cancelUrl, customerEmail, shippingCost, orderNote, shippingCarrier, skydropxRateId, skydropxParcelsCount } = body
 
     if (!items || items.length === 0) {
       throw createError({ statusCode: 400, message: 'El carrito está vacío' })
@@ -87,6 +87,9 @@ export default defineEventHandler(async (event) => {
         // Nota general del pedido (opcional). Stripe limita cada valor de
         // metadata a 500 caracteres, por eso acotamos aquí.
         order_note: (orderNote || '').slice(0, 500),
+        // Datos de la cotización Skydropx para crear la guía tras el pago
+        skydropx_rate_id: skydropxRateId || '',
+        skydropx_parcels_count: String(skydropxParcelsCount || 0),
       },
     }
 
