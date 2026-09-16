@@ -59,6 +59,60 @@ export default defineEventHandler(async (event) => {
 
     if (insertError) throw insertError
 
+    // Copiar galería de fotos. Las imágenes en Supabase Storage se clonan a un
+    // path nuevo (borrar la foto en un producto no afecta al otro); las rutas
+    // locales o externas se reutilizan tal cual.
+    const { data: originalImages } = await supabaseAdmin
+      .from('product_images')
+      .select('*')
+      .eq('product_id', id)
+      .order('sort_order', { ascending: true })
+
+    const copiedImages = []
+    for (const img of originalImages || []) {
+      let url = img.url
+      const storagePath = img.url?.split('/product-images/')[1]
+      if (storagePath) {
+        try {
+          const { data: blob, error: downloadError } = await supabaseAdmin.storage
+            .from('product-images')
+            .download(storagePath)
+          if (!downloadError && blob) {
+            const ext = (storagePath.split('.').pop() || 'jpg').toLowerCase()
+            const contentType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg'
+            const newPath = `${newProduct.id}/${Date.now()}-${img.sort_order ?? 0}.${ext}`
+            const buffer = Buffer.from(await blob.arrayBuffer())
+            const { error: uploadError } = await supabaseAdmin.storage
+              .from('product-images')
+              .upload(newPath, buffer, { contentType, cacheControl: '31536000', upsert: false })
+            if (!uploadError) {
+              const { data: pub } = supabaseAdmin.storage.from('product-images').getPublicUrl(newPath)
+              url = pub.publicUrl
+            }
+          }
+        } catch (err) {
+          console.warn('No se pudo clonar la imagen de storage; se reutiliza la URL:', err.message)
+        }
+      }
+
+      copiedImages.push({
+        product_id: newProduct.id,
+        url,
+        alt_text: img.alt_text || newProduct.name || '',
+        sort_order: img.sort_order ?? 0,
+        is_primary: img.is_primary || false,
+        google_image_link: img.google_image_link || null,
+        pinterest_image_link: img.pinterest_image_link || null,
+      })
+    }
+
+    if (copiedImages.length) {
+      const { error: imagesError } = await supabaseAdmin
+        .from('product_images')
+        .insert(copiedImages)
+      if (imagesError) throw imagesError
+    }
+
     return { success: true, product: newProduct }
   } catch (e) {
     throw createError({ statusCode: 500, message: e.message })
