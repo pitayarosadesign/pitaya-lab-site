@@ -9,10 +9,10 @@
 /**
  * Redimensiona y comprime una imagen manteniendo su relación de aspecto.
  * @param file Archivo de imagen original.
- * @param maxSize Lado mayor máximo en píxeles (por defecto 1600).
+ * @param maxSize Lado mayor máximo en píxeles (por defecto 1200).
  * @returns Objeto con dataUrl (imagen optimizada), ancho y alto.
  */
-export async function compressImageFile(file: File, maxSize = 1600): Promise<{ dataUrl: string; width: number; height: number }> {
+export async function compressImageFile(file: File, maxSize = 1200): Promise<{ dataUrl: string; width: number; height: number }> {
   const original = await readFileAsDataURL(file)
   const img = await loadImage(original)
   let { width, height } = img
@@ -43,10 +43,11 @@ export async function compressImageFile(file: File, maxSize = 1600): Promise<{ d
     ctx.drawImage(img, 0, 0)
   }
 
-  // PNG solo si el original tenía transparencia; si no, JPEG 0.85.
+  // PNG solo si el original tenía transparencia; si no, JPEG. Calidades
+  // ajustadas para mantener el payload pequeño y evitar el 413 al subir.
   const isPng = /png/i.test(file.type) || /\.png$/i.test(file.name)
   const mime = isPng ? 'image/png' : 'image/jpeg'
-  const dataUrl = canvas.toDataURL(mime, isPng ? 0.92 : 0.85)
+  const dataUrl = canvas.toDataURL(mime, isPng ? 0.85 : 0.8)
   return { dataUrl, width, height }
 }
 
@@ -60,17 +61,30 @@ export function compressedDataUrlToBase64(dataUrl: string): string {
 
 /**
  * Optimiza un archivo de imagen y devuelve directamente su base64.
- * Si la optimización falla, cae al base64 del original como respaldo.
+ * Si la optimización falla, lanza un error para no enviar nunca el original
+ * sin comprimir (evita el 413 Payload Too Large).
  */
-export async function optimizeImageToBase64(file: File, maxSize = 1600): Promise<string> {
+export async function optimizeImageToBase64(file: File, maxSize = 1200): Promise<string> {
+  let base64: string
   try {
     const { dataUrl } = await compressImageFile(file, maxSize)
-    return compressedDataUrlToBase64(dataUrl)
+    base64 = compressedDataUrlToBase64(dataUrl)
   } catch (err) {
-    console.warn('No se pudo optimizar la imagen, se usará el original:', err)
-    const original = await readFileAsDataURL(file)
-    return compressedDataUrlToBase64(original)
+    console.error('No se pudo procesar la imagen:', err)
+    throw new Error(`No se pudo procesar la imagen "${file.name}"`)
   }
+
+  // Anti-413: si una sola imagen queda muy pesada, se re-comprime a menor
+  // tamaño. Nunca se envía el original sin comprimir.
+  if (base64.length > 450 * 1024) {
+    try {
+      const { dataUrl } = await compressImageFile(file, 800)
+      base64 = compressedDataUrlToBase64(dataUrl)
+    } catch (err) {
+      console.error('No se pudo re-comprimir la imagen:', err)
+    }
+  }
+  return base64
 }
 
 function readFileAsDataURL(file: File): Promise<string> {
