@@ -175,6 +175,8 @@
             <!-- Variantes (Aromas) -->
             <!-- Selector de variantes -->
             <div v-if="product.variants && product.variants.length > 0" class="mb-6">
+              <!-- Selector de aroma: solo se muestra si hay más de una variante -->
+              <template v-if="product.variants.length > 1">
               <!-- Modelo flexible (dimensiones: ej. Aroma + Tamaño) -->
               <template v-if="isFlexibleVariants">
                 <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
@@ -241,6 +243,7 @@
                     {{ variant.name }}
                   </button>
                 </div>
+              </template>
               </template>
 
               <!-- 🌸 Tarjeta contextual del aroma seleccionado
