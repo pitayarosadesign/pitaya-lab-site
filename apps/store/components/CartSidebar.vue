@@ -69,6 +69,83 @@
 
         <!-- Items del carrito (scroll) -->
         <div v-if="cart.hasItems" class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          <!-- 🚚 Envío: cotización con Skydropx -->
+          <div class="rounded-xl border border-earth-200 bg-earth-50/40 p-3 space-y-2">
+            <div class="flex items-center justify-between">
+              <h4 class="text-sm font-bold text-earth-800">🚚 Envío</h4>
+              <span v-if="selectedRate" class="text-xs font-semibold text-primary-700">{{ selectedRate.carrierDisplay }} · {{ selectedRate.days }} días</span>
+              <span v-else-if="cart.totalPrice >= FREE_SHIPPING_THRESHOLD" class="text-xs font-semibold text-green-600">Gratis</span>
+              <span v-else class="text-xs font-semibold text-earth-400">Cotiza con tu CP</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-[10px] font-semibold text-earth-500 uppercase">Código postal</label>
+                <input
+                  v-model="shippingAddress.postal_code"
+                  maxlength="5"
+                  inputmode="numeric"
+                  placeholder="45236"
+                  class="w-full px-2.5 py-2 rounded-lg border border-earth-200 text-sm focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none bg-white"
+                />
+              </div>
+              <div>
+                <label class="text-[10px] font-semibold text-earth-500 uppercase">Estado</label>
+                <select
+                  v-model="shippingAddress.area_level1"
+                  class="w-full px-2.5 py-2 rounded-lg border border-earth-200 text-sm bg-white focus:border-primary-400 outline-none"
+                >
+                  <option value="" disabled>Selecciona…</option>
+                  <option v-for="s in MEXICAN_STATES" :key="s" :value="s">{{ s }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[10px] font-semibold text-earth-500 uppercase">Ciudad</label>
+                <input
+                  v-model="shippingAddress.area_level2"
+                  placeholder="Zapopan"
+                  class="w-full px-2.5 py-2 rounded-lg border border-earth-200 text-sm focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none bg-white"
+                />
+              </div>
+              <div>
+                <label class="text-[10px] font-semibold text-earth-500 uppercase">Colonia</label>
+                <input
+                  v-model="shippingAddress.area_level3"
+                  placeholder="Centro"
+                  class="w-full px-2.5 py-2 rounded-lg border border-earth-200 text-sm focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none bg-white"
+                />
+              </div>
+            </div>
+
+            <button
+              @click="quoteShipping"
+              :disabled="quoting"
+              class="w-full py-2 rounded-lg bg-earth-800 hover:bg-earth-900 disabled:opacity-60 text-white text-sm font-semibold transition-all"
+            >
+              {{ quoting ? 'Cotizando…' : 'Cotizar envío' }}
+            </button>
+
+            <p v-if="quoteError" class="text-xs text-red-600">{{ quoteError }}</p>
+
+            <div v-if="shippingRates.length" class="space-y-1.5">
+              <label
+                v-for="r in shippingRates"
+                :key="r.id"
+                class="flex items-center justify-between gap-2 p-2 rounded-lg border cursor-pointer transition-all"
+                :class="selectedRateId === r.id ? 'border-primary-500 bg-primary-50' : 'border-earth-200 bg-white hover:border-primary-200'"
+              >
+                <div class="flex items-center gap-2 min-w-0">
+                  <input v-model="selectedRateId" type="radio" :value="r.id" class="accent-primary-600" />
+                  <div class="min-w-0">
+                    <p class="text-sm font-semibold text-earth-800 truncate">{{ r.carrierDisplay }}</p>
+                    <p class="text-[11px] text-earth-500 truncate">{{ r.service }} · {{ r.days }} días</p>
+                  </div>
+                </div>
+                <span class="text-sm font-bold text-earth-900 whitespace-nowrap">${{ formatPrice(r.total) }}</span>
+              </label>
+            </div>
+          </div>
+
           <div
             v-for="(item, index) in cart.items"
             :key="`${item.id}-${item.variant?.id || 'default'}`"
@@ -416,8 +493,61 @@ const freeShippingProgress = computed(() => {
   return Math.min(100, (cart.totalPrice / FREE_SHIPPING_THRESHOLD.value) * 100)
 })
 
+// ===== 🚚 Cotización de envío (Skydropx) =====
+const MEXICAN_STATES = [
+  'Aguascalientes', 'Baja California', 'Baja California Sur', 'Campeche', 'Chiapas', 'Chihuahua',
+  'Ciudad de México', 'Coahuila', 'Colima', 'Durango', 'Estado de México', 'Guanajuato', 'Guerrero',
+  'Hidalgo', 'Jalisco', 'Michoacán', 'Morelos', 'Nayarit', 'Nuevo León', 'Oaxaca', 'Puebla', 'Querétaro',
+  'Quintana Roo', 'San Luis Potosí', 'Sinaloa', 'Sonora', 'Tabasco', 'Tamaulipas', 'Tlaxcala', 'Veracruz',
+  'Yucatán', 'Zacatecas',
+]
+
+const shippingAddress = reactive({
+  postal_code: '',
+  area_level1: '',
+  area_level2: '',
+  area_level3: '',
+})
+const shippingRates = ref([])
+const selectedRateId = ref(null)
+const quoting = ref(false)
+const quoteError = ref('')
+
+const selectedRate = computed(() => shippingRates.value.find((r) => r.id === selectedRateId.value) || null)
+
+async function quoteShipping() {
+  if (!shippingAddress.postal_code || !shippingAddress.area_level1 || !shippingAddress.area_level2 || !shippingAddress.area_level3) {
+    quoteError.value = 'Completa CP, estado, ciudad y colonia'
+    return
+  }
+  quoting.value = true
+  quoteError.value = ''
+  selectedRateId.value = null
+  shippingRates.value = []
+  try {
+    const res = await $fetch('/api/shipping/quote', {
+      method: 'POST',
+      body: {
+        postal_code: shippingAddress.postal_code,
+        area_level1: shippingAddress.area_level1,
+        area_level2: shippingAddress.area_level2,
+        area_level3: shippingAddress.area_level3,
+        items: cart.items.map((i) => ({ id: i.id, quantity: i.quantity })),
+      },
+    })
+    shippingRates.value = res.rates || []
+    if (shippingRates.value.length) selectedRateId.value = shippingRates.value[0].id
+  } catch (e) {
+    quoteError.value = e?.data?.message || e?.message || 'No se pudo cotizar el envío'
+  } finally {
+    quoting.value = false
+  }
+}
+
 const shippingCost = computed(() => {
-  return cart.totalPrice >= FREE_SHIPPING_THRESHOLD.value ? 0 : SHIPPING_COST.value
+  if (cart.totalPrice >= FREE_SHIPPING_THRESHOLD.value) return 0
+  if (selectedRate.value) return selectedRate.value.total
+  return SHIPPING_COST.value
 })
 function formatPrice(price) {
   return Number(price).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -511,6 +641,7 @@ async function handleCheckout() {
       body: {
         items: cart.getCheckoutItems(),
         shippingCost: shippingCost.value, // ← Enviamos el costo de envío
+        shippingCarrier: selectedRate.value ? `${selectedRate.value.carrierDisplay} - ${selectedRate.value.service}` : '',
         orderNote: cart.orderNote || '', // ← Nota general del pedido (opcional)
         successUrl: `${window.location.origin}/checkout/success`,
         cancelUrl: `${window.location.origin}/checkout/cancel`,

@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   )
 
   try {
-    const { items, successUrl, cancelUrl, customerEmail, shippingCost, orderNote } = body
+    const { items, successUrl, cancelUrl, customerEmail, shippingCost, orderNote, shippingCarrier } = body
 
     if (!items || items.length === 0) {
       throw createError({ statusCode: 400, message: 'El carrito está vacío' })
@@ -53,8 +53,8 @@ export default defineEventHandler(async (event) => {
         price_data: {
           currency: 'mxn',
           product_data: {
-            name: 'Envío estándar',
-            description: 'Costo de envío a todo México (3-5 días hábiles)',
+            name: shippingCarrier ? `Envío - ${shippingCarrier}` : 'Envío estándar',
+            description: 'Costo de envío a todo México',
           },
           unit_amount: Math.round(shippingCost * 100), // convertir a centavos
         },
