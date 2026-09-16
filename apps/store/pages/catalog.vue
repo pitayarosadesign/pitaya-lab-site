@@ -108,6 +108,73 @@
       </div>
     </section>
 
+    <!-- Grid de productos -->
+    <section v-if="catalogConfig.blocks.grid.enabled" class="py-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Cargando -->
+        <div v-if="loading" class="text-center py-20">
+          <div class="w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p class="text-earth-500">Cargando productos...</p>
+        </div>
+
+        <!-- Contador de resultados -->
+        <div v-if="!loading && filteredProducts.length > 0" class="flex items-center justify-between mb-6">
+          <p class="text-sm text-earth-500">
+            <span class="font-semibold text-earth-800">{{ filteredProducts.length }}</span>
+            {{ filteredProducts.length === 1 ? 'producto' : 'productos' }}
+            <template v-if="activeFragrance">
+              · fragancia <span class="font-medium text-primary-600">{{ activeFragranceName }}</span>
+            </template>
+          </p>
+          <button
+            v-if="activeCategory !== 'all' || activeFragrance"
+            @click="resetFilters"
+            class="text-sm text-primary-600 hover:text-primary-700 font-medium underline"
+          >
+            Limpiar filtros
+          </button>
+        </div>
+
+        <!-- Sin resultados -->
+        <div v-if="!loading && filteredProducts.length === 0" class="text-center py-20">
+          <p class="text-5xl mb-4">🌸</p>
+          <p class="text-earth-600 text-lg mb-2">No encontramos productos con esos filtros.</p>
+          <p class="text-earth-400 text-sm mb-6">Prueba con otra fragancia o categoría.</p>
+          <button
+            @click="resetFilters"
+            class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-full text-sm font-semibold transition-all"
+          >
+            Ver todos los productos
+          </button>
+        </div>
+
+        <!-- Grid -->
+        <div v-if="!loading && filteredProducts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div
+            v-for="product in filteredProducts"
+            :key="product.id"
+          >
+            <ProductCard
+              :product-name="`${product.name}${product.subtitle ? ' – ' + product.subtitle : ''}`"
+              :short-description="`${product.description}${product.size ? ' (' + product.size + ')' : ''}`"
+              :image-url="productDisplayImage(product)"
+              :amazon-link="product.amazonLink"
+              :product-slug="product.slug"
+              :price="product.price"
+              :product-id="product.id"
+              :fragrances="product.fragrances"
+              :wholesale="product.wholesale"
+              :badge="product.badge"
+              :is-featured="product.isFeatured"
+              :prep-days-min="product.prepDaysMin"
+              :prep-days-max="product.prepDaysMax"
+              :link-query="activeFragrance ? { aroma: selectedAroma?.slug || selectedAroma?.name } : null"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- 🌸 Panel de experiencia olfativa -->
     <section v-if="catalogConfig.blocks.olfactory.enabled" class="py-10 bg-gradient-to-b from-primary-50/50 to-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -269,73 +336,6 @@
                 </div>
               </div>
             </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Grid de productos -->
-    <section v-if="catalogConfig.blocks.grid.enabled" class="py-12">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Cargando -->
-        <div v-if="loading" class="text-center py-20">
-          <div class="w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p class="text-earth-500">Cargando productos...</p>
-        </div>
-
-        <!-- Contador de resultados -->
-        <div v-if="!loading && filteredProducts.length > 0" class="flex items-center justify-between mb-6">
-          <p class="text-sm text-earth-500">
-            <span class="font-semibold text-earth-800">{{ filteredProducts.length }}</span>
-            {{ filteredProducts.length === 1 ? 'producto' : 'productos' }}
-            <template v-if="activeFragrance">
-              · fragancia <span class="font-medium text-primary-600">{{ activeFragranceName }}</span>
-            </template>
-          </p>
-          <button
-            v-if="activeCategory !== 'all' || activeFragrance"
-            @click="resetFilters"
-            class="text-sm text-primary-600 hover:text-primary-700 font-medium underline"
-          >
-            Limpiar filtros
-          </button>
-        </div>
-
-        <!-- Sin resultados -->
-        <div v-if="!loading && filteredProducts.length === 0" class="text-center py-20">
-          <p class="text-5xl mb-4">🌸</p>
-          <p class="text-earth-600 text-lg mb-2">No encontramos productos con esos filtros.</p>
-          <p class="text-earth-400 text-sm mb-6">Prueba con otra fragancia o categoría.</p>
-          <button
-            @click="resetFilters"
-            class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-full text-sm font-semibold transition-all"
-          >
-            Ver todos los productos
-          </button>
-        </div>
-
-        <!-- Grid -->
-        <div v-if="!loading && filteredProducts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          <div
-            v-for="product in filteredProducts"
-            :key="product.id"
-          >
-            <ProductCard
-              :product-name="`${product.name}${product.subtitle ? ' – ' + product.subtitle : ''}`"
-              :short-description="`${product.description}${product.size ? ' (' + product.size + ')' : ''}`"
-              :image-url="productDisplayImage(product)"
-              :amazon-link="product.amazonLink"
-              :product-slug="product.slug"
-              :price="product.price"
-              :product-id="product.id"
-              :fragrances="product.fragrances"
-              :wholesale="product.wholesale"
-              :badge="product.badge"
-              :is-featured="product.isFeatured"
-              :prep-days-min="product.prepDaysMin"
-              :prep-days-max="product.prepDaysMax"
-              :link-query="activeFragrance ? { aroma: selectedAroma?.slug || selectedAroma?.name } : null"
-            />
           </div>
         </div>
       </div>
