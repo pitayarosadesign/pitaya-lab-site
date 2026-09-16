@@ -345,10 +345,8 @@
                 </template>
                 <template v-else>
                   <span class="font-semibold">Recíbelo antes del</span>
-                  <strong class="whitespace-nowrap">{{ productDeliveryDeadlineText }}</strong>
-                  si pagas hoy antes de la 1:00 pm.
-                  <span v-if="productDeliveryRangeText">({{ productDeliveryRangeText }})</span>
-                  <span class="block mt-0.5 opacity-90">Preparación {{ productPrepText }} + envío de 2 a 5 días hábiles.</span>
+                  <strong class="whitespace-nowrap">{{ productDeliveryDeadlineText }}</strong>.
+                  <span class="block mt-0.5 opacity-90">Preparación {{ productPrepText }} + envío de 2 a 5 días hábiles · pedidos antes de la 1:00 pm se preparan el mismo día.</span>
                 </template>
               </p>
             </div>
@@ -886,9 +884,6 @@ const productDelivery = computed(() =>
 )
 const productDeliveryDeadlineText = computed(() =>
   productDelivery.value ? formatDeliveryDeadline(productDelivery.value) : ''
-)
-const productDeliveryRangeText = computed(() =>
-  productDelivery.value ? formatDeliveryRange(productDelivery.value) : ''
 )
 
 // Texto legible de preparación en taller (sobre pedido). Usa la preparación
