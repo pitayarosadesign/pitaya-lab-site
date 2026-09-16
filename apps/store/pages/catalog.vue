@@ -350,69 +350,6 @@
       :cta-text="catalogConfig.recuerdos.cta_text"
     />
 
-    <!-- 🎯 Guía de Aromas por Mood -->
-    <section v-if="catalogConfig.blocks.scent_guide.enabled" class="py-16 bg-gradient-to-b from-white to-primary-50/30">
-      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-10">
-          <span class="text-primary-600 font-semibold text-sm uppercase tracking-wider">{{ catalogConfig.scent_guide.badge }}</span>
-          <h2 class="text-3xl font-serif font-bold text-earth-900 mt-2 mb-4">
-            {{ catalogConfig.scent_guide.title }}
-          </h2>
-          <p class="text-earth-500 max-w-2xl mx-auto">
-            {{ catalogConfig.scent_guide.description }}
-          </p>
-        </div>
-
-        <!-- Contenedor scrollable con altura fija -->
-        <div class="max-h-[420px] overflow-y-auto rounded-2xl border border-earth-100 bg-white shadow-sm scrollbar-thin scrollbar-thumb-earth-200 scrollbar-track-earth-50">
-          <table class="w-full text-sm">
-            <thead class="bg-earth-50 sticky top-0 z-10">
-              <tr>
-                <th class="px-5 py-4 text-left font-semibold text-earth-700 w-[120px]">Aroma</th>
-                <th class="px-5 py-4 text-left font-semibold text-earth-700 w-[140px]">Colección</th>
-                <th class="px-5 py-4 text-left font-semibold text-earth-700 w-[100px]">Vibra</th>
-                <th class="px-5 py-4 text-left font-semibold text-earth-700">Ideal para</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-earth-100">
-              <tr v-for="scent in aromas" :key="scent.id" class="hover:bg-primary-50/40 transition-colors">
-                <td class="px-5 py-4">
-                  <div class="flex items-center gap-3">
-                    <!-- Círculo con foto del aroma o emoji fallback -->
-                    <div class="w-10 h-10 rounded-full overflow-hidden bg-earth-100 flex-shrink-0 shadow-sm border border-earth-200">
-                      <img
-                        v-if="scent.image"
-                        :src="useOptimizedImage(scent.image, { width: 200, quality: 80 })"
-                        :alt="scent.name"
-                        class="w-full h-full object-cover"
-                      />
-                      <span v-else class="w-full h-full flex items-center justify-center text-sm font-semibold text-earth-400">{{ scent.name.charAt(0) }}</span>
-                    </div>
-                    <span class="font-semibold text-earth-800">{{ scent.name }}</span>
-                  </div>
-                </td>
-                <td class="px-5 py-4">
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary-50 text-primary-700">
-                    {{ scent.categoryLabel || 'Perfil' }}
-                  </span>
-                </td>
-                <td class="px-5 py-4">
-                  <span class="text-earth-600 font-medium">{{ scent.vibe || '—' }}</span>
-                </td>
-                <td class="px-5 py-4 text-earth-500">
-                  {{ scent.bestFor || scent.description || '—' }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <p class="text-center text-[10px] text-earth-400 mt-4">
-          {{ catalogConfig.scent_guide.disclaimer }}
-        </p>
-      </div>
-    </section>
-
     <!-- CTA Amazon -->
     <section v-if="catalogConfig.blocks.cta.enabled" class="py-16 bg-gradient-to-r from-primary-900 to-earth-900">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -679,21 +616,13 @@ const catalogConfig = reactive({
   blocks: {
     header: { enabled: true, compact: false },
     filters: { enabled: true },
-    // La galería de aromas y la "guía por mood" viven embebidas en el catálogo
-    // (el descubrimiento por fragancia ya no ocupa una página aparte). Se pueden
-    // apagar desde el panel admin (site_config > catalog_page.blocks).
+    // La galería de aromas vive embebida en el catálogo (el descubrimiento por
+    // fragancia ya no ocupa una página aparte). Se puede apagar desde el panel
+    // admin (site_config > catalog_page.blocks).
     olfactory: { enabled: true },
     grid: { enabled: true },
-    scent_guide: { enabled: true },
     cta: { enabled: true },
     recuerdos: { enabled: true },
-  },
-  scent_guide: {
-    enabled: false,
-    badge: 'Guía de Aromas',
-    title: 'Encuentra tu aroma ideal',
-    description: 'Cada aroma de PITAYA LAB está diseñado para una experiencia única. Elige según tu mood y el momento.',
-    disclaimer: '* Los aromas "Xcaret" y "Vidanta" son referencias inspiracionales. PITAYA LAB no tiene afiliación con los hoteles o marcas de dichos nombres.',
   },
   cta: {
     title: '¡Todos disponibles en Amazon!',
@@ -735,13 +664,8 @@ async function loadCatalogConfig() {
           catalogConfig.blocks[k] = typeof b === 'object' && b ? { enabled: true, ...b } : { enabled: true }
         })
       }
-      Object.assign(catalogConfig.scent_guide, data.value.scent_guide)
       Object.assign(catalogConfig.cta, data.value.cta)
       if (data.value.recuerdos) Object.assign(catalogConfig.recuerdos, data.value.recuerdos)
-      // Mantener compatibilidad: scent_guide.enabled desde el top-level si no vino en blocks
-      if (data.value.scent_guide && typeof data.value.scent_guide.enabled === 'boolean') {
-        catalogConfig.blocks.scent_guide.enabled = data.value.scent_guide.enabled
-      }
     }
   } catch (e) {
     console.warn('Usando configuración por defecto del catálogo:', e.message)

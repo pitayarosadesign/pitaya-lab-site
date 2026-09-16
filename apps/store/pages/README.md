@@ -50,8 +50,8 @@ Vía `site_config > catalog_page`:
 - `header.badge/title/highlight/description`
 - `blocks.header.enabled / .compact`
 - `blocks.filters.enabled` → muestra/oculta la barra de filtros completa
-- `blocks.olfactory / grid / scent_guide / cta .enabled`
-- `scent_guide.*` y `cta.*`
+- `blocks.olfactory / grid / cta .enabled`
+- `cta.*`
 
 ### ¿Cuándo sería correcto “refactorizar a editor”?
 Solo si el negocio pide **facetas nuevas configurables por página/tienda**, p. ej.:

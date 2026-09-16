@@ -50,16 +50,8 @@ const config = reactive({
     filters: { enabled: true },
     olfactory: { enabled: true },
     grid: { enabled: true },
-    scent_guide: { enabled: true },
     cta: { enabled: true },
     recuerdos: { enabled: true },
-  },
-  scent_guide: {
-    enabled: true,
-    badge: 'Guía de Aromas',
-    title: 'Encuentra tu aroma ideal',
-    description: 'Cada aroma de PITAYA LAB está diseñado para una experiencia única. Elige según tu mood y el momento.',
-    disclaimer: '* Los aromas "Xcaret" y "Vidanta" son referencias inspiracionales. PITAYA LAB no tiene afiliación con los hoteles o marcas de dichos nombres.',
   },
   cta: {
     title: '¡Todos disponibles en Amazon!',
@@ -89,13 +81,8 @@ async function loadConfig() {
           config.blocks[k] = typeof b === 'object' && b ? { enabled: true, ...b } : { enabled: true }
         })
       }
-      Object.assign(config.scent_guide, data.value.scent_guide)
       Object.assign(config.cta, data.value.cta)
       if (data.value.recuerdos) Object.assign(config.recuerdos, data.value.recuerdos)
-      // Compatibilidad: scent_guide.enabled top-level → blocks.scent_guide
-      if (data.value.scent_guide && typeof data.value.scent_guide.enabled === 'boolean') {
-        config.blocks.scent_guide.enabled = data.value.scent_guide.enabled
-      }
     }
   } catch (e) {
     console.error('Error cargando config de Catálogo:', e)
