@@ -249,7 +249,7 @@
                   {{
                     deliveryEstimate.hasBackorder
                       ? 'Incluye artículos que se preparan en taller, además del tiempo de envío.'
-                      : 'Órdenes pagadas antes de la 1:00 pm se envían el mismo día. De lo contrario, al siguiente día hábil.'
+                      : 'Incluye preparación de tu pedido más el tiempo de envío.'
                   }}
                 </p>
               </div>

@@ -3,15 +3,12 @@
  * =================================
  * Lógica de cálculo de fechas de entrega estimada según las reglas de negocio:
  *
- *  - Con stock:
- *      * Órdenes pagadas ANTES de las 13:00 hrs (en día hábil) se envían el
- *        mismo día (dentro del horario de preparación 9:00–16:30).
- *      * De lo contrario se envían el siguiente día hábil.
+ *  - Todos los pedidos:
+ *      * Preparación: 1 a 2 días hábiles (o el valor definido por
+ *        producto/categoría, p. ej. Recuerdos = 4 días hábiles).
  *      * Envío de mensajería: 2 a 5 días hábiles.
- *
- *  - Sin stock (sobre pedido):
- *      * Preparación en taller: 2 a 3 días hábiles.
- *      * Envío de mensajería: 2 a 5 días hábiles.
+ *      * Órdenes pagadas antes de las 13:00 hrs (en día hábil) inician la
+ *        preparación el mismo día; si no, al siguiente día hábil.
  *
  * La leyenda predominante es "Recíbelo antes de [fecha]" (límite máximo y
  * honesto), y en detalle fino se puede ampliar el rango estimado.
@@ -26,7 +23,7 @@ export interface DeliveryEstimateConfig {
   /** Días hábiles de envío de mensajería (min y max) */
   transitDaysMin: number
   transitDaysMax: number
-  /** Días hábiles de preparación en taller para sobre pedido (min y max) */
+  /** Días hábiles de preparación (default general 1-2; override por producto/categoría) */
   prepDaysMin: number
   prepDaysMax: number
   /** Copys configurables */
@@ -40,10 +37,10 @@ export const DEFAULT_DELIVERY_CONFIG: DeliveryEstimateConfig = {
   sameDayCutoffMinute: 0,
   transitDaysMin: 2,
   transitDaysMax: 5,
-  prepDaysMin: 2,
-  prepDaysMax: 3,
-  backorderNote: 'Este artículo se prepara en taller en 2-3 días hábiles (sobre pedido).',
-  cutoffNote: 'Órdenes pagadas antes de la 1:00 pm se envían el mismo día. De lo contrario, al siguiente día hábil.',
+  prepDaysMin: 1,
+  prepDaysMax: 2,
+  backorderNote: 'Este artículo se prepara en taller (sobre pedido).',
+  cutoffNote: 'Órdenes pagadas antes de la 1:00 pm inician preparación el mismo día hábil. De lo contrario, al siguiente día hábil.',
 }
 
 const MXN = new Intl.DateTimeFormat('es-MX', {
@@ -124,44 +121,22 @@ export function estimateDelivery(
   const now = opts.now || new Date()
   const isBackorder = !!opts.isBackorder
 
-  // 1) Fecha de envío
-  const shipDate = calculateShipDate(now, isBackorder, cfg)
+  // Días de preparación: SIEMPRE se suman al envío. Si el producto/categoría
+  // define su propia preparación (ej. Recuerdos = 4), se usa ese valor;
+  // si no, el default general (1-2 días hábiles).
+  const prepMin = typeof opts.prepDaysMin === 'number' ? opts.prepDaysMin : cfg.prepDaysMin
+  const prepMax = typeof opts.prepDaysMax === 'number' ? opts.prepDaysMax : cfg.prepDaysMax
 
-  // 2) Días de preparación previos (si hay sobre pedido) ANTES del envío
-  //    Reinterpretamos: cuando es sobre pedido, la preparación ocurre ANTES de
-  //    despachar a mensajería. La fórmula correcta:
-  //      Fecha de envío real = ahora + (prep si aplica) al siguiente hábil
-  //    Para no complicar con "fecha de envío", calculamos el rango a partir de
-  //    hoy directamente:
-  //      - minTotal = prepMin (0 si stock) + transitMin
-  //      - maxTotal = prepMax (0 si stock) + transitMax
-  //    y usamos `now` como base caminando días hábiles (considerando el corte).
-
-  // Constructor: cuándo "empieza la cuenta". Con envío mismo día + corte OK:
-  //   la cuenta de tránsito inicia hoy. Si pasó el corte o sobre pedido, inicia
-  //   al siguiente día hábil (prep + envío).
-  const prepMin = isBackorder
-    ? (typeof opts.prepDaysMin === 'number' ? opts.prepDaysMin : cfg.prepDaysMin)
-    : 0
-  const prepMax = isBackorder
-    ? (typeof opts.prepDaysMax === 'number' ? opts.prepDaysMax : cfg.prepDaysMax)
-    : 0
-
-  // Base: si hay sobre pedido siempre arranca mañana (siguiente hábil) porque
-  //   ya no se despacha hoy. Si stock y antes del corte → arranca hoy.
+  // Cuándo arranca la preparación: hoy mismo si es día hábil antes del corte
+  // y no es sobre pedido; si no, el siguiente día hábil.
   const base = calculateShipDate(now, isBackorder, cfg)
 
-  // Rango: la fecha de envío (`base`) + tránsito.
-  const minDate = isBackorder
-    ? addBusinessDays(addBusinessDays(base, prepMin), cfg.transitDaysMin) // por claridad: prep+transit
-    : addBusinessDays(shipDate, cfg.transitDaysMin)
-
-  const maxDate = isBackorder
-    ? addBusinessDays(addBusinessDays(base, prepMax), cfg.transitDaysMax)
-    : addBusinessDays(shipDate, cfg.transitDaysMax)
+  // Entrega = preparación + tránsito de mensajería (ambos en días hábiles).
+  const minDate = addBusinessDays(addBusinessDays(base, prepMin), cfg.transitDaysMin)
+  const maxDate = addBusinessDays(addBusinessDays(base, prepMax), cfg.transitDaysMax)
 
   return {
-    shipDate,
+    shipDate: base,
     minDate,
     maxDate,
     isBackorder,

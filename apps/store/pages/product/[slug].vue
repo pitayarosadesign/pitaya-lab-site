@@ -348,6 +348,7 @@
                   <strong class="whitespace-nowrap">{{ productDeliveryDeadlineText }}</strong>
                   si pagas hoy antes de la 1:00 pm.
                   <span v-if="productDeliveryRangeText">({{ productDeliveryRangeText }})</span>
+                  <span class="block mt-0.5 opacity-90">Preparación {{ productPrepText }} + envío de 2 a 5 días hábiles.</span>
                 </template>
               </p>
             </div>
@@ -891,10 +892,10 @@ const productDeliveryRangeText = computed(() =>
 )
 
 // Texto legible de preparación en taller (sobre pedido). Usa la preparación
-// real del producto/categoría; si no hay valor, cae al default 2-3 días.
+// real del producto/categoría; si no hay valor, cae al default 1-2 días.
 const productPrepText = computed(() => {
-  const min = product.value?.prepDaysMin ?? 2
-  const max = product.value?.prepDaysMax ?? 3
+  const min = product.value?.prepDaysMin ?? 1
+  const max = product.value?.prepDaysMax ?? 2
   if (min === max) {
     return min === 1 ? '1 día hábil' : `${min} días hábiles`
   }
