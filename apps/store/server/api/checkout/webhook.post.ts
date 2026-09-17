@@ -446,7 +446,7 @@ export default defineEventHandler(async (event) => {
             customer_name: session.customer_details?.name || order.customer_name,
             customer_phone: session.customer_details?.phone || null,
             shipping_cost: session.total_details?.amount_shipping ? session.total_details.amount_shipping / 100 : 0,
-            shipping_address: { ...(session.shipping_details || {}), geocoded },
+            shipping_address: { ...(session.shipping_details || {}), neighborhood: session.metadata?.shipping_neighborhood || '', geocoded },
             paid_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           }
@@ -557,7 +557,7 @@ export default defineEventHandler(async (event) => {
             subtotal: session.amount_subtotal ? session.amount_subtotal / 100 : 0,
             total: session.amount_total ? session.amount_total / 100 : 0,
             shipping_cost: session.total_details?.amount_shipping ? session.total_details.amount_shipping / 100 : 0,
-            shipping_address: { ...(session.shipping_details || {}), geocoded },
+            shipping_address: { ...(session.shipping_details || {}), neighborhood: session.metadata?.shipping_neighborhood || '', geocoded },
             notes: session.metadata?.order_note || null,
             paid_at: new Date().toISOString(),
           }

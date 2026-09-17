@@ -135,12 +135,26 @@ ue <template>
         <!-- Dirección de envío -->
         <div class="bg-white rounded-2xl border border-gray-200 p-6">
           <h3 class="text-sm font-bold text-gray-900 mb-3">🚚 Dirección de envío</h3>
-          <p v-if="shippingAddress" class="text-sm text-gray-600">
-            {{ shippingAddress.line1 }}<br>
-            <template v-if="shippingAddress.line2">{{ shippingAddress.line2 }}<br></template>
-            {{ shippingAddress.city }}, {{ shippingAddress.state }}<br>
-            CP: {{ shippingAddress.postal_code }}
-          </p>
+          <template v-if="shippingAddress">
+            <p class="text-sm text-gray-600">
+              <strong>{{ shippingAddress.name }}</strong><template v-if="shippingAddress.phone"> · {{ shippingAddress.phone }}</template><br>
+              {{ shippingAddress.line1 }}<br>
+              <template v-if="shippingAddress.line2">{{ shippingAddress.line2 }}<br></template>
+              <template v-if="shippingAddress.neighborhood">{{ shippingAddress.neighborhood }}<br></template>
+              {{ shippingAddress.city }}, {{ shippingAddress.state }}<br>
+              CP: {{ shippingAddress.postal_code }}
+            </p>
+
+            <p v-if="shippingAddress.geocoded?.found && !shippingAddress.geocoded.partial_match && !shippingAddress.geocoded.postal_code_mismatch" class="text-xs text-green-600 mt-2">
+              ✓ Dirección validada en Google Maps{{ shippingAddress.geocoded.formatted_address ? ': ' + shippingAddress.geocoded.formatted_address : '' }}
+            </p>
+            <p v-else-if="shippingAddress.geocoded?.found" class="text-xs text-amber-600 mt-2">
+              ⚠️ Coincidencia parcial en Google Maps{{ shippingAddress.geocoded.postal_code_mismatch ? ' (el CP no coincide)' : '' }}
+            </p>
+            <p v-else-if="shippingAddress.geocoded?.invalid" class="text-xs text-red-600 mt-2 font-semibold">
+              ⚠️ Dirección NO encontrada en Google Maps. Confirma con el cliente.
+            </p>
+          </template>
           <p v-else class="text-sm text-gray-400">Sin dirección registrada</p>
         </div>
 
@@ -281,9 +295,27 @@ const orderItems = computed(() => {
 })
 
 const shippingAddress = computed(() => {
-  if (!order.value?.shipping_address) return null
-  if (typeof order.value.shipping_address === 'string') return JSON.parse(order.value.shipping_address)
-  return order.value.shipping_address
+  const raw = order.value?.shipping_address
+  if (!raw) return null
+
+  let data = raw
+  if (typeof data === 'string') {
+    try { data = JSON.parse(data) } catch { return null }
+  }
+
+  // Stripe guarda el domicilio anidado en `address`; versiones anteriores lo guardaban plano
+  const addr = data.address || data
+  return {
+    name: data.name || addr.name || '',
+    phone: data.phone || addr.phone || '',
+    line1: addr.line1 || '',
+    line2: addr.line2 || '',
+    city: addr.city || data.city || '',
+    state: addr.state || data.state || '',
+    postal_code: addr.postal_code || data.postal_code || '',
+    neighborhood: data.neighborhood || addr.neighborhood || '',
+    geocoded: data.geocoded || null,
+  }
 })
 
 const isB2B = computed(() =>
