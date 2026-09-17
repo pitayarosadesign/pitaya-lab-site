@@ -117,7 +117,7 @@
             </div>
 
             <p class="text-[11px] text-earth-400 leading-snug">
-              Tu dirección se usa para generar tu guía de envío con nuestra paquetería de confianza. Verifica que esté correcta y completa antes de pagar.
+              Tu dirección se usa para generar tu guía de envío con nuestra paquetería de confianza. Verifica que tu dirección de envío esté correcta y completa antes de pagar.
             </p>
 
             <p v-if="cpCheck.status === 'loading'" class="text-[10px] text-earth-400">Validando cobertura…</p>
@@ -274,10 +274,6 @@
             </svg>
             {{ checkoutLoading ? 'Procesando...' : 'Ir a pagar' }}
           </button>
-
-          <p class="text-[11px] text-earth-500 text-center mt-2 leading-snug">
-            Al continuar, confirmas que tu dirección de envío es correcta y está completa.
-          </p>
 
           <!-- 🧾 Detalles (colapsable): entrega, nota, desglose y confianza -->
           <div class="mt-2">
