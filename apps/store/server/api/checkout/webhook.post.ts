@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 import { Resend } from 'resend'
-import { createSkydropxShipment } from '../../utils/skydropx'
+import { createSkydropxAddressTemplate } from '../../utils/skydropx'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -197,6 +197,13 @@ export default defineEventHandler(async (event) => {
                 </p>
               </div>
 
+              <div style="background:#fff7ed;border:1px solid #fdba74;border-radius:12px;padding:20px;margin:20px 0;">
+                <h3 style="color:#9a3412;font-size:14px;margin:0 0 8px;">📦 Genera la guía de envío</h3>
+                <p style="color:#7c2d12;font-size:13px;margin:0;">
+                  Entra a Skydropx y genera la guía con la paquetería que más te convenga. La dirección del cliente quedó guardada en tu libreta de direcciones de Skydropx.
+                </p>
+              </div>
+
               <p style="color:#9ca3af;font-size:12px;text-align:center;margin:20px 0 0;">
                 Puedes ver el detalle del pedido en el panel de administración.
               </p>
@@ -264,48 +271,57 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // 🚚 Crear la guía en Skydropx automáticamente tras el pago
-  async function createSkydropxLabel(orderId: string, orderNumber: string, session: Stripe.Checkout.Session) {
-    const rateId = session.metadata?.skydropx_rate_id
-    if (!rateId) {
-      console.log(`ℹ️ Orden ${orderNumber}: sin cotización Skydropx, no se crea guía automática`)
-      return
+  // 📍 Guardar la dirección del cliente en la libreta de Skydropx
+  async function saveCustomerAddressToSkydropx(orderId: string, orderNumber: string, session: Stripe.Checkout.Session) {
+    const shipping = session.shipping_details
+    const metadata = session.metadata || {}
+
+    const postal_code = shipping?.address?.postal_code || metadata.shipping_cp || ''
+    const area_level1 = metadata.shipping_state || shipping?.address?.state || ''
+    const area_level2 = metadata.shipping_city || shipping?.address?.city || ''
+    const area_level3 = metadata.shipping_neighborhood || ''
+
+    // Skydropx exige CP, estado, ciudad y colonia
+    if (!postal_code || !area_level1 || !area_level2 || !area_level3) {
+      console.log(`ℹ️ Orden ${orderNumber}: dirección incompleta, no se guarda en Skydropx`)
+      return null
     }
 
-    const shipping = session.shipping_details
     const name = shipping?.name || session.customer_details?.name || 'Cliente'
     const street = [shipping?.address?.line1, shipping?.address?.line2].filter(Boolean).join(' ')
     const phone = shipping?.phone || session.customer_details?.phone || ''
     const email = session.customer_details?.email || session.customer_email || ''
-    const packageCount = Number(session.metadata?.skydropx_parcels_count) || 1
+    const alias = `PITAYA - ${name}`.slice(0, 60)
 
     try {
-      const result = await createSkydropxShipment({
-        rateId,
-        packageCount,
-        recipient: { name, street: street || 'Dirección pendiente', phone, email },
+      await createSkydropxAddressTemplate({
+        alias,
+        address: {
+          name,
+          street1: street || 'Dirección pendiente',
+          postal_code,
+          area_level1,
+          area_level2,
+          area_level3,
+          phone: phone || '5210000000000',
+          email: email || 'cliente@pendiente.com',
+          reference: `Pedido ${orderNumber}`,
+        },
       })
 
-      const { error } = await supabaseAdmin
+      await supabaseAdmin
         .from('orders')
         .update({
-          shipping_carrier: result.carrier || null,
-          tracking_number: result.trackingNumber,
-          skydropx_shipment_id: result.id || null,
-          shipping_status: result.status || 'created',
-          shipped_at: result.trackingNumber ? new Date().toISOString() : null,
+          admin_notes: `Dirección guardada en Skydropx (alias: ${alias})`,
           updated_at: new Date().toISOString(),
         })
         .eq('id', orderId)
 
-      if (error) {
-        console.error('Error guardando guía Skydropx:', error.message)
-      } else {
-        console.log(`✅ Guía Skydropx creada para ${orderNumber}: ${result.trackingNumber || 'sin tracking aún'} (${result.carrier})`)
-      }
+      console.log(`✅ Dirección guardada en Skydropx para ${orderNumber}: ${alias}`)
+      return alias
     } catch (e: any) {
-      // No romper el webhook si la guía falla; la orden ya está pagada.
-      console.error(`⚠️ No se pudo crear la guía Skydropx para ${orderNumber}:`, e?.message || e)
+      console.error(`⚠️ No se pudo guardar la dirección en Skydropx para ${orderNumber}:`, e?.message || e)
+      return null
     }
   }
 
@@ -386,9 +402,9 @@ export default defineEventHandler(async (event) => {
 
           console.log(`✅ Orden ${order.order_number} pagada con éxito`)
 
-          // 🚚 Crear guía Skydropx (solo si no tiene tracking previo)
-          if (!order.tracking_number) {
-            await createSkydropxLabel(order.id, order.order_number, session)
+          // 📍 Guardar dirección del cliente en Skydropx (evita duplicados en reintentos)
+          if (!order.admin_notes?.includes('Skydropx')) {
+            await saveCustomerAddressToSkydropx(order.id, order.order_number, session)
           }
 
           // Crear/actualizar el cliente en la tabla customers
@@ -483,9 +499,9 @@ export default defineEventHandler(async (event) => {
             throw createError({ statusCode: 500, message: `Error creando orden: ${insertError.message}` })
           }
 
-          // 🚚 Crear guía Skydropx automáticamente
+          // 📍 Guardar dirección del cliente en Skydropx
           if (newOrder?.id) {
-            await createSkydropxLabel(newOrder.id, orderNumber, session)
+            await saveCustomerAddressToSkydropx(newOrder.id, orderNumber, session)
           }
 
           // Crear/actualizar el cliente en la tabla customers

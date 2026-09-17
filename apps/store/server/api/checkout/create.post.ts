@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   )
 
   try {
-    const { items, successUrl, cancelUrl, customerEmail, shippingCost, orderNote, shippingCarrier, skydropxRateId, skydropxParcelsCount } = body
+    const { items, successUrl, cancelUrl, customerEmail, shippingCost, orderNote, shippingAddress } = body
 
     if (!items || items.length === 0) {
       throw createError({ statusCode: 400, message: 'El carrito está vacío' })
@@ -53,8 +53,8 @@ export default defineEventHandler(async (event) => {
         price_data: {
           currency: 'mxn',
           product_data: {
-            name: shippingCarrier ? `Envío - ${shippingCarrier}` : 'Envío estándar',
-            description: 'Costo de envío a todo México',
+            name: 'Envío estándar',
+            description: 'Costo de envío a todo México (3-5 días hábiles)',
           },
           unit_amount: Math.round(shippingCost * 100), // convertir a centavos
         },
@@ -87,9 +87,11 @@ export default defineEventHandler(async (event) => {
         // Nota general del pedido (opcional). Stripe limita cada valor de
         // metadata a 500 caracteres, por eso acotamos aquí.
         order_note: (orderNote || '').slice(0, 500),
-        // Datos de la cotización Skydropx para crear la guía tras el pago
-        skydropx_rate_id: skydropxRateId || '',
-        skydropx_parcels_count: String(skydropxParcelsCount || 0),
+        // Dirección de envío capturada en el carrito (para la guía Skydropx)
+        shipping_cp: shippingAddress?.postal_code || '',
+        shipping_state: shippingAddress?.area_level1 || '',
+        shipping_city: shippingAddress?.area_level2 || '',
+        shipping_neighborhood: shippingAddress?.area_level3 || '',
       },
     }
 
