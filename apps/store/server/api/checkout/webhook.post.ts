@@ -153,7 +153,7 @@ export default defineEventHandler(async (event) => {
         validationHtml = `<p style="color:#16a34a;font-size:12px;margin:8px 0 0;">✓ Dirección validada en Google Maps${validation.formatted_address ? ': ' + validation.formatted_address : ''}</p>`
       } else if (validation.found) {
         validationHtml = `<p style="color:#b45309;font-size:12px;margin:8px 0 0;">⚠️ Coincidencia parcial en Google Maps${validation.postal_code_mismatch ? ' (el CP no coincide con el capturado)' : ''}${validation.formatted_address ? ': ' + validation.formatted_address : ''}</p>`
-      } else {
+      } else if (validation.invalid) {
         validationHtml = `<p style="color:#dc2626;font-size:12px;margin:8px 0 0;font-weight:bold;">⚠️ Dirección NO encontrada en Google Maps. Confirma el domicilio con el cliente antes de generar la guía.</p>`
       }
     }
@@ -369,6 +369,7 @@ export default defineEventHandler(async (event) => {
     result.lat = geo.lat
     result.lng = geo.lng
     result.partial_match = geo.partial_match
+    result.invalid = !geo.found && geo.status === 'ZERO_RESULTS'
 
     if (geo.found) {
       const matchedCp = (geo.matched_postal_code || '').replace(/\s+/g, '')
@@ -449,7 +450,7 @@ export default defineEventHandler(async (event) => {
             paid_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           }
-          if (!geocoded.found) {
+          if (geocoded.invalid) {
             updatePayload.admin_notes = '⚠️ Dirección no validada en Google Maps — confirma el domicilio con el cliente'
           }
 
@@ -467,10 +468,10 @@ export default defineEventHandler(async (event) => {
 
           // 📍 Guardar dirección en Skydropx solo si fue validada (evita duplicados en reintentos)
           if (!order.admin_notes?.includes('Skydropx')) {
-            if (geocoded.found) {
+            if (!geocoded.invalid) {
               await saveCustomerAddressToSkydropx(order.id, order.order_number, session)
             } else {
-              console.warn(`⚠️ Orden ${order.order_number}: dirección no validada, no se guarda en Skydropx`)
+              console.warn(`⚠️ Orden ${order.order_number}: dirección no encontrada en Google Maps, no se guarda en Skydropx`)
             }
           }
 
@@ -560,7 +561,7 @@ export default defineEventHandler(async (event) => {
             notes: session.metadata?.order_note || null,
             paid_at: new Date().toISOString(),
           }
-          if (!geocoded.found) {
+          if (geocoded.invalid) {
             insertPayload.admin_notes = '⚠️ Dirección no validada en Google Maps — confirma el domicilio con el cliente'
           }
 
@@ -577,10 +578,10 @@ export default defineEventHandler(async (event) => {
 
           // 📍 Guardar dirección en Skydropx solo si fue validada
           if (newOrder?.id) {
-            if (geocoded.found) {
+            if (!geocoded.invalid) {
               await saveCustomerAddressToSkydropx(newOrder.id, orderNumber, session)
             } else {
-              console.warn(`⚠️ Orden ${orderNumber}: dirección no validada, no se guarda en Skydropx`)
+              console.warn(`⚠️ Orden ${orderNumber}: dirección no encontrada en Google Maps, no se guarda en Skydropx`)
             }
           }
 
