@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 import { Resend } from 'resend'
 import { createSkydropxAddressTemplate } from '../../utils/skydropx'
+import { geocodeAddress } from '../../utils/geocoding'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -144,6 +145,19 @@ export default defineEventHandler(async (event) => {
       </tr>`
     ).join('')
 
+    // Estado de validación de la dirección en Google Maps
+    const validation = order.shipping_validation
+    let validationHtml = ''
+    if (validation) {
+      if (validation.found && !validation.partial_match && !validation.postal_code_mismatch) {
+        validationHtml = `<p style="color:#16a34a;font-size:12px;margin:8px 0 0;">✓ Dirección validada en Google Maps${validation.formatted_address ? ': ' + validation.formatted_address : ''}</p>`
+      } else if (validation.found) {
+        validationHtml = `<p style="color:#b45309;font-size:12px;margin:8px 0 0;">⚠️ Coincidencia parcial en Google Maps${validation.postal_code_mismatch ? ' (el CP no coincide con el capturado)' : ''}${validation.formatted_address ? ': ' + validation.formatted_address : ''}</p>`
+      } else {
+        validationHtml = `<p style="color:#dc2626;font-size:12px;margin:8px 0 0;font-weight:bold;">⚠️ Dirección NO encontrada en Google Maps. Confirma el domicilio con el cliente antes de generar la guía.</p>`
+      }
+    }
+
     try {
       await resend.emails.send({
         from: 'PITAYA LAB <pedidos@pitayalab.com.mx>',
@@ -195,6 +209,7 @@ export default defineEventHandler(async (event) => {
                   ${order.shipping_address?.address?.city || ''} ${order.shipping_address?.address?.state || ''}<br>
                   CP: ${order.shipping_address?.address?.postal_code || ''}
                 </p>
+                ${validationHtml}
               </div>
 
               <div style="background:#fff7ed;border:1px solid #fdba74;border-radius:12px;padding:20px;margin:20px 0;">
@@ -325,6 +340,46 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // 📍 Construir la dirección completa de envío (Stripe + datos del carrito)
+  function buildShippingAddressString(session: Stripe.Checkout.Session): string {
+    const s = session.shipping_details?.address
+    const m = session.metadata || {}
+    const street = [s?.line1, s?.line2].filter(Boolean).join(', ')
+    const neighborhood = m.shipping_neighborhood || ''
+    const city = s?.city || m.shipping_city || ''
+    const state = s?.state || m.shipping_state || ''
+    const cp = s?.postal_code || m.shipping_cp || ''
+    return [street, neighborhood, city, state, cp, 'México'].filter(Boolean).join(', ')
+  }
+
+  // 📍 Validar la dirección contra Google Maps (geocoding)
+  async function validateShippingAddress(session: Stripe.Checkout.Session) {
+    const query = buildShippingAddressString(session)
+    const inputCp = (session.shipping_details?.address?.postal_code || session.metadata?.shipping_cp || '')
+      .toString()
+      .replace(/\s+/g, '')
+
+    const result: any = { query, checked_at: new Date().toISOString(), found: false, status: 'EMPTY' }
+    if (!query) return result
+
+    const geo = await geocodeAddress(query)
+    result.status = geo.status
+    result.found = geo.found
+    result.formatted_address = geo.formatted_address
+    result.lat = geo.lat
+    result.lng = geo.lng
+    result.partial_match = geo.partial_match
+
+    if (geo.found) {
+      const matchedCp = (geo.matched_postal_code || '').replace(/\s+/g, '')
+      if (inputCp && matchedCp && inputCp !== matchedCp) {
+        result.postal_code_mismatch = true
+      }
+    }
+
+    return result
+  }
+
   try {
     const signature = event.node.req.headers['stripe-signature']
 
@@ -378,21 +433,29 @@ export default defineEventHandler(async (event) => {
         const order = orders?.[0]
 
         if (order) {
+          // 📍 Validar dirección con Google Maps (una sola vez; en reintentos se reutiliza)
+          const geocoded = order.shipping_address?.geocoded || (await validateShippingAddress(session))
+
           // Actualizar orden como pagada
+          const updatePayload: any = {
+            status: 'confirmed',
+            payment_status: 'paid',
+            stripe_payment_intent_id: (session.payment_intent as string) || order.stripe_payment_intent_id,
+            customer_email: session.customer_details?.email || order.customer_email,
+            customer_name: session.customer_details?.name || order.customer_name,
+            customer_phone: session.customer_details?.phone || null,
+            shipping_cost: session.total_details?.amount_shipping ? session.total_details.amount_shipping / 100 : 0,
+            shipping_address: { ...(session.shipping_details || {}), geocoded },
+            paid_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }
+          if (!geocoded.found) {
+            updatePayload.admin_notes = '⚠️ Dirección no validada en Google Maps — confirma el domicilio con el cliente'
+          }
+
           const { error: updateError } = await supabaseAdmin
             .from('orders')
-            .update({
-              status: 'confirmed',
-              payment_status: 'paid',
-              stripe_payment_intent_id: (session.payment_intent as string) || order.stripe_payment_intent_id,
-              customer_email: session.customer_details?.email || order.customer_email,
-              customer_name: session.customer_details?.name || order.customer_name,
-              customer_phone: session.customer_details?.phone || null,
-              shipping_cost: session.total_details?.amount_shipping ? session.total_details.amount_shipping / 100 : 0,
-              shipping_address: session.shipping_details || {},
-              paid_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            })
+            .update(updatePayload)
             .eq('id', order.id)
 
           if (updateError) {
@@ -402,9 +465,13 @@ export default defineEventHandler(async (event) => {
 
           console.log(`✅ Orden ${order.order_number} pagada con éxito`)
 
-          // 📍 Guardar dirección del cliente en Skydropx (evita duplicados en reintentos)
+          // 📍 Guardar dirección en Skydropx solo si fue validada (evita duplicados en reintentos)
           if (!order.admin_notes?.includes('Skydropx')) {
-            await saveCustomerAddressToSkydropx(order.id, order.order_number, session)
+            if (geocoded.found) {
+              await saveCustomerAddressToSkydropx(order.id, order.order_number, session)
+            } else {
+              console.warn(`⚠️ Orden ${order.order_number}: dirección no validada, no se guarda en Skydropx`)
+            }
           }
 
           // Crear/actualizar el cliente en la tabla customers
@@ -443,6 +510,7 @@ export default defineEventHandler(async (event) => {
             customer_name: session.customer_details?.name || order.customer_name,
             customer_phone: session.customer_details?.phone || null,
             shipping_address: session.shipping_details || order.shipping_address,
+            shipping_validation: geocoded,
             total: session.amount_total ? session.amount_total / 100 : order.total,
             items: itemsForEmail,
           })
@@ -472,25 +540,33 @@ export default defineEventHandler(async (event) => {
           }
           const orderNumber = `PIT-${nextNumber}`
 
+          // 📍 Validar dirección con Google Maps antes de registrar la orden
+          const geocoded = await validateShippingAddress(session)
+
+          const insertPayload: any = {
+            order_number: orderNumber,
+            customer_email: session.customer_details?.email || 'cliente@email.com',
+            customer_name: session.customer_details?.name || 'Cliente',
+            customer_phone: session.customer_details?.phone || null,
+            status: 'confirmed',
+            payment_status: 'paid',
+            stripe_session_id: session.id,
+            stripe_payment_intent_id: session.payment_intent as string,
+            items: items,
+            subtotal: session.amount_subtotal ? session.amount_subtotal / 100 : 0,
+            total: session.amount_total ? session.amount_total / 100 : 0,
+            shipping_cost: session.total_details?.amount_shipping ? session.total_details.amount_shipping / 100 : 0,
+            shipping_address: { ...(session.shipping_details || {}), geocoded },
+            notes: session.metadata?.order_note || null,
+            paid_at: new Date().toISOString(),
+          }
+          if (!geocoded.found) {
+            insertPayload.admin_notes = '⚠️ Dirección no validada en Google Maps — confirma el domicilio con el cliente'
+          }
+
           const { data: newOrder, error: insertError } = await supabaseAdmin
             .from('orders')
-            .insert({
-              order_number: orderNumber,
-              customer_email: session.customer_details?.email || 'cliente@email.com',
-              customer_name: session.customer_details?.name || 'Cliente',
-              customer_phone: session.customer_details?.phone || null,
-              status: 'confirmed',
-              payment_status: 'paid',
-              stripe_session_id: session.id,
-              stripe_payment_intent_id: session.payment_intent as string,
-              items: items,
-              subtotal: session.amount_subtotal ? session.amount_subtotal / 100 : 0,
-              total: session.amount_total ? session.amount_total / 100 : 0,
-              shipping_cost: session.total_details?.amount_shipping ? session.total_details.amount_shipping / 100 : 0,
-              shipping_address: session.shipping_details || {},
-              notes: session.metadata?.order_note || null,
-              paid_at: new Date().toISOString(),
-            })
+            .insert(insertPayload)
             .select('id')
             .single()
 
@@ -499,9 +575,13 @@ export default defineEventHandler(async (event) => {
             throw createError({ statusCode: 500, message: `Error creando orden: ${insertError.message}` })
           }
 
-          // 📍 Guardar dirección del cliente en Skydropx
+          // 📍 Guardar dirección en Skydropx solo si fue validada
           if (newOrder?.id) {
-            await saveCustomerAddressToSkydropx(newOrder.id, orderNumber, session)
+            if (geocoded.found) {
+              await saveCustomerAddressToSkydropx(newOrder.id, orderNumber, session)
+            } else {
+              console.warn(`⚠️ Orden ${orderNumber}: dirección no validada, no se guarda en Skydropx`)
+            }
           }
 
           // Crear/actualizar el cliente en la tabla customers
@@ -530,6 +610,7 @@ export default defineEventHandler(async (event) => {
             customer_name: session.customer_details?.name || 'Cliente',
             customer_phone: session.customer_details?.phone || null,
             shipping_address: session.shipping_details || {},
+            shipping_validation: geocoded,
             total: session.amount_total ? session.amount_total / 100 : 0,
             items: items,
           })

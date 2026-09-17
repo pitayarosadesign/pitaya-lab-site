@@ -50,6 +50,7 @@ export default defineNuxtConfig({
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
     skydropxApiKey: process.env.SKYDROPX_API_KEY || '',
     skydropxApiSecretKey: process.env.SKYDROPX_API_SECRET_KEY || '',
+    googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || '',
     resendApiKey: process.env.RESEND_API_KEY || '',
   },
 
