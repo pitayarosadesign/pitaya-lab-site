@@ -145,14 +145,14 @@ ue <template>
               CP: {{ shippingAddress.postal_code }}
             </p>
 
-            <p v-if="shippingAddress.geocoded?.found && !shippingAddress.geocoded.partial_match && !shippingAddress.geocoded.postal_code_mismatch" class="text-xs text-green-600 mt-2">
-              ✓ Dirección validada en Google Maps{{ shippingAddress.geocoded.formatted_address ? ': ' + shippingAddress.geocoded.formatted_address : '' }}
+            <p v-if="shippingAddress.cp_validation?.valid" class="text-xs text-green-600 mt-2">
+              ✓ CP {{ shippingAddress.cp_validation.cp }} validado · {{ shippingAddress.cp_validation.state }}
             </p>
-            <p v-else-if="shippingAddress.geocoded?.found" class="text-xs text-amber-600 mt-2">
-              ⚠️ Coincidencia parcial en Google Maps{{ shippingAddress.geocoded.postal_code_mismatch ? ' (el CP no coincide)' : '' }}
+            <p v-else-if="shippingAddress.cp_validation?.state_mismatch" class="text-xs text-amber-600 mt-2">
+              ⚠️ El CP {{ shippingAddress.cp_validation.cp }} pertenece a {{ shippingAddress.cp_validation.state }}, no a {{ shippingAddress.cp_validation.selected_state }}
             </p>
-            <p v-else-if="shippingAddress.geocoded?.invalid" class="text-xs text-red-600 mt-2 font-semibold">
-              ⚠️ Dirección NO encontrada en Google Maps. Confirma con el cliente.
+            <p v-else-if="shippingAddress.cp_validation?.invalid" class="text-xs text-red-600 mt-2 font-semibold">
+              ⚠️ Código postal no válido en México. Confirma con el cliente.
             </p>
           </template>
           <p v-else class="text-sm text-gray-400">Sin dirección registrada</p>
@@ -314,7 +314,7 @@ const shippingAddress = computed(() => {
     state: addr.state || data.state || '',
     postal_code: addr.postal_code || data.postal_code || '',
     neighborhood: data.neighborhood || addr.neighborhood || '',
-    geocoded: data.geocoded || null,
+    cp_validation: data.cp_validation || data.geocoded || null,
   }
 })
 

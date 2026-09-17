@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 import { Resend } from 'resend'
 import { createSkydropxAddressTemplate } from '../../utils/skydropx'
-import { geocodeAddress } from '../../utils/geocoding'
+import { validatePostalCode } from '../../utils/postalCode'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -145,16 +145,16 @@ export default defineEventHandler(async (event) => {
       </tr>`
     ).join('')
 
-    // Estado de validación de la dirección en Google Maps
+    // Estado de validación del código postal (SEPOMEX)
     const validation = order.shipping_validation
     let validationHtml = ''
     if (validation) {
-      if (validation.found && !validation.partial_match && !validation.postal_code_mismatch) {
-        validationHtml = `<p style="color:#16a34a;font-size:12px;margin:8px 0 0;">✓ Dirección validada en Google Maps${validation.formatted_address ? ': ' + validation.formatted_address : ''}</p>`
-      } else if (validation.found) {
-        validationHtml = `<p style="color:#b45309;font-size:12px;margin:8px 0 0;">⚠️ Coincidencia parcial en Google Maps${validation.postal_code_mismatch ? ' (el CP no coincide con el capturado)' : ''}${validation.formatted_address ? ': ' + validation.formatted_address : ''}</p>`
+      if (validation.valid) {
+        validationHtml = `<p style="color:#16a34a;font-size:12px;margin:8px 0 0;">✓ CP ${validation.cp} validado · ${validation.state}</p>`
+      } else if (validation.state_mismatch) {
+        validationHtml = `<p style="color:#b45309;font-size:12px;margin:8px 0 0;">⚠️ El CP ${validation.cp} pertenece a ${validation.state}, no a ${validation.selected_state}</p>`
       } else if (validation.invalid) {
-        validationHtml = `<p style="color:#dc2626;font-size:12px;margin:8px 0 0;font-weight:bold;">⚠️ Dirección NO encontrada en Google Maps. Confirma el domicilio con el cliente antes de generar la guía.</p>`
+        validationHtml = `<p style="color:#dc2626;font-size:12px;margin:8px 0 0;font-weight:bold;">⚠️ Código postal ${validation.cp || 'vacío'} no válido en México. Confirma el domicilio con el cliente.</p>`
       }
     }
 
@@ -340,44 +340,22 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // 📍 Construir la dirección completa de envío (Stripe + datos del carrito)
-  function buildShippingAddressString(session: Stripe.Checkout.Session): string {
-    const s = session.shipping_details?.address
-    const m = session.metadata || {}
-    const street = [s?.line1, s?.line2].filter(Boolean).join(', ')
-    const neighborhood = m.shipping_neighborhood || ''
-    const city = s?.city || m.shipping_city || ''
-    const state = s?.state || m.shipping_state || ''
-    const cp = s?.postal_code || m.shipping_cp || ''
-    return [street, neighborhood, city, state, cp, 'México'].filter(Boolean).join(', ')
-  }
-
-  // 📍 Validar la dirección contra Google Maps (geocoding)
-  async function validateShippingAddress(session: Stripe.Checkout.Session) {
-    const query = buildShippingAddressString(session)
-    const inputCp = (session.shipping_details?.address?.postal_code || session.metadata?.shipping_cp || '')
+  // 📍 Validar el código postal contra SEPOMEX (local, sin APIs de pago)
+  function validateShippingCp(session: Stripe.Checkout.Session) {
+    const cp = (session.shipping_details?.address?.postal_code || session.metadata?.shipping_cp || '')
       .toString()
-      .replace(/\s+/g, '')
+      .replace(/\D/g, '')
+    const selectedState = session.metadata?.shipping_state || ''
 
-    const result: any = { query, checked_at: new Date().toISOString(), found: false, status: 'EMPTY' }
-    if (!query) return result
+    const result: any = { checked_at: new Date().toISOString(), cp, selected_state: selectedState }
+    const v = validatePostalCode(cp)
 
-    const geo = await geocodeAddress(query)
-    result.status = geo.status
-    result.found = geo.found
-    result.formatted_address = geo.formatted_address
-    result.lat = geo.lat
-    result.lng = geo.lng
-    result.partial_match = geo.partial_match
-    result.invalid = !geo.found && geo.status === 'ZERO_RESULTS'
-
-    if (geo.found) {
-      const matchedCp = (geo.matched_postal_code || '').replace(/\s+/g, '')
-      if (inputCp && matchedCp && inputCp !== matchedCp) {
-        result.postal_code_mismatch = true
-      }
-    }
-
+    result.status = v.status
+    result.exists = v.exists
+    result.state = v.state || null
+    result.state_mismatch = !!(v.exists && selectedState && v.state && selectedState !== v.state)
+    result.valid = v.exists && !result.state_mismatch
+    result.invalid = !v.exists
     return result
   }
 
@@ -434,8 +412,8 @@ export default defineEventHandler(async (event) => {
         const order = orders?.[0]
 
         if (order) {
-          // 📍 Validar dirección con Google Maps (una sola vez; en reintentos se reutiliza)
-          const geocoded = order.shipping_address?.geocoded || (await validateShippingAddress(session))
+          // 📍 Validar código postal contra SEPOMEX (una sola vez; en reintentos se reutiliza)
+          const cpValidation = order.shipping_address?.cp_validation || validateShippingCp(session)
 
           // Actualizar orden como pagada
           const updatePayload: any = {
@@ -446,12 +424,12 @@ export default defineEventHandler(async (event) => {
             customer_name: session.customer_details?.name || order.customer_name,
             customer_phone: session.customer_details?.phone || null,
             shipping_cost: session.total_details?.amount_shipping ? session.total_details.amount_shipping / 100 : 0,
-            shipping_address: { ...(session.shipping_details || {}), neighborhood: session.metadata?.shipping_neighborhood || '', geocoded },
+            shipping_address: { ...(session.shipping_details || {}), neighborhood: session.metadata?.shipping_neighborhood || '', cp_validation: cpValidation },
             paid_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           }
-          if (geocoded.invalid) {
-            updatePayload.admin_notes = '⚠️ Dirección no validada en Google Maps — confirma el domicilio con el cliente'
+          if (cpValidation.invalid) {
+            updatePayload.admin_notes = '⚠️ Código postal no válido — confirma el domicilio con el cliente'
           }
 
           const { error: updateError } = await supabaseAdmin
@@ -466,12 +444,12 @@ export default defineEventHandler(async (event) => {
 
           console.log(`✅ Orden ${order.order_number} pagada con éxito`)
 
-          // 📍 Guardar dirección en Skydropx solo si fue validada (evita duplicados en reintentos)
+          // 📍 Guardar dirección en Skydropx solo si el CP es válido (evita duplicados en reintentos)
           if (!order.admin_notes?.includes('Skydropx')) {
-            if (!geocoded.invalid) {
+            if (!cpValidation.invalid) {
               await saveCustomerAddressToSkydropx(order.id, order.order_number, session)
             } else {
-              console.warn(`⚠️ Orden ${order.order_number}: dirección no encontrada en Google Maps, no se guarda en Skydropx`)
+              console.warn(`⚠️ Orden ${order.order_number}: CP no válido, no se guarda en Skydropx`)
             }
           }
 
@@ -511,7 +489,7 @@ export default defineEventHandler(async (event) => {
             customer_name: session.customer_details?.name || order.customer_name,
             customer_phone: session.customer_details?.phone || null,
             shipping_address: session.shipping_details || order.shipping_address,
-            shipping_validation: geocoded,
+            shipping_validation: cpValidation,
             total: session.amount_total ? session.amount_total / 100 : order.total,
             items: itemsForEmail,
           })
@@ -541,8 +519,8 @@ export default defineEventHandler(async (event) => {
           }
           const orderNumber = `PIT-${nextNumber}`
 
-          // 📍 Validar dirección con Google Maps antes de registrar la orden
-          const geocoded = await validateShippingAddress(session)
+          // 📍 Validar código postal contra SEPOMEX antes de registrar la orden
+          const cpValidation = validateShippingCp(session)
 
           const insertPayload: any = {
             order_number: orderNumber,
@@ -557,12 +535,12 @@ export default defineEventHandler(async (event) => {
             subtotal: session.amount_subtotal ? session.amount_subtotal / 100 : 0,
             total: session.amount_total ? session.amount_total / 100 : 0,
             shipping_cost: session.total_details?.amount_shipping ? session.total_details.amount_shipping / 100 : 0,
-            shipping_address: { ...(session.shipping_details || {}), neighborhood: session.metadata?.shipping_neighborhood || '', geocoded },
+            shipping_address: { ...(session.shipping_details || {}), neighborhood: session.metadata?.shipping_neighborhood || '', cp_validation: cpValidation },
             notes: session.metadata?.order_note || null,
             paid_at: new Date().toISOString(),
           }
-          if (geocoded.invalid) {
-            insertPayload.admin_notes = '⚠️ Dirección no validada en Google Maps — confirma el domicilio con el cliente'
+          if (cpValidation.invalid) {
+            insertPayload.admin_notes = '⚠️ Código postal no válido — confirma el domicilio con el cliente'
           }
 
           const { data: newOrder, error: insertError } = await supabaseAdmin
@@ -576,12 +554,12 @@ export default defineEventHandler(async (event) => {
             throw createError({ statusCode: 500, message: `Error creando orden: ${insertError.message}` })
           }
 
-          // 📍 Guardar dirección en Skydropx solo si fue validada
+          // 📍 Guardar dirección en Skydropx solo si el CP es válido
           if (newOrder?.id) {
-            if (!geocoded.invalid) {
+            if (!cpValidation.invalid) {
               await saveCustomerAddressToSkydropx(newOrder.id, orderNumber, session)
             } else {
-              console.warn(`⚠️ Orden ${orderNumber}: dirección no encontrada en Google Maps, no se guarda en Skydropx`)
+              console.warn(`⚠️ Orden ${orderNumber}: CP no válido, no se guarda en Skydropx`)
             }
           }
 
@@ -611,7 +589,7 @@ export default defineEventHandler(async (event) => {
             customer_name: session.customer_details?.name || 'Cliente',
             customer_phone: session.customer_details?.phone || null,
             shipping_address: session.shipping_details || {},
-            shipping_validation: geocoded,
+            shipping_validation: cpValidation,
             total: session.amount_total ? session.amount_total / 100 : 0,
             items: items,
           })
