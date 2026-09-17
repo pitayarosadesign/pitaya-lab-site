@@ -116,6 +116,11 @@
               </div>
             </div>
 
+            <p v-if="cpCheck.status === 'loading'" class="text-[11px] text-earth-400">Validando CP…</p>
+            <p v-else-if="cpCheck.status === 'ok'" class="text-[11px] text-green-600">✓ {{ cpCheck.message }}</p>
+            <p v-else-if="cpCheck.status === 'warn'" class="text-[11px] text-amber-600">⚠️ {{ cpCheck.message }}</p>
+            <p v-else-if="cpCheck.status === 'error'" class="text-[11px] text-red-600">✗ {{ cpCheck.message }}</p>
+
             <p class="text-[11px] text-earth-400 leading-snug">
               Tu dirección se usa para generar tu guía de envío con nuestra paquetería de confianza.
             </p>
@@ -483,6 +488,50 @@ const shippingAddress = reactive({
   area_level2: '',
   area_level3: '',
 })
+
+// ===== Validación en vivo del CP contra SEPOMEX =====
+const cpCheck = reactive({ status: 'idle', message: '' })
+let cpTimer = null
+
+async function validateCpLive() {
+  const cp = shippingAddress.postal_code.replace(/\D/g, '')
+  const state = shippingAddress.area_level1
+
+  if (cp.length !== 5) {
+    cpCheck.status = 'idle'
+    cpCheck.message = ''
+    return
+  }
+
+  cpCheck.status = 'loading'
+  try {
+    const res = await $fetch('/api/shipping/validate-cp', { query: { cp, state } })
+    if (res.invalid) {
+      cpCheck.status = 'error'
+      cpCheck.message = 'CP no válido en México. Revísalo.'
+    } else if (res.state_mismatch) {
+      cpCheck.status = 'warn'
+      cpCheck.message = `Este CP pertenece a ${res.state}.`
+    } else if (res.valid) {
+      cpCheck.status = 'ok'
+      cpCheck.message = `CP de ${res.state}.`
+    } else {
+      cpCheck.status = 'idle'
+      cpCheck.message = ''
+    }
+  } catch (e) {
+    cpCheck.status = 'idle'
+    cpCheck.message = ''
+  }
+}
+
+watch(
+  () => [shippingAddress.postal_code, shippingAddress.area_level1],
+  () => {
+    clearTimeout(cpTimer)
+    cpTimer = setTimeout(validateCpLive, 450)
+  }
+)
 
 const shippingCost = computed(() => {
   return cart.totalPrice >= FREE_SHIPPING_THRESHOLD.value ? 0 : SHIPPING_COST.value
