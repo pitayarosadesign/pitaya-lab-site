@@ -980,14 +980,7 @@ function applyActiveFilters(list, exclude = {}) {
   }
 
   if (!exclude.fragrance && activeFragrance.value) {
-    const activeAroma = aromas.value.find(a => a.id === activeFragrance.value)
-    const aromaName = activeAroma?.name?.toLowerCase() || ''
-    result = result.filter(p => {
-      const byProfile = (p.fragrances || []).some(f => f.id === activeFragrance.value)
-      if (byProfile) return true
-      if (aromaName) return (p.variantNames || []).some(n => n.toLowerCase().includes(aromaName))
-      return false
-    })
+    result = result.filter(p => (p.fragrances || []).some(f => f.id === activeFragrance.value))
   }
 
   if (!exclude.family && activeFamily.value !== 'all') {

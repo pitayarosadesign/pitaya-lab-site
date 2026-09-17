@@ -86,9 +86,6 @@ export default defineEventHandler(async (event) => {
         }
       })
 
-      // Nombres de todas las variantes (para filtrado por coincidencia de aroma)
-      const variantNames = variants.map(v => v.name).filter(Boolean)
-
       return {
         id: p.id,
         sku: p.sku,
@@ -108,7 +105,6 @@ export default defineEventHandler(async (event) => {
           isPrimary: img.is_primary,
         })),
         fragrances,
-        variantNames,
         variantImageByFragrance,
         stock: p.stock,
         isFeatured: p.is_featured,
