@@ -1261,9 +1261,7 @@ async function loadCategories() {
 async function loadProducts() {
   loading.value = true
   try {
-    const data = await $fetch('/api/products', {
-      query: { limit: 50 }
-    })
+    const data = await $fetch('/api/products')
     products.value = data?.products || []
   } catch (e) {
     console.warn('Error cargando productos:', e.message)
