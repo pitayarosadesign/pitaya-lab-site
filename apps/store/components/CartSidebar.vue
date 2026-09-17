@@ -116,14 +116,14 @@
               </div>
             </div>
 
-            <p v-if="cpCheck.status === 'loading'" class="text-[11px] text-earth-400">Validando CP…</p>
-            <p v-else-if="cpCheck.status === 'ok'" class="text-[11px] text-green-600">✓ {{ cpCheck.message }}</p>
-            <p v-else-if="cpCheck.status === 'warn'" class="text-[11px] text-amber-600">⚠️ {{ cpCheck.message }}</p>
-            <p v-else-if="cpCheck.status === 'error'" class="text-[11px] text-red-600">✗ {{ cpCheck.message }}</p>
-
             <p class="text-[11px] text-earth-400 leading-snug">
               Tu dirección se usa para generar tu guía de envío con nuestra paquetería de confianza.
             </p>
+
+            <p v-if="cpCheck.status === 'loading'" class="text-[10px] text-earth-400">Validando cobertura…</p>
+            <p v-else-if="cpCheck.status === 'ok'" class="text-[10px] text-green-600">✓ Enviamos a tu zona</p>
+            <p v-else-if="cpCheck.status === 'warn'" class="text-[10px] text-amber-600">⚠️ {{ cpCheck.message }}</p>
+            <p v-else-if="cpCheck.status === 'error'" class="text-[10px] text-red-600">✗ {{ cpCheck.message }}</p>
           </div>
 
           <div
@@ -514,7 +514,7 @@ async function validateCpLive() {
       cpCheck.message = `Este CP pertenece a ${res.state}.`
     } else if (res.valid) {
       cpCheck.status = 'ok'
-      cpCheck.message = `CP de ${res.state}.`
+      cpCheck.message = ''
     } else {
       cpCheck.status = 'idle'
       cpCheck.message = ''
