@@ -69,63 +69,6 @@
 
         <!-- Items del carrito (scroll) -->
         <div v-if="cart.hasItems" class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-          <!-- 🚚 Envío: cotización con Skydropx -->
-          <div class="rounded-xl border border-earth-200 bg-earth-50/40 p-3 space-y-2">
-            <div class="flex items-center justify-between">
-              <h4 class="text-sm font-bold text-earth-800">🚚 Envío</h4>
-              <span v-if="cart.totalPrice >= FREE_SHIPPING_THRESHOLD" class="text-xs font-semibold text-green-600">Gratis</span>
-              <span v-else class="text-xs font-semibold text-earth-400">Envío estándar</span>
-            </div>
-
-            <div class="grid grid-cols-2 gap-2">
-              <div>
-                <label class="text-[10px] font-semibold text-earth-500 uppercase">Código postal</label>
-                <input
-                  v-model="shippingAddress.postal_code"
-                  maxlength="5"
-                  inputmode="numeric"
-                  placeholder="45236"
-                  class="w-full px-2.5 py-2 rounded-lg border border-earth-200 text-sm focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none bg-white"
-                />
-              </div>
-              <div>
-                <label class="text-[10px] font-semibold text-earth-500 uppercase">Estado</label>
-                <select
-                  v-model="shippingAddress.area_level1"
-                  class="w-full px-2.5 py-2 rounded-lg border border-earth-200 text-sm bg-white focus:border-primary-400 outline-none"
-                >
-                  <option value="" disabled>Selecciona…</option>
-                  <option v-for="s in MEXICAN_STATES" :key="s" :value="s">{{ s }}</option>
-                </select>
-              </div>
-              <div>
-                <label class="text-[10px] font-semibold text-earth-500 uppercase">Ciudad</label>
-                <input
-                  v-model="shippingAddress.area_level2"
-                  placeholder="Zapopan"
-                  class="w-full px-2.5 py-2 rounded-lg border border-earth-200 text-sm focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none bg-white"
-                />
-              </div>
-              <div>
-                <label class="text-[10px] font-semibold text-earth-500 uppercase">Colonia</label>
-                <input
-                  v-model="shippingAddress.area_level3"
-                  placeholder="Centro"
-                  class="w-full px-2.5 py-2 rounded-lg border border-earth-200 text-sm focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none bg-white"
-                />
-              </div>
-            </div>
-
-            <p class="text-[11px] text-earth-400 leading-snug">
-              Tu dirección se usa para generar tu guía de envío con nuestra paquetería de confianza. Verifica que tu dirección de envío esté correcta y completa antes de pagar.
-            </p>
-
-            <p v-if="cpCheck.status === 'loading'" class="text-[10px] text-earth-400">Validando cobertura…</p>
-            <p v-else-if="cpCheck.status === 'ok'" class="text-[10px] text-green-600">✓ Enviamos a tu zona</p>
-            <p v-else-if="cpCheck.status === 'warn'" class="text-[10px] text-amber-600">⚠️ {{ cpCheck.message }}</p>
-            <p v-else-if="cpCheck.status === 'error'" class="text-[10px] text-red-600">✗ {{ cpCheck.message }}</p>
-          </div>
-
           <div
             v-for="(item, index) in cart.items"
             :key="`${item.id}-${item.variant?.id || 'default'}`"
@@ -473,66 +416,6 @@ const freeShippingProgress = computed(() => {
   return Math.min(100, (cart.totalPrice / FREE_SHIPPING_THRESHOLD.value) * 100)
 })
 
-// ===== 🚚 Dirección de envío (se guarda en Skydropx para generar la guía) =====
-const MEXICAN_STATES = [
-  'Aguascalientes', 'Baja California', 'Baja California Sur', 'Campeche', 'Chiapas', 'Chihuahua',
-  'Ciudad de México', 'Coahuila', 'Colima', 'Durango', 'Estado de México', 'Guanajuato', 'Guerrero',
-  'Hidalgo', 'Jalisco', 'Michoacán', 'Morelos', 'Nayarit', 'Nuevo León', 'Oaxaca', 'Puebla', 'Querétaro',
-  'Quintana Roo', 'San Luis Potosí', 'Sinaloa', 'Sonora', 'Tabasco', 'Tamaulipas', 'Tlaxcala', 'Veracruz',
-  'Yucatán', 'Zacatecas',
-]
-
-const shippingAddress = reactive({
-  postal_code: '',
-  area_level1: '',
-  area_level2: '',
-  area_level3: '',
-})
-
-// ===== Validación en vivo del CP contra SEPOMEX =====
-const cpCheck = reactive({ status: 'idle', message: '' })
-let cpTimer = null
-
-async function validateCpLive() {
-  const cp = shippingAddress.postal_code.replace(/\D/g, '')
-  const state = shippingAddress.area_level1
-
-  if (cp.length !== 5) {
-    cpCheck.status = 'idle'
-    cpCheck.message = ''
-    return
-  }
-
-  cpCheck.status = 'loading'
-  try {
-    const res = await $fetch('/api/shipping/validate-cp', { query: { cp, state } })
-    if (res.invalid) {
-      cpCheck.status = 'error'
-      cpCheck.message = 'CP no válido en México. Revísalo.'
-    } else if (res.state_mismatch) {
-      cpCheck.status = 'warn'
-      cpCheck.message = `Este CP pertenece a ${res.state}.`
-    } else if (res.valid) {
-      cpCheck.status = 'ok'
-      cpCheck.message = ''
-    } else {
-      cpCheck.status = 'idle'
-      cpCheck.message = ''
-    }
-  } catch (e) {
-    cpCheck.status = 'idle'
-    cpCheck.message = ''
-  }
-}
-
-watch(
-  () => [shippingAddress.postal_code, shippingAddress.area_level1],
-  () => {
-    clearTimeout(cpTimer)
-    cpTimer = setTimeout(validateCpLive, 450)
-  }
-)
-
 const shippingCost = computed(() => {
   return cart.totalPrice >= FREE_SHIPPING_THRESHOLD.value ? 0 : SHIPPING_COST.value
 })
@@ -617,10 +500,6 @@ onUnmounted(() => {
 
 async function handleCheckout() {
   if (cart.items.length === 0) return
-  if (!shippingAddress.postal_code || !shippingAddress.area_level1 || !shippingAddress.area_level2 || !shippingAddress.area_level3) {
-    alert('Completa tu dirección de envío (CP, estado, ciudad y colonia)')
-    return
-  }
   checkoutLoading.value = true
 
   try {
@@ -632,12 +511,6 @@ async function handleCheckout() {
       body: {
         items: cart.getCheckoutItems(),
         shippingCost: shippingCost.value, // ← Enviamos el costo de envío
-        shippingAddress: {
-          postal_code: shippingAddress.postal_code,
-          area_level1: shippingAddress.area_level1,
-          area_level2: shippingAddress.area_level2,
-          area_level3: shippingAddress.area_level3,
-        },
         orderNote: cart.orderNote || '', // ← Nota general del pedido (opcional)
         successUrl: `${window.location.origin}/checkout/success`,
         cancelUrl: `${window.location.origin}/checkout/cancel`,

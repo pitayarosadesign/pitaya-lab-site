@@ -296,8 +296,8 @@ export default defineEventHandler(async (event) => {
     const area_level2 = metadata.shipping_city || shipping?.address?.city || ''
     const area_level3 = metadata.shipping_neighborhood || ''
 
-    // Skydropx exige CP, estado, ciudad y colonia
-    if (!postal_code || !area_level1 || !area_level2 || !area_level3) {
+    // Skydropx exige CP, estado y ciudad (la colonia es opcional)
+    if (!postal_code || !area_level1 || !area_level2) {
       console.log(`ℹ️ Orden ${orderNumber}: dirección incompleta, no se guarda en Skydropx`)
       return null
     }
