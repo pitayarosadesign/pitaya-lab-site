@@ -73,6 +73,9 @@ export default defineEventHandler(async (event) => {
       cancel_url: cancelUrl || `${event.node.req.headers.origin || 'http://localhost:3002'}/checkout/cancel`,
       payment_method_types: ['card'],
       billing_address_collection: 'required',
+      phone_number_collection: {
+        enabled: true,
+      },
       shipping_address_collection: {
         allowed_countries: ['MX'],
       },
