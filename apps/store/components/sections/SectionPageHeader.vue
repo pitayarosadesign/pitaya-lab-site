@@ -10,7 +10,7 @@
     />
     <div v-if="content.image_url" class="absolute inset-0" :class="content.overlay || 'bg-earth-950/60'"></div>
 
-    <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+    <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8" :class="compact ? 'py-8 md:py-10' : 'py-16 md:py-24'">
       <div class="max-w-3xl" :class="content.alignment === 'left' ? 'text-left' : 'mx-auto text-center'">
         <span
           v-if="content.badge"
@@ -18,11 +18,11 @@
           :class="onDark ? 'text-primary-200' : 'text-primary-600'"
         >{{ content.badge }}</span>
 
-        <h1 class="text-4xl md:text-5xl font-serif font-bold" :class="onDark ? 'text-white' : 'text-earth-900'">
+        <h1 class="font-serif font-bold" :class="[compact ? 'text-3xl md:text-4xl' : 'text-4xl md:text-5xl', onDark ? 'text-white' : 'text-earth-900']">
           {{ content.title || 'Encabezado de página' }}<span v-if="content.highlight" :class="onDark ? 'text-primary-300' : 'text-primary-600'"> {{ content.highlight }}</span>
         </h1>
 
-        <p v-if="content.description" class="text-lg mt-4 leading-relaxed" :class="onDark ? 'text-white/90' : 'text-earth-600'">
+        <p v-if="content.description" class="mt-4 leading-relaxed" :class="[compact ? 'text-base' : 'text-lg', onDark ? 'text-white/90' : 'text-earth-600']">
           {{ content.description }}
         </p>
 
@@ -46,6 +46,7 @@ const props = defineProps({
 })
 
 const onDark = computed(() => !!props.content.image_url || props.settings.background === 'dark')
+const compact = computed(() => props.settings.compact === true)
 
 const sectionBg = computed(() => {
   if (props.content.image_url) return 'bg-earth-900'

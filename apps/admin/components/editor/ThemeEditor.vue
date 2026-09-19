@@ -222,6 +222,11 @@ const FONTS = {
     { family: "'Lora', Georgia, serif", href: 'https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap', label: 'Lora' },
     { family: "'Merriweather', Georgia, serif", href: 'https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;0,900;1,400&display=swap', label: 'Merriweather' },
     { family: "'DM Serif Display', Georgia, serif", href: 'https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap', label: 'DM Serif Display' },
+    { family: "'Prata', Georgia, serif", href: 'https://fonts.googleapis.com/css2?family=Prata&display=swap', label: 'Prata' },
+    { family: "'Marcellus', Georgia, serif", href: 'https://fonts.googleapis.com/css2?family=Marcellus&display=swap', label: 'Marcellus' },
+    { family: "'Bodoni Moda', Georgia, serif", href: 'https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap', label: 'Bodoni Moda' },
+    { family: "'Crimson Text', Georgia, serif", href: 'https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap', label: 'Crimson Text' },
+    { family: "'Libre Baskerville', Georgia, serif", href: 'https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap', label: 'Libre Baskerville' },
   ],
   sans: [
     { family: "'Inter', system-ui, sans-serif", href: 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap', label: 'Inter (actual)' },
@@ -229,6 +234,12 @@ const FONTS = {
     { family: "'Montserrat', system-ui, sans-serif", href: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap', label: 'Montserrat' },
     { family: "'Lato', system-ui, sans-serif", href: 'https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap', label: 'Lato' },
     { family: "'Nunito Sans', system-ui, sans-serif", href: 'https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&display=swap', label: 'Nunito Sans' },
+    { family: "'Raleway', system-ui, sans-serif", href: 'https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap', label: 'Raleway' },
+    { family: "'Work Sans', system-ui, sans-serif", href: 'https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap', label: 'Work Sans' },
+    { family: "'Mulish', system-ui, sans-serif", href: 'https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;500;600;700&display=swap', label: 'Mulish' },
+    { family: "'Jost', system-ui, sans-serif", href: 'https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap', label: 'Jost' },
+    { family: "'Open Sans', system-ui, sans-serif", href: 'https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap', label: 'Open Sans' },
+    { family: "'Karla', system-ui, sans-serif", href: 'https://fonts.googleapis.com/css2?family=Karla:wght@300;400;500;600;700&display=swap', label: 'Karla' },
   ],
 }
 

@@ -1191,6 +1191,12 @@
             </label>
           </div>
         </div>
+        <div class="md:col-span-2">
+          <label class="inline-flex items-center gap-2 text-sm">
+            <input type="checkbox" v-model="section.settings.compact" class="text-primary-600 rounded" />
+            <span class="text-gray-700">Estilo compacto (menos altura)</span>
+          </label>
+        </div>
       </div>
     </div>
 

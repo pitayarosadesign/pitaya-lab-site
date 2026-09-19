@@ -103,7 +103,7 @@
 
     <!-- Modal para agregar sección -->
     <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" @click.self="showAddModal = false">
-      <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-semibold text-gray-900">Agregar nueva sección</h3>
           <button @click="showAddModal = false" class="text-gray-400 hover:text-gray-600">
@@ -113,10 +113,43 @@
           </button>
         </div>
 
-        <p class="text-sm text-gray-500 mb-4">Elige una plantilla por categoría según el propósito en tu tienda:</p>
+        <!-- Buscador -->
+        <div class="relative mb-4">
+          <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input
+            v-model="addModalSearch"
+            type="text"
+            placeholder="Buscar plantilla (ej. video, productos, reseñas...)"
+            class="w-full pl-9 pr-3 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm"
+          />
+        </div>
 
-        <!-- Modal con scroll, agrupado por categoría -->
-        <div class="max-h-[60vh] overflow-y-auto pr-1 -mr-1 space-y-5">
+        <!-- Resultados de búsqueda -->
+        <div v-if="filteredSectionTypes" class="max-h-[60vh] overflow-y-auto pr-1 -mr-1">
+          <div v-if="filteredSectionTypes.length === 0" class="py-10 text-center text-gray-400 text-sm">
+            No hay plantillas que coincidan con tu búsqueda.
+          </div>
+          <div v-else class="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <button
+              v-for="type in filteredSectionTypes"
+              :key="type.value"
+              @click="addSection(type.value)"
+              class="p-3 rounded-xl border border-gray-200 hover:border-primary-400 hover:bg-primary-50 transition-all text-left group"
+            >
+              <SectionThumb :type="type.value" />
+              <div class="mt-2 flex items-center gap-1.5">
+                <span class="text-base">{{ type.icon }}</span>
+                <span class="text-sm font-medium text-gray-800 group-hover:text-primary-700">{{ type.label }}</span>
+              </div>
+              <span class="text-[11px] text-gray-400 mt-0.5 block leading-snug">{{ type.description }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Vista agrupada por categoría -->
+        <div v-else class="max-h-[60vh] overflow-y-auto pr-1 -mr-1 space-y-5">
           <div v-for="cat in sectionCategories" :key="cat.key" class="space-y-2">
             <div class="flex items-center gap-2 pt-1">
               <span class="text-lg">{{ cat.icon }}</span>
@@ -125,15 +158,18 @@
                 <p class="text-[11px] text-gray-400">{{ cat.hint }}</p>
               </div>
             </div>
-            <div class="grid grid-cols-2 gap-2.5">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-2.5">
               <button
                 v-for="type in sectionTypesByCategory(cat.key)"
                 :key="type.value"
                 @click="addSection(type.value)"
-                class="p-3.5 rounded-xl border border-gray-200 hover:border-primary-400 hover:bg-primary-50 transition-all text-left group"
+                class="p-3 rounded-xl border border-gray-200 hover:border-primary-400 hover:bg-primary-50 transition-all text-left group"
               >
-                <span class="text-xl block mb-1.5">{{ type.icon }}</span>
-                <span class="text-sm font-medium text-gray-800 block group-hover:text-primary-700">{{ type.label }}</span>
+                <SectionThumb :type="type.value" />
+                <div class="mt-2 flex items-center gap-1.5">
+                  <span class="text-base">{{ type.icon }}</span>
+                  <span class="text-sm font-medium text-gray-800 group-hover:text-primary-700">{{ type.label }}</span>
+                </div>
                 <span class="text-[11px] text-gray-400 mt-0.5 block leading-snug">{{ type.description }}</span>
               </button>
             </div>
@@ -146,6 +182,7 @@
 
 <script setup>
 import SectionForm from './SectionForm.vue'
+import SectionThumb from './SectionThumb.vue'
 
 const props = defineProps({
   page: { type: String, default: 'home' },
@@ -156,6 +193,17 @@ const loading = ref(true)
 const expandedSection = ref(null)
 const showAddModal = ref(false)
 const dragIndex = ref(null)
+const addModalSearch = ref('')
+
+// Búsqueda en el modal: si hay texto, devuelve las plantillas que coinciden;
+// si no hay texto (null), se muestra la vista agrupada por categoría.
+const filteredSectionTypes = computed(() => {
+  const q = addModalSearch.value.trim().toLowerCase()
+  if (!q) return null
+  return sectionTypes.filter(t =>
+    `${t.label} ${t.description} ${t.category}`.toLowerCase().includes(q)
+  )
+})
 
 // Tipos de sección disponibles agrupados por categoría
 const sectionTypes = [
@@ -445,7 +493,7 @@ function getDefaultContent(type) {
         cta_link: '',
         alignment: 'center',
       },
-      settings: { enabled: true, background: 'light' },
+      settings: { enabled: true, background: 'light', compact: false },
     },
     html: {
       title: 'HTML',
