@@ -925,7 +925,7 @@
     <!-- Carrusel Multimedia (imágenes y videos) -->
     <div v-else-if="section.type === 'media_carousel'">
       <!-- Vista previa en vivo -->
-      <div class="mb-4 rounded-xl overflow-hidden border border-gray-200 bg-gray-900 relative" style="aspect-ratio: 16/9;">
+      <div class="mb-4 rounded-xl overflow-hidden border border-gray-200 bg-gray-900 relative" :style="{ aspectRatio: section.settings.aspect || '16 / 9' }">
         <template v-for="(slide, i) in section.content.slides || []" :key="i">
           <video
             v-if="slide.type === 'video' && slide.media_url && i === mcPreviewIndex"
@@ -935,18 +935,18 @@
             muted
             loop
             playsinline
-            class="absolute inset-0 w-full h-full object-cover"
+            :class="['absolute inset-0 w-full h-full', mcObjectFit]"
           ></video>
           <img
             v-else-if="slide.type === 'video' && slide.poster_url && i === mcPreviewIndex"
             :src="slide.poster_url"
-            class="absolute inset-0 w-full h-full object-cover"
+            :class="['absolute inset-0 w-full h-full', mcObjectFit]"
             @error="onPreviewImgError($event)"
           />
           <img
             v-else-if="slide.type !== 'video' && slide.media_url && i === mcPreviewIndex"
             :src="slide.media_url"
-            class="absolute inset-0 w-full h-full object-cover"
+            :class="['absolute inset-0 w-full h-full', mcObjectFit]"
             @error="onPreviewImgError($event)"
           />
         </template>
@@ -994,10 +994,21 @@
         <div>
           <label class="block text-xs font-medium text-gray-500 mb-1">Proporción</label>
           <select v-model="section.settings.aspect" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm">
-            <option value="16 / 9">16:9</option>
+            <option value="16 / 9">16:9 (horizontal)</option>
+            <option value="9 / 16">9:16 (vertical)</option>
+            <option value="4 / 5">4:5 (vertical)</option>
+            <option value="3 / 4">3:4 (vertical)</option>
             <option value="4 / 3">4:3</option>
             <option value="1 / 1">1:1 (cuadrada)</option>
             <option value="21 / 9">21:9 (cine)</option>
+          </select>
+          <p class="text-[11px] text-gray-400 mt-1">Para videos verticales elige <strong>9:16</strong> (o usa "Ajustar completo").</p>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Ajuste de media</label>
+          <select v-model="section.settings.object_fit" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm">
+            <option value="cover">Rellenar (recortar)</option>
+            <option value="contain">Ajustar completo</option>
           </select>
         </div>
         <div>
@@ -1832,6 +1843,9 @@ const mcPreviewIndex = computed(() => {
   if (!total) return 0
   return Math.min(previewSlide.value, total - 1)
 })
+const mcObjectFit = computed(() =>
+  section.value.settings?.object_fit === 'contain' ? 'object-contain' : 'object-cover'
+)
 
 function triggerSlideUpload(slide) {
   // El input con data-slide-index coincide con el índice de la slide

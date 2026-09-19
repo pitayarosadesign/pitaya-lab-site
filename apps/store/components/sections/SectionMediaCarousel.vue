@@ -44,12 +44,12 @@
                 muted
                 loop
                 playsinline
-                class="w-full h-full object-cover"
+                :class="['w-full h-full', objectFitClass]"
               ></video>
               <img
                 v-else-if="slide.poster_url"
                 :src="slide.poster_url"
-                class="w-full h-full object-cover"
+                :class="['w-full h-full', objectFitClass]"
                 :alt="slide.caption || ''"
                 loading="lazy"
               />
@@ -59,7 +59,7 @@
             <img
               v-else
               :src="slide.media_url"
-              class="w-full h-full object-cover"
+              :class="['w-full h-full', objectFitClass]"
               :alt="slide.caption || ''"
               loading="lazy"
             />
@@ -133,6 +133,9 @@ const slides = computed(() =>
   (props.content.slides || []).filter(s => s && s.media_url)
 )
 const aspect = computed(() => props.settings.aspect || '16 / 9')
+const objectFitClass = computed(() =>
+  props.settings.object_fit === 'contain' ? 'object-contain' : 'object-cover'
+)
 const showArrows = computed(() => props.settings.show_arrows !== false)
 const showDots = computed(() => props.settings.show_dots !== false && slides.value.length > 1)
 const intervalMs = computed(() => {

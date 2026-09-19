@@ -429,7 +429,7 @@ function getDefaultContent(type) {
           { type: 'video', media_url: '', poster_url: '', caption: '', link: '' },
         ],
       },
-      settings: { enabled: true, aspect: '16 / 9', autoplay: true, show_arrows: true, show_dots: true, interval: 5, background: 'light' },
+      settings: { enabled: true, aspect: '16 / 9', object_fit: 'cover', autoplay: true, show_arrows: true, show_dots: true, interval: 5, background: 'light' },
     },
     html: {
       title: 'HTML',
