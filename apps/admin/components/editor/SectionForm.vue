@@ -1124,6 +1124,76 @@
       </div>
     </div>
 
+    <!-- Encabezado de página (banner) -->
+    <div v-else-if="section.type === 'page_header'">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
+          <input v-model="section.content.title" type="text" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Etiqueta (badge)</label>
+          <input v-model="section.content.badge" type="text" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Resaltado del título</label>
+          <input v-model="section.content.highlight" type="text" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+          <textarea v-model="section.content.description" rows="2" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Texto del botón</label>
+          <input v-model="section.content.cta_text" type="text" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Enlace del botón</label>
+          <input v-model="section.content.cta_link" type="url" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Imagen de fondo (opcional)</label>
+          <div class="flex flex-wrap items-center gap-2">
+            <input v-model="section.content.image_url" type="url" placeholder="https://..." class="flex-1 min-w-[220px] px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm font-mono" />
+            <input type="file" accept="image/png,image/jpeg,image/webp" class="hidden" data-input-key="page_header_image" @change="onMediaUpload('image_url', $event)" />
+            <button type="button" @click="triggerMediaUpload('page_header_image')" class="px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs text-gray-600 hover:bg-gray-100 transition-colors">📷 Subir imagen</button>
+          </div>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Overlay (oscurecido sobre la imagen)</label>
+          <input v-model="section.content.overlay" type="text" placeholder="bg-earth-950/60" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm font-mono" />
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Alineación</label>
+          <div class="flex gap-4">
+            <label class="inline-flex items-center gap-2 text-sm">
+              <input type="radio" value="center" v-model="section.content.alignment" class="text-primary-600" />
+              Centrado
+            </label>
+            <label class="inline-flex items-center gap-2 text-sm">
+              <input type="radio" value="left" v-model="section.content.alignment" class="text-primary-600" />
+              Izquierda
+            </label>
+          </div>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Fondo (sin imagen)</label>
+          <div class="flex gap-4">
+            <label class="inline-flex items-center gap-2 text-sm">
+              <input type="radio" value="light" v-model="section.settings.background" class="text-primary-600" />
+              Claro (degradado)
+            </label>
+            <label class="inline-flex items-center gap-2 text-sm">
+              <input type="radio" value="dark" v-model="section.settings.background" class="text-primary-600" />
+              Oscuro
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- B2B Stats -->
     <div v-else-if="section.type === 'b2b_stats'">
       <div class="space-y-3">

@@ -21,7 +21,7 @@
     <!-- Página personalizada -->
     <div v-else>
       <!-- Encabezado de la página (opcional) -->
-      <header v-if="page.title" class="py-16 md:py-20 bg-gradient-to-b from-primary-50 to-white text-center px-4">
+      <header v-if="page.title && showHeader" class="py-16 md:py-20 bg-gradient-to-b from-primary-50 to-white text-center px-4">
         <div class="max-w-3xl mx-auto">
           <span v-if="page.badge" class="inline-block text-primary-600 font-semibold text-sm uppercase tracking-wider mb-3">{{ page.badge }}</span>
           <h1 class="text-4xl md:text-5xl font-serif font-bold text-earth-900">
@@ -52,6 +52,13 @@ const supabase = useNuxtApp().$supabase
 
 const page = ref(null)
 const loading = ref(true)
+
+// Visibilidad del encabezado (site_config, clave page_header_settings)
+const headerSettings = ref({})
+const showHeader = computed(() => {
+  const entry = headerSettings.value[String(route.params.slug || '')]
+  return entry?.show_header !== false
+})
 
 // Secciones de la página (page_sections), cargadas por el composable
 // compartido. Se recargan automáticamente al cambiar el slug de la ruta.
@@ -84,6 +91,16 @@ async function loadPage() {
     }
 
     page.value = pageData
+
+    // Configuración de visibilidad del encabezado
+    const { data: cfgData, error: cfgError } = await supabase
+      .from('site_config')
+      .select('value')
+      .eq('key', 'page_header_settings')
+      .maybeSingle()
+    if (!cfgError && cfgData?.value && typeof cfgData.value === 'object') {
+      headerSettings.value = cfgData.value
+    }
   } catch (e) {
     console.warn(`Error cargando página ${route.params.slug}:`, e.message)
     page.value = null

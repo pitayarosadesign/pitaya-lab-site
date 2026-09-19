@@ -10,6 +10,19 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     return
   }
 
+  // Carga dinámicamente una fuente de Google Fonts (evita duplicar <link>).
+  function loadFont(font) {
+    if (!font?.href) return
+    const id = 'gf-' + String(font.family || '').replace(/[^a-zA-Z0-9]/g, '-')
+    if (!document.getElementById(id)) {
+      const link = document.createElement('link')
+      link.id = id
+      link.rel = 'stylesheet'
+      link.href = font.href
+      document.head.appendChild(link)
+    }
+  }
+
   try {
     const { data, error } = await $supabase
       .from('site_config')
@@ -52,6 +65,17 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       if (theme.textColor) {
         root.style.setProperty('--color-text', theme.textColor)
         document.body.style.color = theme.textColor
+      }
+
+      // Aplicar tipografías (encabezados y cuerpo)
+      if (theme.font_heading?.family) {
+        loadFont(theme.font_heading)
+        root.style.setProperty('--font-serif', theme.font_heading.family)
+      }
+      if (theme.font_body?.family) {
+        loadFont(theme.font_body)
+        root.style.setProperty('--font-sans', theme.font_body.family)
+        document.body.style.fontFamily = theme.font_body.family
       }
     }
   } catch (e) {

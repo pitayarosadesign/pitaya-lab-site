@@ -169,6 +169,7 @@ const sectionTypes = [
   { value: 'image_text', label: 'Imagen + Texto', icon: '🖼️', description: 'Imagen a un lado, texto al otro', category: 'Contenido' },
   { value: 'gallery', label: 'Galería', icon: '🖼️', description: 'Grid de imágenes', category: 'Contenido' },
   { value: 'media_carousel', label: 'Carrusel Multimedia', icon: '🎞️', description: 'Carrusel de imágenes y videos', category: 'Contenido' },
+  { value: 'page_header', label: 'Encabezado de página', icon: '🪧', description: 'Banner con título para páginas internas', category: 'Contenido' },
   { value: 'html', label: 'HTML', icon: '💻', description: 'HTML libre', category: 'Contenido' },
 
   // Prueba social & Confianza
@@ -430,6 +431,21 @@ function getDefaultContent(type) {
         ],
       },
       settings: { enabled: true, aspect: '16 / 9', object_fit: 'cover', autoplay: true, show_arrows: true, show_dots: true, interval: 5, background: 'light' },
+    },
+    page_header: {
+      title: 'Encabezado de página',
+      content: {
+        badge: '',
+        title: 'Título de la página',
+        highlight: '',
+        description: '',
+        image_url: '',
+        overlay: 'bg-earth-950/60',
+        cta_text: '',
+        cta_link: '',
+        alignment: 'center',
+      },
+      settings: { enabled: true, background: 'light' },
     },
     html: {
       title: 'HTML',

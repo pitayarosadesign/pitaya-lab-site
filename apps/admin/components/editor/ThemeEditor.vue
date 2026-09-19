@@ -139,6 +139,45 @@
         </div>
       </div>
     </div>
+
+    <!-- Tipografía -->
+    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+        <span class="text-lg">🔤</span>
+        <div>
+          <h3 class="text-sm font-semibold text-gray-900">Tipografía</h3>
+          <p class="text-xs text-gray-400">Elige las fuentes para títulos y texto general de la tienda</p>
+        </div>
+      </div>
+      <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Fuente de títulos (serif)</label>
+          <select
+            :value="fontHeadingFamily"
+            @change="setHeadingFont($event.target.value)"
+            class="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm"
+          >
+            <option v-for="f in FONTS.serif" :key="f.family" :value="f.family">{{ f.label }}</option>
+          </select>
+          <p class="text-sm text-earth-700 mt-2" :style="{ fontFamily: fontHeadingFamily }">
+            Vista previa: Fragancias que conectan
+          </p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Fuente del texto (sans)</label>
+          <select
+            :value="fontBodyFamily"
+            @change="setBodyFont($event.target.value)"
+            class="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm"
+          >
+            <option v-for="f in FONTS.sans" :key="f.family" :value="f.family">{{ f.label }}</option>
+          </select>
+          <p class="text-sm text-earth-700 mt-2" :style="{ fontFamily: fontBodyFamily }">
+            Vista previa: Productos botánicos biodegradables
+          </p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -171,6 +210,26 @@ const defaultTheme = {
   },
   background: '#f0fdf4',
   textColor: '#584236',
+  font_heading: { family: "'Playfair Display', Georgia, serif", href: 'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap' },
+  font_body: { family: "'Inter', system-ui, sans-serif", href: 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap' },
+}
+
+// Catálogo de tipografías disponibles (Google Fonts)
+const FONTS = {
+  serif: [
+    { family: "'Playfair Display', Georgia, serif", href: 'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap', label: 'Playfair Display (actual)' },
+    { family: "'Cormorant Garamond', Georgia, serif", href: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap', label: 'Cormorant Garamond' },
+    { family: "'Lora', Georgia, serif", href: 'https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap', label: 'Lora' },
+    { family: "'Merriweather', Georgia, serif", href: 'https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;0,900;1,400&display=swap', label: 'Merriweather' },
+    { family: "'DM Serif Display', Georgia, serif", href: 'https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap', label: 'DM Serif Display' },
+  ],
+  sans: [
+    { family: "'Inter', system-ui, sans-serif", href: 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap', label: 'Inter (actual)' },
+    { family: "'Poppins', system-ui, sans-serif", href: 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap', label: 'Poppins' },
+    { family: "'Montserrat', system-ui, sans-serif", href: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap', label: 'Montserrat' },
+    { family: "'Lato', system-ui, sans-serif", href: 'https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap', label: 'Lato' },
+    { family: "'Nunito Sans', system-ui, sans-serif", href: 'https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&display=swap', label: 'Nunito Sans' },
+  ],
 }
 
 // Tema editable
@@ -180,6 +239,8 @@ const theme = reactive({
   earth: { ...defaultTheme.earth },
   background: defaultTheme.background,
   textColor: defaultTheme.textColor,
+  font_heading: { ...defaultTheme.font_heading },
+  font_body: { ...defaultTheme.font_body },
 })
 
 async function loadTheme() {
@@ -199,6 +260,8 @@ async function loadTheme() {
       if (saved.earth) Object.assign(theme.earth, saved.earth)
       if (saved.background) theme.background = saved.background
       if (saved.textColor) theme.textColor = saved.textColor
+      if (saved.font_heading) theme.font_heading = saved.font_heading
+      if (saved.font_body) theme.font_body = saved.font_body
     }
   } catch (e) {
     console.warn('No se pudo cargar el tema, usando valores por defecto:', e.message)
@@ -223,6 +286,8 @@ async function saveTheme() {
             earth: { ...theme.earth },
             background: theme.background,
             textColor: theme.textColor,
+            font_heading: theme.font_heading,
+            font_body: theme.font_body,
           },
         }],
       },
@@ -243,6 +308,21 @@ function resetToDefault() {
   theme.earth = { ...defaultTheme.earth }
   theme.background = defaultTheme.background
   theme.textColor = defaultTheme.textColor
+  theme.font_heading = { ...defaultTheme.font_heading }
+  theme.font_body = { ...defaultTheme.font_body }
+}
+
+// Tipografía seleccionada (para enlazar los selectores con el tema)
+const fontHeadingFamily = computed(() => theme.font_heading?.family || defaultTheme.font_heading.family)
+const fontBodyFamily = computed(() => theme.font_body?.family || defaultTheme.font_body.family)
+
+function setHeadingFont(family) {
+  const opt = FONTS.serif.find(f => f.family === family)
+  if (opt) theme.font_heading = { family: opt.family, href: opt.href }
+}
+function setBodyFont(family) {
+  const opt = FONTS.sans.find(f => f.family === family)
+  if (opt) theme.font_body = { family: opt.family, href: opt.href }
 }
 
 onMounted(loadTheme)

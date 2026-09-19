@@ -62,6 +62,10 @@
             <input type="checkbox" v-model="form.in_top_menu" class="w-4 h-4 text-primary-600 rounded" />
             <span class="text-sm text-gray-700">Sugerir en el menú</span>
           </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" v-model="showHeader" class="w-4 h-4 text-primary-600 rounded" />
+            <span class="text-sm text-gray-700">Mostrar encabezado (título) en la tienda</span>
+          </label>
         </div>
       </div>
     </div>
@@ -93,6 +97,11 @@ const isNew = computed(() => route.params.slug === 'nueva')
 const saving = ref(false)
 const savedSlug = ref('')
 const pageId = ref(null)
+const supabase = useSupabase()
+
+// Visibilidad del encabezado (se guarda en site_config, clave page_header_settings)
+const showHeader = ref(true)
+const pageHeaderSettings = ref({})
 
 const form = reactive({
   title: '',
@@ -121,9 +130,26 @@ async function loadPage() {
       in_top_menu: !!data.in_top_menu,
     })
     savedSlug.value = data.slug
+    await loadHeaderSetting(data.slug)
   } catch (e) {
     console.error('Error cargando página:', e)
     alert('No se pudo cargar la página: ' + (e.data?.message || e.message))
+  }
+}
+
+async function loadHeaderSetting(slug) {
+  try {
+    const { data, error } = await supabase
+      .from('site_config')
+      .select('value')
+      .eq('key', 'page_header_settings')
+      .maybeSingle()
+    if (error) throw error
+    pageHeaderSettings.value = data?.value && typeof data.value === 'object' ? data.value : {}
+    const entry = pageHeaderSettings.value[slug]
+    showHeader.value = entry?.show_header !== false
+  } catch (e) {
+    console.warn('No se pudo cargar la configuración del encabezado:', e.message)
   }
 }
 
@@ -160,6 +186,14 @@ async function handleSave() {
         method: 'PUT',
         body: { id: pageId.value, ...payload },
       })
+
+      // Persistir visibilidad del encabezado (site_config)
+      pageHeaderSettings.value = { ...pageHeaderSettings.value, [form.slug]: { show_header: showHeader.value } }
+      await $fetch('/api/site/config', {
+        method: 'PUT',
+        body: { entries: [{ key: 'page_header_settings', value: pageHeaderSettings.value }] },
+      })
+
       alert('✅ Cambios guardados')
     }
   } catch (e) {
