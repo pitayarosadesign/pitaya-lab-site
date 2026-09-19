@@ -180,7 +180,10 @@ const sectionTypes = [
   { value: 'newsletter', label: 'Newsletter', icon: '✉️', description: 'Formulario de suscripción', category: 'Conversión' },
 
   // Redes Sociales
-  { value: 'instagram', label: 'Instagram', icon: '📸', description: 'Embed del perfil / comunidad de Instagram', category: 'Redes' },
+  { value: 'instagram', label: 'Instagram', icon: '📸', description: 'Ícono + enlace de seguimiento a tu perfil', category: 'Redes' },
+
+  // Canales de Venta
+  { value: 'marketplaces', label: 'Marketplaces', icon: '🛍️', description: 'Enlaces a Amazon, Mercado Libre y más', category: 'Ventas' },
 
   // B2B (Mayoreo & Corporativo)
   { value: 'b2b_stats', label: 'B2B Stats', icon: '📊', description: 'Estadísticas de confianza B2B', category: 'B2B' },
@@ -197,6 +200,7 @@ const sectionCategories = [
   { key: 'Confianza', label: 'Prueba social', icon: '⭐', hint: 'Genera confianza y fidelidad' },
   { key: 'Conversión', label: 'Conversión', icon: '🚀', hint: 'Impulsa acciones de compra' },
   { key: 'Redes', label: 'Redes Sociales', icon: '📸', hint: 'Conecta tu comunidad en Instagram' },
+  { key: 'Ventas', label: 'Canales de Venta', icon: '🛍️', hint: 'Enlaza tus tiendas en marketplaces' },
   { key: 'B2B', label: 'Mayoreo & Corporativo', icon: '🏢', hint: 'Secciones para la página B2B' },
 ]
 
@@ -426,12 +430,24 @@ function getDefaultContent(type) {
     instagram: {
       title: 'Instagram',
       content: {
-        title: 'Comunidad PITAYA LAB',
-        subtitle: 'Síguenos',
+        title: 'Síguenos en Instagram',
+        subtitle: 'Comunidad',
         description: 'Inspiración, rutinas de aromaterapia y novedades de nuestra casa.',
-        handle: 'pitayalab.mx',
-        cta_text: 'Seguir en Instagram',
-        profile_link: '',
+        cta_text: 'Síguenos en Instagram',
+        profile_link: 'https://www.instagram.com/pitayalab.mx/',
+      },
+      settings: { enabled: true, background: 'light' },
+    },
+    marketplaces: {
+      title: 'Canales de Venta',
+      content: {
+        subtitle: 'Otros canales',
+        title: 'Encuéntranos en marketplaces',
+        description: 'Compra nuestros productos en tus plataformas de confianza.',
+        channels: [
+          { name: 'Amazon México', link: 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329', icon: '🛒' },
+          { name: 'Mercado Libre', link: '', icon: '🛍️' },
+        ],
       },
       settings: { enabled: true, background: 'light' },
     },

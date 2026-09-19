@@ -7,57 +7,38 @@
           {{ content.subtitle }}
         </span>
         <h2 class="text-3xl md:text-4xl font-serif font-bold text-earth-900 mt-2 mb-4">
-          {{ content.title || '@' + cleanHandle + ' en Instagram' }}
+          {{ content.title || 'Síguenos en Instagram' }}
         </h2>
         <p v-if="content.description" class="text-earth-600 max-w-2xl mx-auto">
           {{ content.description }}
         </p>
       </div>
 
-      <!-- Embed del perfil de Instagram (oficial vía iframe) -->
-      <div
-        v-if="embedHandle"
-        class="instagram-embed-wrap mx-auto flex justify-center overflow-hidden rounded-2xl border border-earth-200 bg-white shadow-sm"
-      >
-        <iframe
-          :src="`https://www.instagram.com/${embedHandle}/embed/`"
-          width="440"
-          height="600"
-          frameborder="0"
-          scrolling="no"
-          allowtransparency="true"
-          loading="lazy"
-          :title="'Perfil de Instagram @' + embedHandle"
-          class="max-w-full"
-        ></iframe>
-      </div>
-
-      <!-- Alternativa: ícono + link al perfil (cuando no se provee handle) -->
-      <div v-else class="text-center py-10">
-        <span class="text-5xl block mb-4">📸</span>
-        <p class="text-earth-500 mb-6">Conecta tus redes y muestra tu comunidad de PITAYA LAB.</p>
+      <!-- Tarjeta de seguimiento: ícono + enlace (sin embed) -->
+      <div class="flex justify-center">
         <a
           v-if="profileUrl"
           :href="profileUrl"
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-semibold transition-colors"
+          class="group inline-flex items-center gap-4 bg-white border border-earth-200 hover:border-primary-300 hover:shadow-lg rounded-2xl pl-4 pr-8 py-4 transition-all"
         >
-          Síguenos en Instagram
+          <span class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-amber-500 flex items-center justify-center flex-shrink-0">
+            <instagram-icon class="w-6 h-6 text-white" />
+          </span>
+          <span class="text-left">
+            <span class="block text-[11px] text-earth-400 font-semibold uppercase tracking-wide">Instagram</span>
+            <span class="block text-earth-800 font-semibold group-hover:text-primary-600 transition-colors">
+              {{ content.cta_text || 'Síguenos en Instagram' }}
+            </span>
+          </span>
+          <svg class="w-4 h-4 text-earth-300 group-hover:text-primary-500 group-hover:translate-x-1 transition-all flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
         </a>
-      </div>
-
-      <!-- Botón de seguimiento -->
-      <div v-if="profileUrl" class="mt-8 text-center">
-        <a
-          :href="profileUrl"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-flex items-center gap-2 bg-gradient-to-br from-primary-500 to-amber-500 hover:opacity-90 text-white px-8 py-4 rounded-full text-base font-semibold shadow-lg transition-all"
-        >
-          <instagram-icon class="w-5 h-5" />
-          {{ ctaText }}
-        </a>
+        <p v-else class="text-earth-400 text-sm py-4">
+          Agrega el enlace de tu perfil de Instagram desde el panel de administración.
+        </p>
       </div>
     </div>
   </section>
@@ -77,21 +58,17 @@ const props = defineProps({
   settings: { type: Object, default: () => ({}) },
 })
 
+// El campo `handle` se mantiene como respaldo para secciones antiguas.
 const contentHandle = computed(() =>
   String(props.content.handle || props.content.username || '').replace(/^@/, '').trim()
 )
 
-// Solo hacemos embed cuando hay un handle válido.
-const embedHandle = computed(() => (contentHandle.value ? encodeURIComponent(contentHandle.value) : ''))
-
-const cleanHandle = computed(() => contentHandle.value)
-
+// Enlace del perfil: se usa profile_link; si está vacío, se deriva del usuario.
 const profileUrl = computed(() => {
+  if (props.content.profile_link) return props.content.profile_link
   if (contentHandle.value) return `https://www.instagram.com/${encodeURIComponent(contentHandle.value)}/`
-  return props.content.profile_link || ''
+  return ''
 })
-
-const ctaText = computed(() => props.content.cta_text || `@${contentHandle.value || 'pitayalab.mx'}`)
 
 const sectionBg = computed(() =>
   props.settings.background === 'dark' ? 'bg-earth-900' : 'bg-white'

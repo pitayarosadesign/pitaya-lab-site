@@ -842,7 +842,7 @@
       </div>
     </div>
 
-    <!-- Instagram -->
+    <!-- Instagram (ícono + enlace de seguimiento, sin embed) -->
     <div v-else-if="section.type === 'instagram'">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="md:col-span-2">
@@ -859,22 +859,65 @@
         </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-gray-700 mb-1">
-            Usuario de Instagram <span class="text-gray-400 font-normal">(sin @)</span>
+            Enlace de tu perfil de Instagram <span class="text-gray-400 font-normal">(se abre al hacer clic)</span>
           </label>
-          <input v-model="section.content.handle" type="text" placeholder="pitayalab.mx" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+          <input v-model="section.content.profile_link" type="url" placeholder="https://www.instagram.com/pitayalab.mx/" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
           <p class="text-xs text-gray-400 mt-1.5">
-            Se muestra el perfil embebido de Instagram cuando el usuario es válido. Sin usuario, se muestra un enlace de seguimiento.
+            Se muestra el ícono de Instagram con tu enlace. Ya no se incrusta el feed completo.
           </p>
         </div>
         <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Texto del botón de seguimiento</label>
-          <input v-model="section.content.cta_text" type="text" placeholder="Seguir en Instagram" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+          <label class="block text-sm font-medium text-gray-700 mb-1">Texto del botón</label>
+          <input v-model="section.content.cta_text" type="text" placeholder="Síguenos en Instagram" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
         </div>
-        <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            URL del perfil <span class="text-gray-400 font-normal">(opcional; por defecto @usuario)</span>
-          </label>
-          <input v-model="section.content.profile_link" type="url" placeholder="https://www.instagram.com/pitayalab.mx/" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+      </div>
+    </div>
+
+    <!-- Marketplaces (otros canales de venta) -->
+    <div v-else-if="section.type === 'marketplaces'">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
+          <input v-model="section.content.title" type="text" placeholder="Encuéntranos en marketplaces" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Subtítulo (etiqueta)</label>
+          <input v-model="section.content.subtitle" type="text" placeholder="Otros canales de venta" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+          <textarea v-model="section.content.description" rows="2" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+
+        <div class="flex items-center justify-between pt-1">
+          <label class="text-sm font-medium text-gray-700">Canales de venta</label>
+          <button
+            type="button"
+            @click="section.content.channels = section.content.channels || []; section.content.channels.push({ name: '', link: '', icon: '🛍️' })"
+            class="text-xs font-medium text-primary-600 hover:text-primary-700 px-3 py-1.5 rounded-lg border border-dashed border-primary-300 hover:bg-primary-50 transition-colors"
+          >+ Agregar canal</button>
+        </div>
+
+        <div
+          v-for="(ch, index) in section.content.channels || []"
+          :key="index"
+          class="grid grid-cols-12 gap-2 p-3 rounded-xl border border-gray-200 bg-gray-50/50"
+        >
+          <div class="col-span-2">
+            <label class="block text-xs font-medium text-gray-500 mb-1">Ícono</label>
+            <input v-model="ch.icon" type="text" placeholder="🛍️" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm text-center" />
+          </div>
+          <div class="col-span-4">
+            <label class="block text-xs font-medium text-gray-500 mb-1">Nombre</label>
+            <input v-model="ch.name" type="text" placeholder="Amazon México" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+          </div>
+          <div class="col-span-5">
+            <label class="block text-xs font-medium text-gray-500 mb-1">Enlace</label>
+            <input v-model="ch.link" type="url" placeholder="https://..." class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm font-mono" />
+          </div>
+          <div class="col-span-1 flex items-end justify-end">
+            <button type="button" @click="section.content.channels.splice(index, 1)" class="text-red-400 hover:text-red-600 text-xs">✕</button>
+          </div>
         </div>
       </div>
     </div>
