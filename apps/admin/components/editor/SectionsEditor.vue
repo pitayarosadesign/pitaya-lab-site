@@ -168,6 +168,7 @@ const sectionTypes = [
   { value: 'text', label: 'Texto', icon: '📝', description: 'Título y párrafos', category: 'Contenido' },
   { value: 'image_text', label: 'Imagen + Texto', icon: '🖼️', description: 'Imagen a un lado, texto al otro', category: 'Contenido' },
   { value: 'gallery', label: 'Galería', icon: '🖼️', description: 'Grid de imágenes', category: 'Contenido' },
+  { value: 'media_carousel', label: 'Carrusel Multimedia', icon: '🎞️', description: 'Carrusel de imágenes y videos', category: 'Contenido' },
   { value: 'html', label: 'HTML', icon: '💻', description: 'HTML libre', category: 'Contenido' },
 
   // Prueba social & Confianza
@@ -416,6 +417,19 @@ function getDefaultContent(type) {
       title: 'Galería',
       content: { title: '', subtitle: '', images: [] },
       settings: { enabled: true },
+    },
+    media_carousel: {
+      title: 'Carrusel Multimedia',
+      content: {
+        subtitle: 'Galería',
+        title: 'Explora en movimiento',
+        description: 'Imágenes y videos de nuestros productos y experiencias.',
+        slides: [
+          { type: 'image', media_url: '', poster_url: '', caption: '', link: '' },
+          { type: 'video', media_url: '', poster_url: '', caption: '', link: '' },
+        ],
+      },
+      settings: { enabled: true, aspect: '16 / 9', autoplay: true, show_arrows: true, show_dots: true, interval: 5, background: 'light' },
     },
     html: {
       title: 'HTML',

@@ -30,6 +30,7 @@ import SectionHtml from './SectionHtml.vue'
 import SectionNewsletter from './SectionNewsletter.vue'
 import SectionInstagram from './SectionInstagram.vue'
 import SectionMarketplaces from './SectionMarketplaces.vue'
+import SectionMediaCarousel from './SectionMediaCarousel.vue'
 import SectionB2BStats from './SectionB2BStats.vue'
 import SectionB2BAudience from './SectionB2BAudience.vue'
 import SectionB2BCalculator from './SectionB2BCalculator.vue'
@@ -58,6 +59,7 @@ const sectionComponent = computed(() => {
     newsletter: SectionNewsletter,
     instagram: SectionInstagram,
     marketplaces: SectionMarketplaces,
+    media_carousel: SectionMediaCarousel,
     b2b_stats: SectionB2BStats,
     b2b_audience: SectionB2BAudience,
     b2b_calculator: SectionB2BCalculator,

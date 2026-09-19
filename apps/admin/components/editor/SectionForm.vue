@@ -922,6 +922,197 @@
       </div>
     </div>
 
+    <!-- Carrusel Multimedia (imágenes y videos) -->
+    <div v-else-if="section.type === 'media_carousel'">
+      <!-- Vista previa en vivo -->
+      <div class="mb-4 rounded-xl overflow-hidden border border-gray-200 bg-gray-900 relative" style="aspect-ratio: 16/9;">
+        <template v-for="(slide, i) in section.content.slides || []" :key="i">
+          <video
+            v-if="slide.type === 'video' && slide.media_url && i === mcPreviewIndex"
+            :src="slide.media_url"
+            :poster="slide.poster_url || undefined"
+            autoplay
+            muted
+            loop
+            playsinline
+            class="absolute inset-0 w-full h-full object-cover"
+          ></video>
+          <img
+            v-else-if="slide.type === 'video' && slide.poster_url && i === mcPreviewIndex"
+            :src="slide.poster_url"
+            class="absolute inset-0 w-full h-full object-cover"
+            @error="onPreviewImgError($event)"
+          />
+          <img
+            v-else-if="slide.type !== 'video' && slide.media_url && i === mcPreviewIndex"
+            :src="slide.media_url"
+            class="absolute inset-0 w-full h-full object-cover"
+            @error="onPreviewImgError($event)"
+          />
+        </template>
+        <div
+          v-if="!((section.content.slides || []).some(s => s.media_url))"
+          class="absolute inset-0 flex items-center justify-center text-gray-500 text-sm"
+        >
+          🎞️ Vista previa — agrega imágenes o videos
+        </div>
+        <span
+          v-if="(section.content.slides || []).length"
+          class="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded-full"
+        >
+          {{ mcPreviewIndex + 1 }} / {{ (section.content.slides || []).length }}
+        </span>
+        <div v-if="(section.content.slides || []).length > 1" class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+          <button
+            v-for="(s, i) in section.content.slides || []"
+            :key="i"
+            type="button"
+            @click="previewSlide = i"
+            class="w-2 h-2 rounded-full transition-colors"
+            :class="i === mcPreviewIndex ? 'bg-white' : 'bg-white/40 hover:bg-white/70'"
+          ></button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
+          <input v-model="section.content.title" type="text" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Subtítulo (etiqueta)</label>
+          <input v-model="section.content.subtitle" type="text" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+          <textarea v-model="section.content.description" rows="2" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+        </div>
+      </div>
+
+      <!-- Ajustes del carrusel -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Proporción</label>
+          <select v-model="section.settings.aspect" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm">
+            <option value="16 / 9">16:9</option>
+            <option value="4 / 3">4:3</option>
+            <option value="1 / 1">1:1 (cuadrada)</option>
+            <option value="21 / 9">21:9 (cine)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Avance automático</label>
+          <select v-model="section.settings.interval" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm">
+            <option :value="3">3 s</option>
+            <option :value="5">5 s</option>
+            <option :value="8">8 s</option>
+            <option :value="0">Desactivado</option>
+          </select>
+        </div>
+        <div class="flex items-end">
+          <label class="inline-flex items-center gap-2 text-sm text-gray-600">
+            <input type="checkbox" v-model="section.settings.show_arrows" class="text-primary-600 rounded" />
+            Flechas
+          </label>
+        </div>
+        <div class="flex items-end">
+          <label class="inline-flex items-center gap-2 text-sm text-gray-600">
+            <input type="checkbox" v-model="section.settings.show_dots" class="text-primary-600 rounded" />
+            Puntos
+          </label>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between pt-1">
+          <label class="text-sm font-medium text-gray-700">Slides</label>
+          <button
+            type="button"
+            @click="mcAddSlide()"
+            class="text-xs font-medium text-primary-600 hover:text-primary-700 px-3 py-1.5 rounded-lg border border-dashed border-primary-300 hover:bg-primary-50 transition-colors"
+          >+ Agregar slide</button>
+        </div>
+        <p class="text-xs text-gray-400 -mt-2">Cada slide puede ser una imagen o un video (autoplay, sin sonido, en bucle).</p>
+
+        <div v-for="(slide, index) in section.content.slides || []" :key="index" class="p-3 bg-gray-50 rounded-lg space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-medium text-gray-700">Slide {{ index + 1 }}</span>
+            <div class="flex items-center gap-1.5">
+              <button type="button" @click="mcMoveSlide(index, -1)" :disabled="index === 0" class="text-gray-400 hover:text-gray-600 disabled:opacity-30 text-xs px-1">↑</button>
+              <button type="button" @click="mcMoveSlide(index, 1)" :disabled="index === (section.content.slides || []).length - 1" class="text-gray-400 hover:text-gray-600 disabled:opacity-30 text-xs px-1">↓</button>
+              <button type="button" @click="section.content.slides.splice(index, 1)" class="text-red-400 hover:text-red-600 text-xs">Eliminar</button>
+            </div>
+          </div>
+
+          <!-- Tipo -->
+          <div class="flex gap-4">
+            <label class="inline-flex items-center gap-2 text-sm">
+              <input type="radio" value="image" v-model="slide.type" class="text-primary-600" />
+              Imagen
+            </label>
+            <label class="inline-flex items-center gap-2 text-sm">
+              <input type="radio" value="video" v-model="slide.type" class="text-primary-600" />
+              Video
+            </label>
+          </div>
+
+          <!-- Media -->
+          <div class="flex flex-wrap items-center gap-2">
+            <input
+              v-model="slide.media_url"
+              type="url"
+              class="flex-1 min-w-[220px] px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm font-mono"
+              :placeholder="slide.type === 'video' ? 'https://.../video.mp4' : 'https://.../imagen.jpg'"
+            />
+            <input
+              type="file"
+              class="hidden"
+              :accept="slide.type === 'video' ? 'video/mp4,video/webm,video/quicktime' : 'image/png,image/jpeg,image/webp'"
+              :data-mc-slide="index"
+              data-mc-field="media"
+              @change="mcUploadMedia(slide, $event)"
+            />
+            <button
+              type="button"
+              @click="mcTriggerUpload(slide, 'media')"
+              class="px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs text-gray-600 hover:bg-gray-100 transition-colors"
+              :disabled="uploadingIndex === index"
+            >
+              {{ uploadingIndex === index ? 'Subiendo...' : (slide.type === 'video' ? '🎬 Subir video' : '📷 Subir imagen') }}
+            </button>
+          </div>
+
+          <!-- Poster (solo video) -->
+          <div v-if="slide.type === 'video'" class="flex flex-wrap items-center gap-2">
+            <input
+              v-model="slide.poster_url"
+              type="url"
+              class="flex-1 min-w-[220px] px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm font-mono"
+              placeholder="Poster (imagen de portada) https://..."
+            />
+            <input type="file" class="hidden" accept="image/png,image/jpeg,image/webp" :data-mc-slide="index" data-mc-field="poster" @change="mcUploadPoster(slide, $event)" />
+            <button
+              type="button"
+              @click="mcTriggerUpload(slide, 'poster')"
+              class="px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs text-gray-600 hover:bg-gray-100 transition-colors"
+            >📷 Subir poster</button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1">Texto (caption)</label>
+              <input v-model="slide.caption" type="text" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" placeholder="Opcional" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1">Enlace al hacer clic</label>
+              <input v-model="slide.link" type="url" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm font-mono" placeholder="https://... (opcional)" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- B2B Stats -->
     <div v-else-if="section.type === 'b2b_stats'">
       <div class="space-y-3">
@@ -1554,8 +1745,8 @@ async function autoSaveSection(what) {
       body: {
         id: props.section.id,
         title: props.section.title,
-        content: section.content,
-        settings: section.settings,
+        content: section.value.content,
+        settings: section.value.settings,
       },
     })
     console.log(`🖼️ Auto-guardado tras subir: ${what}`)
@@ -1634,6 +1825,14 @@ function moveItem(array, index, delta) {
 // ---------- Upload del carrusel ----------
 const uploadingIndex = ref(-1)
 
+// ---------- Carrusel Multimedia ----------
+const previewSlide = ref(0)
+const mcPreviewIndex = computed(() => {
+  const total = (section.value.content?.slides || []).length
+  if (!total) return 0
+  return Math.min(previewSlide.value, total - 1)
+})
+
 function triggerSlideUpload(slide) {
   // El input con data-slide-index coincide con el índice de la slide
   const idx = section.content.slides.indexOf(slide)
@@ -1667,6 +1866,74 @@ async function onSlideUpload(slide, event) {
 // Reordenar slides dentro del carrusel (delega en el helper genérico moveItem)
 function moveSlide(index, delta) {
   moveItem(section.content.slides, index, delta)
+}
+
+// ---------- Carrusel Multimedia (imagen/video por slide) ----------
+function mcAddSlide() {
+  const c = section.value.content || (section.value.content = {})
+  const slides = Array.isArray(c.slides) ? c.slides : []
+  c.slides = [...slides, { type: 'image', media_url: '', poster_url: '', caption: '', link: '' }]
+}
+
+function mcTriggerUpload(slide, field) {
+  const slides = section.value.content?.slides || []
+  const idx = slides.indexOf(slide)
+  const input = document.querySelector(`input[data-mc-slide="${idx}"][data-mc-field="${field}"]`)
+  if (input) input.click()
+}
+
+async function mcUploadMedia(slide, event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  const slides = section.value.content?.slides || []
+  const idx = slides.indexOf(slide)
+  uploadingIndex.value = idx
+  try {
+    const url = await uploadToStorage(file)
+    if (url) {
+      slide.media_url = url
+      if (file.type && file.type.startsWith('video/')) slide.type = 'video'
+      await autoSaveSection('slide multimedia')
+    } else {
+      alert('No se pudo subir el archivo')
+    }
+  } catch (e) {
+    console.error('Error subiendo slide multimedia:', e)
+    alert('Error al subir el archivo: ' + e.message)
+  } finally {
+    uploadingIndex.value = -1
+    event.target.value = ''
+  }
+}
+
+async function mcUploadPoster(slide, event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  try {
+    const url = await uploadToStorage(file)
+    if (url) {
+      slide.poster_url = url
+      await autoSaveSection('poster de slide')
+    } else {
+      alert('No se pudo subir la imagen')
+    }
+  } catch (e) {
+    console.error('Error subiendo poster:', e)
+    alert('Error al subir la imagen: ' + e.message)
+  } finally {
+    event.target.value = ''
+  }
+}
+
+function mcMoveSlide(index, delta) {
+  const c = section.value.content || (section.value.content = {})
+  const slides = Array.isArray(c.slides) ? c.slides : []
+  const target = index + delta
+  if (target < 0 || target >= slides.length) return
+  const copy = [...slides]
+  const [moved] = copy.splice(index, 1)
+  copy.splice(target, 0, moved)
+  c.slides = copy
 }
 
 // Devuelve el emoji correspondiente a un icono (valores y confianza)
