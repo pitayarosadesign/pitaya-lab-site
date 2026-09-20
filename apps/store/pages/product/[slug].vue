@@ -42,20 +42,60 @@
                Si la variante (aroma) seleccionada tiene una imagen propia asignada
                desde la galería del producto, esa imagen se muestra como principal. -->
           <div class="space-y-4">
-            <div class="aspect-square rounded-3xl overflow-hidden bg-earth-50 shadow-sm border border-earth-100">
+            <div
+              class="relative aspect-square rounded-3xl overflow-hidden bg-earth-50 shadow-sm border border-earth-100 select-none touch-pan-y cursor-grab active:cursor-grabbing"
+              @pointerdown="onGalleryPointerDown"
+              @pointerup="onGalleryPointerUp"
+              @pointercancel="onGalleryPointerCancel"
+            >
               <img
                 v-if="activeImage"
+                :key="activeImage"
                 :src="useOptimizedImage(activeImage, { width: 1000, quality: 80 })"
                 :alt="activeImageAlt"
-                class="w-full h-full object-cover"
+                class="w-full h-full object-cover pointer-events-none animate-fadeIn"
                 fetchpriority="high"
                 decoding="async"
+                draggable="false"
               />
               <div v-else class="w-full h-full flex items-center justify-center text-earth-300">
                 <svg class="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
               </div>
+
+              <!-- Controles: flechas + puntos (solo si hay más de una imagen) -->
+              <template v-if="productGalleryImages.length > 1">
+                <button
+                  type="button"
+                  @click="prevImage"
+                  class="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm text-earth-700 hover:bg-white shadow-sm flex items-center justify-center transition-colors"
+                  aria-label="Imagen anterior"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  @click="nextImage"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm text-earth-700 hover:bg-white shadow-sm flex items-center justify-center transition-colors"
+                  aria-label="Imagen siguiente"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </button>
+
+                <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+                  <span
+                    v-for="(img, i) in productGalleryImages"
+                    :key="img.key"
+                    class="h-2 rounded-full transition-all duration-300"
+                    :class="(!showingVariantImage && activeGalleryIndex === i) ? 'w-5 bg-primary-600' : 'w-2 bg-earth-300/80'"
+                  ></span>
+                </div>
+              </template>
             </div>
 
             <!-- Thumbnails: SOLO imágenes reales del producto físico (sin interferir con el aroma) -->
@@ -694,6 +734,54 @@ function selectGalleryImage(index) {
     showingVariantImage.value = false
     activeGalleryIndex.value = index
   }
+}
+
+function nextImage() {
+  const total = productGalleryImages.value.length
+  if (!total) return
+  showingVariantImage.value = false
+  activeGalleryIndex.value = (activeGalleryIndex.value + 1) % total
+}
+
+function prevImage() {
+  const total = productGalleryImages.value.length
+  if (!total) return
+  showingVariantImage.value = false
+  activeGalleryIndex.value = (activeGalleryIndex.value - 1 + total) % total
+}
+
+// ===== Gestos de deslizamiento (swipe) en la galería =====
+// Funciona con dedo (móvil) y con arrastre de mouse (escritorio). El eje
+// vertical queda libre para el scroll de la página (touch-pan-y en el contenedor).
+let swipeStartX = null
+let swipeStartY = null
+let swiping = false
+
+function onGalleryPointerDown(e) {
+  if (e.pointerType === 'mouse' && e.button !== 0) return
+  if (productGalleryImages.value.length < 2) return
+  swiping = true
+  swipeStartX = e.clientX
+  swipeStartY = e.clientY
+}
+
+function onGalleryPointerUp(e) {
+  if (!swiping) return
+  swiping = false
+  if (swipeStartX === null || swipeStartY === null) return
+  const dx = e.clientX - swipeStartX
+  const dy = e.clientY - swipeStartY
+  if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+    dx < 0 ? nextImage() : prevImage()
+  }
+  swipeStartX = null
+  swipeStartY = null
+}
+
+function onGalleryPointerCancel() {
+  swiping = false
+  swipeStartX = null
+  swipeStartY = null
 }
 
 // Al seleccionar una variante (aroma):
