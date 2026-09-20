@@ -1,6 +1,7 @@
 <template>
   
   <header class="fixed top-0 left-0 right-0 z-50">
+    <div ref="headerRef">
     <!-- ✅ Barra promocional de envíos (configurable desde el admin).
          Se oculta al hacer scroll para no tapar contenido en móvil/desktop. -->
     <div
@@ -137,6 +138,8 @@
       </div>
     </div>
 
+    </div>
+
     <!-- Menú móvil -->
     <Transition
       enter-from-class="opacity-0 -translate-y-4"
@@ -193,6 +196,8 @@ const cart = useCartStore()
 const AMAZON_LINK = 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329?'
 
 const mobileMenuOpen = ref(false)
+const headerRef = ref(null)
+let resizeObserver = null
 // Submenú desktop: `hoverMenuIndex` se abre al pasar el mouse y `clickMenuIndex`
 // al hacer clic (pantallas táctiles). Se combinan en `isMenuOpen`; separarlos
 // evita que el hover deje de responder después de navegar con un filtro.
@@ -230,6 +235,14 @@ const scrolled = ref(false)
 
 function onScroll() {
   scrolled.value = window.scrollY > 12
+}
+
+// Mide la altura real del header (barra promocional + navbar) y la expone como
+// variable CSS --nav-height para que el <main> compense el header fijo sin
+// tapar el contenido (títulos, banners, filtros) al inicio de cada página.
+function updateNavHeight() {
+  const h = headerRef.value?.offsetHeight
+  if (h) document.documentElement.style.setProperty('--nav-height', `${h}px`)
 }
 
 function formatPrice(price) {
@@ -303,11 +316,20 @@ onMounted(() => {
   Promise.all([loadShippingBar(), loadBrandAndNav()])
   window.addEventListener('scroll', onScroll, { passive: true })
   document.addEventListener('click', onDocClick)
+
+  updateNavHeight()
+  if (typeof ResizeObserver !== 'undefined' && headerRef.value) {
+    resizeObserver = new ResizeObserver(updateNavHeight)
+    resizeObserver.observe(headerRef.value)
+  }
+  window.addEventListener('resize', updateNavHeight)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', onScroll)
   document.removeEventListener('click', onDocClick)
+  window.removeEventListener('resize', updateNavHeight)
+  resizeObserver?.disconnect()
 })
 
 watch(mobileMenuOpen, (val) => {
