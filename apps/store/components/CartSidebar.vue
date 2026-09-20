@@ -198,7 +198,7 @@
           </div>
           <p v-if="deliveryConfig.enabled && deliveryEstimate" class="text-[12px] text-earth-500 mb-3">
             <span class="mr-1">{{ deliveryEstimate.hasBackorder ? '📦' : '🚚' }}</span>
-            Recíbelo antes del
+            Entrega estimada el
             <strong class="text-earth-700 whitespace-nowrap">{{ deliveryDeadlineText }}</strong>
           </p>
 
@@ -242,14 +242,13 @@
               >
                 <p class="font-bold leading-snug">
                   <span class="mr-1">{{ deliveryEstimate.hasBackorder ? '📦' : '🚚' }}</span>
-                  Recíbelo antes del <span class="whitespace-nowrap">{{ deliveryDeadlineText }}</span>
+                  Entrega estimada el <span class="whitespace-nowrap">{{ deliveryDeadlineText }}</span>
                 </p>
-                <p v-if="deliveryRangeText" class="font-normal opacity-90 mt-1">{{ deliveryRangeText }}</p>
-                <p class="font-normal opacity-90 mt-0.5">
+                <p class="font-normal opacity-90 mt-1">
                   {{
                     deliveryEstimate.hasBackorder
-                      ? 'Incluye artículos que se preparan en taller, además del tiempo de envío.'
-                      : 'Incluye preparación de tu pedido más el tiempo de envío.'
+                      ? 'Incluye artículos que se preparan en taller.'
+                      : 'Días hábiles, de lunes a viernes.'
                   }}
                 </p>
               </div>
@@ -454,7 +453,6 @@ const delivery = computed(() => {
 
 // Texto principal
 const deliveryDeadlineText = computed(() => delivery.value ? formatDeliveryDeadline(delivery.value) : '')
-const deliveryRangeText = computed(() => delivery.value ? formatDeliveryRange(delivery.value) : '')
 
 async function loadDeliveryConfigFromDB() {
   const cfg = await loadDeliveryConfig()

@@ -6,12 +6,13 @@
  *  - Todos los pedidos:
  *      * Preparación: 1 a 2 días hábiles (o el valor definido por
  *        producto/categoría, p. ej. Recuerdos = 4 días hábiles).
- *      * Envío de mensajería: 2 a 5 días hábiles.
+ *      * Envío de mensajería: 2 a 3 días hábiles.
+ *      * Total visible al cliente: 3 a 5 días hábiles.
  *      * Órdenes pagadas antes de las 13:00 hrs (en día hábil) inician la
  *        preparación el mismo día; si no, al siguiente día hábil.
  *
- * La leyenda predominante es "Recíbelo antes de [fecha]" (límite máximo y
- * honesto), y en detalle fino se puede ampliar el rango estimado.
+ * La leyenda predominante es "Entrega estimada el [fecha]" (límite máximo y
+ * honesto), calculada sumando días hábiles (lunes a viernes) a la compra.
  * Todos los cálculos usan DÍAS HÁBILES (lunes a viernes).
  */
 
@@ -22,8 +23,7 @@ export interface DeliveryEstimateConfig {
   sameDayCutoffMinute: number
   /** Días hábiles de envío de mensajería (min y max) */
   transitDaysMin: number
-  transitDaysMax: number
-  /** Días hábiles de preparación (default general 1-2; override por producto/categoría) */
+  transitDaysMax: number  /** Días hábiles de preparación (default general 1-2; override por producto/categoría) */
   prepDaysMin: number
   prepDaysMax: number
   /** Copys configurables */
@@ -36,7 +36,7 @@ export const DEFAULT_DELIVERY_CONFIG: DeliveryEstimateConfig = {
   sameDayCutoffHour: 13,
   sameDayCutoffMinute: 0,
   transitDaysMin: 2,
-  transitDaysMax: 5,
+  transitDaysMax: 3,
   prepDaysMin: 1,
   prepDaysMax: 2,
   backorderNote: 'Este artículo se prepara en taller (sobre pedido).',

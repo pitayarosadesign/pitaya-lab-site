@@ -30,6 +30,9 @@
     <!-- Barra promocional superior -->
     <EditorShippingBarEditor />
 
+    <!-- Entrega estimada (carrito y checkout) -->
+    <EditorDeliveryEstimateEditor />
+
     <!-- SEO de páginas fijas -->
     <EditorSeoEditor />
 

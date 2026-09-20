@@ -30,6 +30,30 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, message: 'El carrito está vacío' })
     }
 
+    // Rango de días hábiles de entrega para la descripción del envío en Stripe.
+    // Se lee de site_config (clave delivery_estimates, la misma que usa el carrito)
+    // para que el texto del checkout sea consistente con la tienda.
+    let deliveryTotalMin = 3
+    let deliveryTotalMax = 5
+    try {
+      const { data: deliveryCfg, error: deliveryErr } = await supabaseAdmin
+        .from('site_config')
+        .select('value')
+        .eq('key', 'delivery_estimates')
+        .maybeSingle()
+      if (!deliveryErr && deliveryCfg?.value) {
+        const v = deliveryCfg.value
+        const prepMin = typeof v.prepDaysMin === 'number' ? v.prepDaysMin : 1
+        const prepMax = typeof v.prepDaysMax === 'number' ? v.prepDaysMax : 2
+        const trMin = typeof v.transitDaysMin === 'number' ? v.transitDaysMin : 2
+        const trMax = typeof v.transitDaysMax === 'number' ? v.transitDaysMax : 3
+        deliveryTotalMin = prepMin + trMin
+        deliveryTotalMax = prepMax + trMax
+      }
+    } catch (e) {
+      // fallback silencioso a 3-5 días hábiles
+    }
+
     // Crear line items para Stripe
     const lineItems = items.map(item => ({
       price_data: {
@@ -54,7 +78,7 @@ export default defineEventHandler(async (event) => {
           currency: 'mxn',
           product_data: {
             name: 'Envío estándar',
-            description: 'Costo de envío a todo México (3-5 días hábiles)',
+            description: `Costo de envío a todo México (${deliveryTotalMin}-${deliveryTotalMax} días hábiles)`,
           },
           unit_amount: Math.round(shippingCost * 100), // convertir a centavos
         },
