@@ -30,6 +30,14 @@ const ORIGIN = {
 // Respaldo cuando un producto no tiene medidas de envío (todos deberían tenerlas).
 const DEFAULT_PACKAGE = { weightKg: 1, lengthCm: 20, widthCm: 20, heightCm: 15 }
 
+// Límites de Punto Post (verificados contra la API de Envía.com):
+//  - peso máximo por paquete: 10 kg
+//  - volumen máximo por paquete: 50,000 cm³ (50 L)
+const PUNTOPOST_LIMITS = {
+  maxWeightKg: 10,
+  maxVolumeCm3: 50000,
+}
+
 // Métodos preferidos -> servicio a extraer de la respuesta de Envía.com
 const METHODS = {
   standard: { carrier: 'paquetexpress', service: 'ground_do', label: 'Envío Estándar' },
@@ -62,9 +70,33 @@ async function resolveZipcode(zipcode: string, token: string) {
   }
 }
 
+// Valida si un conjunto de paquetes entra en los límites de Punto Post.
+// Devuelve { ok: true } o { ok: false, reason, message } para informar al cliente.
+function checkPuntoPostFit(packages: any[]) {
+  for (const p of packages) {
+    const weight = Number(p?.weight) || 0
+    const dims = p?.dimensions || {}
+    const volume = (Number(dims.length) || 0) * (Number(dims.width) || 0) * (Number(dims.height) || 0)
+    if (weight > PUNTOPOST_LIMITS.maxWeightKg) {
+      return {
+        ok: false,
+        reason: 'weight',
+        message: `Punto Post acepta paquetes de hasta ${PUNTOPOST_LIMITS.maxWeightKg} kg; este pedido lo supera.`,
+      }
+    }
+    if (volume > PUNTOPOST_LIMITS.maxVolumeCm3) {
+      return {
+        ok: false,
+        reason: 'size',
+        message: 'Tu pedido supera las medidas máximas de Punto Post (50 L); elige Envío Estándar.',
+      }
+    }
+  }
+  return { ok: true }
+}
+
 // Cotiza un carrier y devuelve el rate que coincide con el servicio deseado
-async function quoteCarrier(carrier: string, service: string, payload: any, token: string) {
-  const body = { ...payload, shipment: { type: 1, import: 0, carrier } }
+async function quoteCarrier(carrier: string, service: string, payload: any, token: string) {  const body = { ...payload, shipment: { type: 1, import: 0, carrier } }
   const res = await fetch(`${ENVIA_SHIPPING_API}/ship/rate/`, {
     method: 'POST',
     headers: enviaHeaders(token),
@@ -153,11 +185,13 @@ export default defineEventHandler(async (event) => {
     settings: { currency: 'MXN' },
   }
 
-  // Cotizar los 2 métodos en paralelo
-  const [standard, pointPost] = await Promise.all([
-    quoteCarrier(METHODS.standard.carrier, METHODS.standard.service, payload, token),
-    quoteCarrier(METHODS.pointPost.carrier, METHODS.pointPost.service, payload, token),
-  ])
+  // Cotizar Envío Estándar siempre; Punto Post solo si el pedido entra en sus límites
+  const puntoPostFit = checkPuntoPostFit(packages)
+
+  const standard = await quoteCarrier(METHODS.standard.carrier, METHODS.standard.service, payload, token)
+  const pointPost = puntoPostFit.ok
+    ? await quoteCarrier(METHODS.pointPost.carrier, METHODS.pointPost.service, payload, token)
+    : { available: false, ...puntoPostFit }
 
   return {
     postalCode,

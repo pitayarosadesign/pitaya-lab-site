@@ -100,7 +100,7 @@
               </button>
 
               <p v-if="pointPostUnavailable" class="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
-                Punto Post no está disponible para tu código postal; el envío se entregará a domicilio.
+                {{ pointPostUnavailableMessage }}
               </p>
 
               <!-- 📍 Selección de sucursal Punto Post -->
@@ -269,6 +269,13 @@ const visibleMethods = computed(() => shippingMethods.value.filter(m => m.availa
 
 // True cuando ya cotizamos y Punto Post no cubre el CP
 const pointPostUnavailable = computed(() => !!quote.value && quote.value.methods?.pointPost?.available === false)
+
+// Mensaje específico según el motivo (peso, medidas o cobertura)
+const pointPostUnavailableMessage = computed(() => {
+  const pp = quote.value?.methods?.pointPost
+  if (pp?.message) return pp.message
+  return 'Punto Post no está disponible para tu código postal; el envío se entregará a domicilio.'
+})
 
 const selectedQuote = computed(() => {
   return shippingMethods.value.find(m => m.key === selectedMethod.value) || null
