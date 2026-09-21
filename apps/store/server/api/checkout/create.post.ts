@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   )
 
   try {
-    const { items, successUrl, cancelUrl, customerEmail, shippingCost, shippingLabel, shippingMethod, shippingAddress, orderNote } = body
+    const { items, successUrl, cancelUrl, customerEmail, shippingCost, shippingLabel, shippingMethod, shippingAddress, orderNote, isGift, giftMessage } = body
 
     if (!items || items.length === 0) {
       throw createError({ statusCode: 400, message: 'El carrito está vacío' })
@@ -97,13 +97,10 @@ export default defineEventHandler(async (event) => {
       success_url: successUrlWithOrder,
       cancel_url: cancelUrl || `${event.node.req.headers.origin || 'http://localhost:3002'}/checkout/cancel`,
       payment_method_types: ['card'],
-      billing_address_collection: 'required',
-      phone_number_collection: {
-        enabled: true,
-      },
-      shipping_address_collection: {
-        allowed_countries: ['MX'],
-      },
+      // Nombre, teléfono, email y dirección los captura NUESTRO checkout;
+      // Stripe solo cobra la tarjeta. billing en 'auto' para que pida la
+      // dirección de facturación únicamente cuando la red de la tarjeta lo exija.
+      billing_address_collection: 'auto',
       locale: 'es',
       metadata: {
         source: 'pitayalab-store',
@@ -115,6 +112,9 @@ export default defineEventHandler(async (event) => {
         // Nota general del pedido (opcional). Stripe limita cada valor de
         // metadata a 500 caracteres, por eso acotamos aquí.
         order_note: (orderNote || '').slice(0, 500),
+        // Regalo + dedicatoria
+        is_gift: isGift ? '1' : '0',
+        gift_message: (giftMessage || '').slice(0, 500),
         // Método de envío elegido y dirección (para guardar en la orden vía webhook)
         shipping_method: (shippingLabel || shippingMethod || '').slice(0, 100),
         shipping_address: JSON.stringify(shippingAddress || {}).slice(0, 500),

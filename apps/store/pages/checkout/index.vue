@@ -131,6 +131,41 @@
               </div>
             </div>
           </div>
+
+          <!-- 3. Nota y regalo -->
+          <div class="bg-white rounded-2xl border border-earth-100 p-6 space-y-4">
+            <h2 class="text-lg font-serif font-bold text-earth-900">3. Nota y regalo</h2>
+            <div>
+              <label class="block text-sm font-medium text-earth-700 mb-1">Nota para tu pedido <span class="text-earth-400 font-normal">(opcional)</span></label>
+              <textarea
+                :value="cart.orderNote"
+                @input="cart.setOrderNote($event.target.value)"
+                rows="2"
+                maxlength="500"
+                placeholder="Instrucciones de entrega, referencias, etc."
+                class="w-full px-4 py-2.5 rounded-xl border border-earth-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none text-sm resize-none transition-all"
+              ></textarea>
+              <p class="text-[11px] text-earth-400 mt-1 text-right">{{ (cart.orderNote || '').length }}/500</p>
+            </div>
+
+            <div class="border-t border-earth-100 pt-4 space-y-3">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input v-model="form.isGift" type="checkbox" class="w-4 h-4 rounded border-earth-300 text-primary-600 focus:ring-primary-500" />
+                <span class="text-sm font-medium text-earth-800">🎁 Este pedido es un regalo</span>
+              </label>
+              <div v-if="form.isGift">
+                <label class="block text-sm font-medium text-earth-700 mb-1">Dedicatoria <span class="text-earth-400 font-normal">(la incluiremos en el paquete)</span></label>
+                <textarea
+                  v-model="form.giftMessage"
+                  rows="2"
+                  maxlength="300"
+                  placeholder="Ej. Para Ana, ¡feliz cumpleaños! Con cariño…"
+                  class="w-full px-4 py-2.5 rounded-xl border border-earth-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none text-sm resize-none transition-all"
+                ></textarea>
+                <p class="text-[11px] text-earth-400 mt-1 text-right">{{ (form.giftMessage || '').length }}/300</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Columna derecha: resumen -->
@@ -207,6 +242,8 @@ const form = reactive({
   street: '',
   district: '',
   pickupBranch: '',
+  isGift: false,
+  giftMessage: '',
 })
 
 const selectedMethod = ref('standard')
@@ -349,6 +386,8 @@ async function handlePay() {
         shippingMethod: selectedMethod.value,
         customerEmail: form.email,
         orderNote: cart.orderNote || '',
+        isGift: form.isGift,
+        giftMessage: form.giftMessage || '',
         shippingAddress: {
           name: form.name,
           phone: form.phone,

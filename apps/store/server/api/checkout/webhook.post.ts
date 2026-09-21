@@ -93,11 +93,17 @@ export default defineEventHandler(async (event) => {
               <div style="background:#f9fafb;border-radius:12px;padding:20px;margin:20px 0;">
                 <h3 style="color:#374151;font-size:14px;margin:0 0 10px;">🚚 Envío a:</h3>
                 <p style="color:#6b7280;font-size:13px;margin:0;">
-                  ${order.shipping_address?.address?.line1 || 'Dirección registrada en Stripe'}<br>
-                  ${order.shipping_address?.address?.city || ''} ${order.shipping_address?.address?.state || ''}<br>
-                  CP: ${order.shipping_address?.address?.postal_code || ''}
+                  ${order.shipping_address?.street || ''} ${order.shipping_address?.district || ''}<br>
+                  ${order.shipping_address?.city || ''} ${order.shipping_address?.state || ''}<br>
+                  CP: ${order.shipping_address?.postalCode || order.shipping_address?.postal_code || ''}
                 </p>
+                ${order.shipping_address?.pickup_branch ? `<p style="color:#6b7280;font-size:13px;margin:8px 0 0;"><strong>📍 Sucursal Punto Post:</strong> ${order.shipping_address.pickup_branch}</p>` : ''}
               </div>
+
+              ${order.notes ? `<div style="background:#fefce8;border:1px solid #fde68a;border-radius:12px;padding:20px;margin:20px 0;">
+                <h3 style="color:#854d0e;font-size:14px;margin:0 0 8px;">🎁 Tu nota / dedicatoria</h3>
+                <p style="color:#713f12;font-size:13px;margin:0;white-space:pre-line;">${order.notes}</p>
+              </div>` : ''}
 
               <p style="color:#9ca3af;font-size:12px;text-align:center;margin:20px 0 0;">
                 ¿Tienes dudas? Escríbenos a <a href="mailto:contacto@pitayalab.com.mx" style="color:#1a3a2a;">contacto@pitayalab.com.mx</a>
@@ -205,12 +211,18 @@ export default defineEventHandler(async (event) => {
               <div style="background:#f9fafb;border-radius:12px;padding:20px;margin:20px 0;">
                 <h3 style="color:#374151;font-size:14px;margin:0 0 10px;">🚚 Envío a:</h3>
                 <p style="color:#6b7280;font-size:13px;margin:0;">
-                  ${order.shipping_address?.address?.line1 || 'Dirección registrada en Stripe'},
-                  ${order.shipping_address?.address?.city || ''} ${order.shipping_address?.address?.state || ''}<br>
-                  CP: ${order.shipping_address?.address?.postal_code || ''}
+                  ${order.shipping_address?.street || '—'} ${order.shipping_address?.district || ''}<br>
+                  ${order.shipping_address?.city || ''} ${order.shipping_address?.state || ''}<br>
+                  CP: ${order.shipping_address?.postalCode || order.shipping_address?.postal_code || ''}
                 </p>
+                ${order.shipping_address?.pickup_branch ? `<p style="color:#6b7280;font-size:13px;margin:8px 0 0;"><strong>📍 Sucursal Punto Post:</strong> ${order.shipping_address.pickup_branch}</p>` : ''}
                 ${validationHtml}
               </div>
+
+              ${order.notes ? `<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;padding:20px;margin:20px 0;">
+                <h3 style="color:#075985;font-size:14px;margin:0 0 8px;">📝 Nota del cliente / 🎁 Regalo</h3>
+                <p style="color:#0c4a6e;font-size:13px;margin:0;white-space:pre-line;">${order.notes}</p>
+              </div>` : ''}
 
               <div style="background:#fff7ed;border:1px solid #fdba74;border-radius:12px;padding:20px;margin:20px 0;">
                 <h3 style="color:#9a3412;font-size:14px;margin:0 0 8px;">📦 Genera la guía de envío</h3>
@@ -378,6 +390,17 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // Nota del pedido + dedicatoria de regalo (visibles en el panel como "Nota del cliente")
+  function buildOrderNotes(session: Stripe.Checkout.Session) {
+    const note = session.metadata?.order_note || ''
+    const isGift = session.metadata?.is_gift === '1'
+    const gift = session.metadata?.gift_message || ''
+    return [
+      note,
+      isGift && gift ? `🎁 ES UN REGALO — Dedicatoria: ${gift}` : (isGift ? '🎁 ES UN REGALO' : ''),
+    ].filter(Boolean).join('\n') || null
+  }
+
   try {
     const signature = event.node.req.headers['stripe-signature']
 
@@ -497,9 +520,10 @@ export default defineEventHandler(async (event) => {
             ...order,
             customer_email: session.customer_details?.email || order.customer_email,
             customer_name: session.customer_details?.name || order.customer_name,
-            shipping_address: session.shipping_details || order.shipping_address,
+            shipping_address: buildShippingAddress(session, cpValidation),
             total: session.amount_total ? session.amount_total / 100 : order.total,
             items: itemsForEmail,
+            notes: buildOrderNotes(session) || order.notes,
           })
 
           // 🔔 Notificar al admin del pedido
@@ -508,10 +532,11 @@ export default defineEventHandler(async (event) => {
             customer_email: session.customer_details?.email || order.customer_email,
             customer_name: session.customer_details?.name || order.customer_name,
             customer_phone: session.customer_details?.phone || null,
-            shipping_address: session.shipping_details || order.shipping_address,
+            shipping_address: buildShippingAddress(session, cpValidation),
             shipping_validation: cpValidation,
             total: session.amount_total ? session.amount_total / 100 : order.total,
             items: itemsForEmail,
+            notes: buildOrderNotes(session) || order.notes,
           })
         } else {
           // Crear nueva orden si no existe
@@ -557,7 +582,7 @@ export default defineEventHandler(async (event) => {
             shipping_cost: session.total_details?.amount_shipping ? session.total_details.amount_shipping / 100 : 0,
             shipping_method: session.metadata?.shipping_method || null,
             shipping_address: buildShippingAddress(session, cpValidation),
-            notes: session.metadata?.order_note || null,
+            notes: buildOrderNotes(session),
             paid_at: new Date().toISOString(),
           }
           if (cpValidation.invalid) {
@@ -598,9 +623,10 @@ export default defineEventHandler(async (event) => {
             order_number: orderNumber,
             customer_email: session.customer_details?.email || 'cliente@email.com',
             customer_name: session.customer_details?.name || 'Cliente',
-            shipping_address: session.shipping_details || {},
+            shipping_address: buildShippingAddress(session, cpValidation),
             total: session.amount_total ? session.amount_total / 100 : 0,
             items: items,
+            notes: buildOrderNotes(session),
           })
 
           // 🔔 Notificar al admin del pedido
@@ -609,10 +635,11 @@ export default defineEventHandler(async (event) => {
             customer_email: session.customer_details?.email || 'cliente@email.com',
             customer_name: session.customer_details?.name || 'Cliente',
             customer_phone: session.customer_details?.phone || null,
-            shipping_address: session.shipping_details || {},
+            shipping_address: buildShippingAddress(session, cpValidation),
             shipping_validation: cpValidation,
             total: session.amount_total ? session.amount_total / 100 : 0,
             items: items,
+            notes: buildOrderNotes(session),
           })
         }
         break
