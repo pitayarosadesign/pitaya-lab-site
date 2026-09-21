@@ -210,25 +210,44 @@
       <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
         <h2 class="text-lg font-semibold text-gray-900">📸 Imágenes</h2>
         
+        <!-- Aviso + botón para limpiar imágenes rotas -->
+        <div v-if="brokenImagesCount > 0" class="flex items-center justify-between gap-3 p-3 rounded-lg bg-red-50 border border-red-200">
+          <p class="text-xs text-red-700">⚠️ {{ brokenImagesCount }} {{ brokenImagesCount === 1 ? 'imagen rota detectada' : 'imágenes rotas detectadas' }}.</p>
+          <button type="button" @click="removeBrokenImages" class="text-xs font-semibold text-red-600 hover:text-red-700 underline whitespace-nowrap">🧹 Eliminar rotas</button>
+        </div>
+
         <!-- Imágenes existentes -->
         <div v-if="form.images.length > 0" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-3">
           <div
             v-for="(img, index) in form.images"
-            :key="img.id || index"
+            :key="img.id || img.url || index"
             class="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 cursor-grab active:cursor-grabbing transition-all"
-            :class="{ 'ring-2 ring-primary-500': img.is_primary, 'opacity-50': dragIndex === index }"
+            :class="{
+              'ring-2 ring-primary-500': img.is_primary,
+              'ring-2 ring-red-400': isBroken(img),
+              'opacity-50': dragIndex === index,
+            }"
             draggable="true"
             @dragstart="onDragStart(index)"
             @dragover.prevent="onDragOver(index)"
             @dragend="onDragEnd"
             @drop.prevent="onDrop(index)"
           >
-            <img :src="img.url ? useOptimizedImage(img.url, { width: 300, quality: 70, format: 'webp' }) : img.preview" :alt="'Imagen ' + (index + 1)" class="w-full h-full object-cover pointer-events-none" loading="lazy" />
+            <img
+              v-if="!isBroken(img)"
+              :src="img.url ? useOptimizedImage(img.url, { width: 300, quality: 70, format: 'webp' }) : img.preview"
+              :alt="'Imagen ' + (index + 1)"
+              class="w-full h-full object-cover pointer-events-none"
+              loading="lazy"
+              @error="markBroken(img)"
+            />
+            <div v-else class="w-full h-full flex items-center justify-center bg-red-50 text-red-300 text-3xl">🖼️</div>
             <div v-if="img.is_primary" class="absolute top-1 left-1 bg-primary-600 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">Principal</div>
-            <button type="button" @click="removeImage(index)" class="absolute top-1 right-1 bg-white/90 text-red-500 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+            <div v-if="isBroken(img)" class="absolute bottom-1 left-1 right-1 bg-red-600 text-white text-[10px] py-1 rounded font-medium text-center">Imagen rota</div>
+            <button type="button" @click="removeImage(index)" class="absolute top-1 right-1 bg-white/90 text-red-500 rounded-full p-1 shadow-sm transition-opacity" :class="isBroken(img) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
-            <button v-if="!img.is_primary" type="button" @click="setPrimary(index)" class="absolute bottom-1 left-1 right-1 bg-black/60 text-white text-[10px] py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Hacer principal</button>
+            <button v-if="!img.is_primary && !isBroken(img)" type="button" @click="setPrimary(index)" class="absolute bottom-1 left-1 right-1 bg-black/60 text-white text-[10px] py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Hacer principal</button>
             <!-- Indicador de arrastre -->
             <div class="absolute top-1 left-1/2 -translate-x-1/2 bg-black/50 text-white text-[10px] px-2 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
               ⠿ Arrastrar
@@ -911,7 +930,50 @@ async function removeImage(index) {
     }
   }
   if (img.preview) URL.revokeObjectURL(img.preview)
+  clearBrokenKey(img)
   form.images.splice(index, 1)
+}
+
+// ===== Detección de imágenes rotas =====
+const brokenImageKeys = ref(new Set())
+
+const brokenImagesCount = computed(() => form.images.filter(img => isBroken(img)).length)
+
+function imageKey(img) {
+  return img.id || img.url || img.preview || ''
+}
+
+function isBroken(img) {
+  const k = imageKey(img)
+  return !!k && brokenImageKeys.value.has(k)
+}
+
+function markBroken(img) {
+  const k = imageKey(img)
+  if (!k || brokenImageKeys.value.has(k)) return
+  const next = new Set(brokenImageKeys.value)
+  next.add(k)
+  brokenImageKeys.value = next
+}
+
+function clearBrokenKey(img) {
+  const k = imageKey(img)
+  if (!k || !brokenImageKeys.value.has(k)) return
+  const next = new Set(brokenImageKeys.value)
+  next.delete(k)
+  brokenImageKeys.value = next
+}
+
+async function removeBrokenImages() {
+  const brokenIndexes = []
+  form.images.forEach((img, i) => {
+    if (isBroken(img)) brokenIndexes.push(i)
+  })
+  // De atrás hacia adelante para no alterar los índices de los demás
+  for (let i = brokenIndexes.length - 1; i >= 0; i--) {
+    await removeImage(brokenIndexes[i])
+  }
+  brokenImageKeys.value = new Set()
 }
 
 async function setPrimary(index) {

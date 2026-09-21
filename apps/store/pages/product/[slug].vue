@@ -57,6 +57,7 @@
                 fetchpriority="high"
                 decoding="async"
                 draggable="false"
+                @error="onMainImageError"
               />
               <div v-else class="w-full h-full flex items-center justify-center text-earth-300">
                 <svg class="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,7 +109,7 @@
                 :class="(!showingVariantImage && activeGalleryIndex === index) ? 'border-primary-500 shadow-md' : 'border-earth-200 hover:border-earth-300'"
               >
                 <div class="w-full h-full bg-white flex items-center justify-center">
-                  <img :src="useOptimizedImage(img.url, { width: 160, quality: 80 })" :alt="img.alt || product.name" class="w-full h-full object-contain p-0.5" loading="lazy" decoding="async" />
+                  <img :src="useOptimizedImage(img.url, { width: 160, quality: 80 })" :alt="img.alt || product.name" class="w-full h-full object-contain p-0.5" loading="lazy" decoding="async" @error="markImageBroken(img.key)" />
                 </div>
               </button>
             </div>
@@ -691,6 +692,10 @@ const toastTimer = ref(null)
 // Únicamente las imágenes reales del producto (presentación/envase/escenas).
 // El aroma NO aporta imágenes aquí: su propio material gráfico se muestra en la
 // tarjeta contextual del aroma (columna derecha), sin contaminar esta galería.
+// Imágenes rotas detectadas en tiempo real: se ocultan de la galería para que
+// el cliente nunca vea una imagen caída.
+const brokenImageKeys = ref(new Set())
+
 const productGalleryImages = computed(() => {
   if (!product.value) return []
   const list = []
@@ -706,7 +711,16 @@ const productGalleryImages = computed(() => {
   } else if (product.value.image) {
     list.push({ key: 'product-main', url: product.value.image, alt: product.value.name })
   }
-  return list
+  return list.filter(img => !brokenImageKeys.value.has(img.key))
+})
+
+// Si se ocultan imágenes rotas, mantener el índice activo dentro de rango.
+watch(() => productGalleryImages.value.length, (len) => {
+  if (!len) {
+    activeGalleryIndex.value = 0
+  } else if (activeGalleryIndex.value >= len) {
+    activeGalleryIndex.value = len - 1
+  }
 })
 
 // Índice activo en la galería del producto
@@ -757,6 +771,24 @@ function prevImage() {
   if (!total) return
   showingVariantImage.value = false
   activeGalleryIndex.value = (activeGalleryIndex.value - 1 + total) % total
+}
+
+// Marca una imagen como rota (la oculta de la galería) sin romper el carrito.
+function markImageBroken(key) {
+  if (!key || brokenImageKeys.value.has(key)) return
+  const next = new Set(brokenImageKeys.value)
+  next.add(key)
+  brokenImageKeys.value = next
+}
+
+function onMainImageError() {
+  // Si la foto rota es la de la variante (aroma), volvemos a la galería física.
+  if (showingVariantImage.value) {
+    showingVariantImage.value = false
+    return
+  }
+  const key = productGalleryImages.value[activeGalleryIndex.value]?.key
+  if (key) markImageBroken(key)
 }
 
 // ===== Gestos de deslizamiento (swipe) en la galería =====

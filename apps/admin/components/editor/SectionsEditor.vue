@@ -523,8 +523,8 @@ function getDefaultContent(type) {
         title: 'Encuéntranos en marketplaces',
         description: 'Compra nuestros productos en tus plataformas de confianza.',
         channels: [
-          { name: 'Amazon México', link: 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329', icon: '🛒' },
-          { name: 'Mercado Libre', link: '', icon: '🛍️' },
+          { name: 'Amazon México', link: 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329', icon: '🛒', image: '' },
+          { name: 'Mercado Libre', link: '', icon: '🛍️', image: '' },
         ],
       },
       settings: { enabled: true, background: 'light' },

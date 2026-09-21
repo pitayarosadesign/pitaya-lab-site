@@ -371,38 +371,6 @@
       </div>
     </section>
 
-    <!-- 💍 Banner / carrusel de Recuerdos para Eventos (debajo de los productos normales) -->
-    <RecuerdosBanner
-      v-if="catalogConfig.blocks.recuerdos.enabled"
-      :badge="catalogConfig.recuerdos.badge"
-      :title="catalogConfig.recuerdos.title"
-      :description="catalogConfig.recuerdos.description"
-      :cta-text="catalogConfig.recuerdos.cta_text"
-    />
-
-    <!-- CTA Amazon -->
-    <section v-if="catalogConfig.blocks.cta.enabled" class="py-16 bg-gradient-to-r from-primary-900 to-earth-900">
-      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 class="text-3xl font-serif font-bold text-white mb-4">
-          {{ catalogConfig.cta.title }}
-        </h2>
-        <p class="text-primary-200 mb-8">
-          {{ catalogConfig.cta.description }}
-        </p>
-        <a
-          :href="catalogConfig.cta.button_link || AMAZON_LINK"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-10 py-4 rounded-full text-lg font-semibold transition-all hover:shadow-xl hover:shadow-amber-900/30"
-        >
-          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M13.483 0a1.374 1.374 0 0 0-.961.438L7.116 6.226l-3.854 4.126a1.375 1.375 0 0 0 0 1.994l2.414 2.585a1.375 1.375 0 0 0 1.994 0l3.779-3.788-3.787 3.787-2.414-2.585a1.374 1.374 0 0 1 0-1.994l3.705-3.964 3.675-3.675a1.375 1.375 0 0 0-.044-1.92A1.374 1.374 0 0 0 13.483 0zm-1.587 2.585-3.673 3.675 3.673 3.675h7.252v-1.53h-5.733l-2.358-2.585 2.358-2.585h5.733v-1.53h-7.252z"/>
-          </svg>
-          {{ catalogConfig.cta.button_text }}
-        </a>
-      </div>
-    </section>
-
     <!-- 🎛️ DRAWER DE FILTROS (facets) — overlay y deslizante, patrón CartSidebar -->
     <Teleport to="body">
       <!-- Overlay -->
@@ -646,8 +614,6 @@ usePageSeo('/catalog', {
   ogDescription: 'Descubre todos nuestros productos: velas de soya clásicas y místicas, aceites aromáticos y brumas. Hecho en México.',
 })
 
-const AMAZON_LINK = 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329?'
-
 // Configuración editable de la página de catálogo (desde site_config)
 const catalogConfig = reactive({
   header: {
@@ -665,20 +631,6 @@ const catalogConfig = reactive({
     // admin (site_config > catalog_page.blocks).
     olfactory: { enabled: true },
     grid: { enabled: true },
-    cta: { enabled: true },
-    recuerdos: { enabled: true },
-  },
-  cta: {
-    title: '¡Todos disponibles en Amazon!',
-    description: 'Haz clic en cualquier producto o visita nuestra tienda oficial en Amazon México.',
-    button_text: 'Ir a la Tienda en Amazon',
-    button_link: 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329',
-  },
-  recuerdos: {
-    badge: '💍 Recuerdos para Eventos',
-    title: 'Cotiza Recuerdos para tus Eventos',
-    description: 'Bodas, XV años, baby showers y eventos corporativos. Personaliza tu recuerdo con tu aroma y diseño favorito.',
-    cta_text: '💍 Arma tu recuerdo personalizado',
   },
 })
 
@@ -708,8 +660,6 @@ async function loadCatalogConfig() {
           catalogConfig.blocks[k] = typeof b === 'object' && b ? { enabled: true, ...b } : { enabled: true }
         })
       }
-      Object.assign(catalogConfig.cta, data.value.cta)
-      if (data.value.recuerdos) Object.assign(catalogConfig.recuerdos, data.value.recuerdos)
     }
   } catch (e) {
     console.warn('Usando configuración por defecto del catálogo:', e.message)

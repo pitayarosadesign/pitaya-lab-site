@@ -24,8 +24,16 @@
           rel="noopener noreferrer"
           class="group flex items-center gap-4 bg-white rounded-2xl border border-earth-200 p-5 hover:shadow-lg hover:border-primary-300 transition-all"
         >
-          <span class="w-12 h-12 rounded-xl bg-earth-50 flex items-center justify-center text-2xl flex-shrink-0">
-            {{ ch.icon || '🛍️' }}
+          <span class="w-12 h-12 rounded-xl bg-earth-50 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
+            <img
+              v-if="ch.image"
+              :src="ch.image"
+              :alt="ch.name || 'Marketplace'"
+              class="w-full h-full object-contain p-1"
+              loading="lazy"
+              decoding="async"
+            />
+            <span v-else>{{ ch.icon || '🛍️' }}</span>
           </span>
           <span class="flex-1 min-w-0">
             <span class="block font-semibold text-earth-800 group-hover:text-primary-600 transition-colors truncate">

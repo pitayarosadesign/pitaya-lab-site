@@ -893,7 +893,7 @@
           <label class="text-sm font-medium text-gray-700">Canales de venta</label>
           <button
             type="button"
-            @click="section.content.channels = section.content.channels || []; section.content.channels.push({ name: '', link: '', icon: '🛍️' })"
+            @click="section.content.channels = section.content.channels || []; section.content.channels.push({ name: '', link: '', icon: '🛍️', image: '' })"
             class="text-xs font-medium text-primary-600 hover:text-primary-700 px-3 py-1.5 rounded-lg border border-dashed border-primary-300 hover:bg-primary-50 transition-colors"
           >+ Agregar canal</button>
         </div>
@@ -901,22 +901,25 @@
         <div
           v-for="(ch, index) in section.content.channels || []"
           :key="index"
-          class="grid grid-cols-12 gap-2 p-3 rounded-xl border border-gray-200 bg-gray-50/50"
+          class="space-y-2 p-3 rounded-xl border border-gray-200 bg-gray-50/50"
         >
-          <div class="col-span-2">
-            <label class="block text-xs font-medium text-gray-500 mb-1">Ícono</label>
-            <input v-model="ch.icon" type="text" placeholder="🛍️" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm text-center" />
-          </div>
-          <div class="col-span-4">
-            <label class="block text-xs font-medium text-gray-500 mb-1">Nombre</label>
-            <input v-model="ch.name" type="text" placeholder="Amazon México" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
-          </div>
-          <div class="col-span-5">
-            <label class="block text-xs font-medium text-gray-500 mb-1">Enlace</label>
-            <input v-model="ch.link" type="url" placeholder="https://..." class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm font-mono" />
-          </div>
-          <div class="col-span-1 flex items-end justify-end">
-            <button type="button" @click="section.content.channels.splice(index, 1)" class="text-red-400 hover:text-red-600 text-xs">✕</button>
+          <EditorImageUrlField v-model="ch.image" label="Logo del marketplace (imagen)" />
+          <div class="grid grid-cols-12 gap-2">
+            <div class="col-span-2">
+              <label class="block text-xs font-medium text-gray-500 mb-1">Ícono (respaldo)</label>
+              <input v-model="ch.icon" type="text" placeholder="🛍️" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm text-center" />
+            </div>
+            <div class="col-span-5">
+              <label class="block text-xs font-medium text-gray-500 mb-1">Nombre</label>
+              <input v-model="ch.name" type="text" placeholder="Amazon México" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm" />
+            </div>
+            <div class="col-span-4">
+              <label class="block text-xs font-medium text-gray-500 mb-1">Enlace</label>
+              <input v-model="ch.link" type="url" placeholder="https://..." class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none text-sm font-mono" />
+            </div>
+            <div class="col-span-1 flex items-end justify-end">
+              <button type="button" @click="section.content.channels.splice(index, 1)" class="text-red-400 hover:text-red-600 text-xs">✕</button>
+            </div>
           </div>
         </div>
       </div>

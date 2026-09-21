@@ -75,67 +75,6 @@
       </div>
     </div>
 
-    <!-- Recuerdos para Eventos -->
-    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-      <div class="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
-        <span class="text-2xl">💍</span>
-        <div>
-          <h3 class="text-lg font-bold text-gray-900">Recuerdos para Eventos</h3>
-          <p class="text-sm text-gray-500">Banner/carrusel que aparece debajo de los productos del catálogo</p>
-        </div>
-      </div>
-      <div class="p-6 space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Badge</label>
-            <input v-model="model.recuerdos.badge" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
-            <input v-model="model.recuerdos.title" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
-          </div>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-          <textarea v-model="model.recuerdos.description" rows="2" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Texto del botón (CTA)</label>
-          <input v-model="model.recuerdos.cta_text" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
-        </div>
-      </div>
-    </div>
-
-    <!-- CTA Amazon -->
-    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-      <div class="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
-        <span class="text-2xl">🚀</span>
-        <div>
-          <h3 class="text-lg font-bold text-gray-900">CTA Final (Amazon)</h3>
-          <p class="text-sm text-gray-500">Banner de llamada a la acción al final de la página</p>
-        </div>
-      </div>
-      <div class="p-6 space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
-          <input v-model="model.cta.title" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-          <textarea v-model="model.cta.description" rows="2" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Texto del botón</label>
-            <input v-model="model.cta.button_text" type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Link del botón</label>
-            <input v-model="model.cta.button_link" type="url" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm font-mono" />
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -150,17 +89,6 @@ if (!model.value.blocks || typeof model.value.blocks !== 'object') {
     filters: { enabled: true },
     olfactory: { enabled: true },
     grid: { enabled: true },
-    cta: { enabled: true },
-  }
-}
-
-// Garantizar que exista la sección "recuerdos" (configs antiguas no la tienen)
-if (!model.value.recuerdos || typeof model.value.recuerdos !== 'object') {
-  model.value.recuerdos = {
-    badge: '💍 Recuerdos para Eventos',
-    title: 'Cotiza Recuerdos para tus Eventos',
-    description: 'Bodas, XV años, baby showers y eventos corporativos. Personaliza tu recuerdo con tu aroma y diseño favorito.',
-    cta_text: '💍 Arma tu recuerdo personalizado',
   }
 }
 
@@ -170,8 +98,6 @@ const blockInfo = [
   { key: 'filters', label: '🔍 Filtros', desc: 'Barra de búsqueda y filtros' },
   { key: 'olfactory', label: '🌸 Panel olfativo', desc: 'Experiencia del aroma seleccionado' },
   { key: 'grid', label: '📦 Grid de productos', desc: 'Cuadrícula de productos' },
-  { key: 'cta', label: '🚀 CTA (Amazon)', desc: 'Banner final de llamada a la acción' },
-  { key: 'recuerdos', label: '💍 Recuerdos para Eventos', desc: 'Banner/carrusel debajo del grid' },
 ]
 
 // Devuelve el bloque garantizando que exista (con enabled default true)
