@@ -383,17 +383,17 @@
               <p class="text-[13px] leading-snug">
                 <template v-if="productIsBackorder">
                   <span class="font-semibold">Sobre pedido:</span>
-                  se prepara en taller {{ productPrepText }}. Recíbelo antes del
+                  se prepara en taller {{ productPrepText }}. Entrega estimada el
                   <strong class="whitespace-nowrap">{{ productDeliveryDeadlineText }}</strong>.
                 </template>
                 <template v-else>
-                  <span class="font-semibold">Recíbelo antes del</span>
+                  <span class="font-semibold">Entrega estimada el</span>
                   <strong class="whitespace-nowrap">{{ productDeliveryDeadlineText }}</strong>.
                   <template v-if="cutoffUrgencyText">
-                    <span class="block mt-0.5 opacity-90">Preparación {{ productPrepText }} + envío de 2 a 5 días hábiles.</span>
+                    <span class="block mt-0.5 opacity-90">Preparación {{ productPrepText }} + envío de {{ transitRangeText }}.</span>
                     <span class="block mt-0.5 font-semibold">{{ cutoffUrgencyText }}</span>
                   </template>
-                  <span v-else class="block mt-0.5 opacity-90">Preparación {{ productPrepText }} + envío de 2 a 5 días hábiles · pedidos en día hábil antes de la 1:00 pm se preparan el mismo día.</span>
+                  <span v-else class="block mt-0.5 opacity-90">Preparación {{ productPrepText }} + envío de {{ transitRangeText }} · pedidos en día hábil antes de las {{ cutoffTimeText }} se preparan el mismo día.</span>
                 </template>
               </p>
             </div>
@@ -655,6 +655,10 @@ const productConfig = reactive({
   low_stock_label: '¡Solo quedan X!',
 })
 
+// Config de entrega estimada (site_config "delivery_estimates"). Es la misma
+// que usa el carrito; alimenta la fecha, el rango de envío y la hora de corte.
+const deliveryConfig = reactive({ ...DEFAULT_DELIVERY_CONFIG })
+
 // Cargar configuración editable desde site_config
 async function loadProductConfig() {
   try {
@@ -671,6 +675,11 @@ async function loadProductConfig() {
   } catch (e) {
     console.warn('Usando configuración por defecto de la página de producto:', e.message)
   }
+}
+
+async function loadDeliveryConfigFromDB() {
+  const cfg = await loadDeliveryConfig()
+  Object.assign(deliveryConfig, cfg)
 }
 
 // 🎉 Toast de confirmación al agregar al carrito
@@ -983,7 +992,7 @@ const productDelivery = computed(() =>
     prepDaysMin: product.value?.prepDaysMin ?? undefined,
     prepDaysMax: product.value?.prepDaysMax ?? undefined,
     now: nowTick.value,
-  })
+  }, { ...deliveryConfig })
 )
 const productDeliveryDeadlineText = computed(() =>
   productDelivery.value ? formatDeliveryDeadline(productDelivery.value) : ''
@@ -997,7 +1006,7 @@ const cutoffCountdown = computed(() => {
   const dow = now.getDay()
   if (dow === 0 || dow === 6) return null
   const cutoff = new Date(now)
-  cutoff.setHours(DEFAULT_DELIVERY_CONFIG.sameDayCutoffHour, DEFAULT_DELIVERY_CONFIG.sameDayCutoffMinute, 0, 0)
+  cutoff.setHours(deliveryConfig.sameDayCutoffHour, deliveryConfig.sameDayCutoffMinute, 0, 0)
   const diff = cutoff.getTime() - now.getTime()
   if (diff <= 0) return null
   const totalMin = Math.floor(diff / 60000)
@@ -1026,6 +1035,27 @@ const productPrepText = computed(() => {
   }
   return `${min}-${max} días hábiles`
 })
+
+// Rango de envío configurable (site_config "delivery_estimates"), para el texto
+// "envío de X a Y días hábiles" en lugar de un valor fijo.
+const transitRangeText = computed(() => {
+  const min = deliveryConfig.transitDaysMin ?? 2
+  const max = deliveryConfig.transitDaysMax ?? 3
+  return min === max ? `${min} días hábiles` : `${min} a ${max} días hábiles`
+})
+
+// Hora de corte legible (ej. "1:00 pm") para el texto de respaldo.
+const cutoffTimeText = computed(() =>
+  formatCutoffTime(deliveryConfig.sameDayCutoffHour, deliveryConfig.sameDayCutoffMinute)
+)
+
+function formatCutoffTime(hour, minute) {
+  const h = Number.isFinite(hour) ? hour : 13
+  const m = Number.isFinite(minute) ? minute : 0
+  const suffix = h >= 12 ? 'pm' : 'am'
+  const h12 = h % 12 || 12
+  return `${h12}:${String(m).padStart(2, '0')} ${suffix}`
+}
 
 // Mensaje de "sobre pedido": usa la preparación real si está configurada;
 // si no, cae al copy configurable de la página de producto.
@@ -1286,6 +1316,7 @@ onMounted(() => {
 
   loadProductConfig()
   loadProduct()
+  loadDeliveryConfigFromDB()
 })
 
 onUnmounted(() => {

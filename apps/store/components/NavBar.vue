@@ -2,26 +2,44 @@
   
   <header class="fixed top-0 left-0 right-0 z-50">
     <div ref="headerRef">
-    <!-- ✅ Barra promocional de envíos (configurable desde el admin).
+    <!-- ✅ Cinta promocional (configurable desde el admin).
+         Hasta 3 mensajes genéricos que se desplazan en movimiento continuo.
          Se oculta al hacer scroll para no tapar contenido en móvil/desktop. -->
     <div
       v-if="shippingBarActive && !scrolled"
-      class="text-white text-center text-xs sm:text-sm py-2 px-4 leading-relaxed transition-all duration-300 overflow-hidden"
-      :class="[
-        scrolled ? 'max-h-0 py-0 opacity-0' : 'max-h-16 opacity-100',
-        !shippingBar.bg_color ? 'bg-gradient-to-r from-primary-900 via-primary-800 to-primary-900' : '',
-      ]"
-      :style="shippingBar.bg_color ? { background: shippingBar.bg_color } : null"
+      class="text-white text-center text-xs sm:text-sm py-2 leading-relaxed transition-all duration-300 overflow-hidden"
+      :class="!shippingBar.bg_color ? 'bg-gradient-to-r from-primary-900 via-primary-800 to-primary-900' : ''"
+      :style="barStyle"
     >
-      <p class="flex items-center justify-center gap-1.5 flex-wrap">
-        <span class="hidden sm:inline">🚚</span>
-        <span class="font-semibold">{{ shippingBarMessage }}</span>
+      <!-- Un solo mensaje: centrado estático -->
+      <p v-if="barMessages.length === 1" class="flex items-center justify-center gap-1.5 px-4">
+        <span class="mr-1.5">🚚</span>
+        <span class="font-medium">{{ barMessages[0].text }}</span>
         <a
-          v-if="shippingBar.cta_text && shippingBar.cta_link"
-          :href="shippingBar.cta_link"
+          v-if="barMessages[0].link"
+          :href="barMessages[0].link"
           class="font-semibold underline underline-offset-2 hover:opacity-80"
-        >{{ shippingBar.cta_text }}</a>
+        >{{ barMessages[0].label || 'Ver más' }}</a>
       </p>
+
+      <!-- Dos o más mensajes: cinta en movimiento continuo -->
+      <div v-else-if="barMessages.length > 1" class="marquee-track" :style="marqueeStyle">
+        <template v-for="copy in 2" :key="copy">
+          <span
+            v-for="(msg, i) in barMessages"
+            :key="`${copy}-${i}`"
+            class="inline-flex items-center gap-2 mx-6"
+          >
+            <span>{{ msg.text }}</span>
+            <a
+              v-if="msg.link"
+              :href="msg.link"
+              class="font-semibold underline underline-offset-2 hover:opacity-80"
+            >{{ msg.label || 'Ver más' }}</a>
+            <span class="opacity-40">✦</span>
+          </span>
+        </template>
+      </div>
     </div>
     <div class="bg-white/90 backdrop-blur-md border-b border-earth-100">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -249,15 +267,47 @@ function formatPrice(price) {
   return Number(price).toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }
 
-// Mensaje de la barra promocional. `shippingBar.message` es una plantilla
-// editable en el editor de sitio; se sustituyen {monto} y {mensajerias}.
-const shippingBarMessage = computed(() => {
-  const tpl = shippingBar.message || 'Envío gratis en compras mayores a {monto}'
-  const monto = `$${formatPrice(shippingBar.free_shipping_min)} MXN`
-  const mensajerias = (shippingBar.couriers || []).join(', ')
-  return tpl
-    .replace(/\{monto\}/g, monto)
-    .replace(/\{mensajerias\}/g, mensajerias)
+// Cinta promocional: hasta 3 mensajes genéricos (texto + enlace opcional).
+// Si el registro en BD aún es el formato viejo (solo `message`), se adapta
+// a un único mensaje para no romper la barra.
+const barMessages = computed(() => {
+  const raw = shippingBar.messages
+  if (Array.isArray(raw)) {
+    return raw
+      .filter(m => m && String(m.text || '').trim())
+      .map(m => ({
+        text: substituteTokens(m.text || ''),
+        link: m.link || '',
+        label: m.label || '',
+      }))
+  }
+  if (shippingBar.message) {
+    return [{
+      text: substituteTokens(shippingBar.message),
+      link: shippingBar.cta_link || '',
+      label: shippingBar.cta_text || '',
+    }]
+  }
+  return []
+})
+
+function substituteTokens(text) {
+  const monto = `$${formatPrice(shippingBar.free_shipping_min || 0)} MXN`
+  return String(text).replace(/\{monto\}/g, monto)
+}
+
+// Colores de la cinta (fondo y texto configurables desde el admin)
+const barStyle = computed(() => {
+  const s = {}
+  if (shippingBar.bg_color) s.background = shippingBar.bg_color
+  if (shippingBar.text_color) s.color = shippingBar.text_color
+  return s
+})
+
+// Duración de la animación de la cinta (segundos por mensaje)
+const marqueeStyle = computed(() => {
+  const perMsg = Number(shippingBar.speed) > 0 ? Number(shippingBar.speed) : 6
+  return { animationDuration: `${Math.max(10, barMessages.value.length * perMsg)}s` }
 })
 
 // Barra activa solo si está habilitada y dentro de su rango de fechas (si lo tiene).

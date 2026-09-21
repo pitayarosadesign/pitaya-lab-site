@@ -127,3 +127,23 @@ body {
   scrollbar-width: none;
 }
 
+/* Cinta promocional (marquee): desplazamiento horizontal continuo */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee-track {
+  display: inline-flex;
+  align-items: center;
+  min-width: max-content;
+  white-space: nowrap;
+  will-change: transform;
+  animation-name: marquee;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+

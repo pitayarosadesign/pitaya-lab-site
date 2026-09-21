@@ -23,12 +23,12 @@ export const defaultShippingBar = {
   enabled: false,
   free_shipping_min: 200,
   shipping_fee: 50,
-  couriers: ['Paquete Express', 'Estafeta', 'FedEx'],
-  delivery_days: '3 a 5 días hábiles',
-  message: 'Envío gratis en compras mayores a {monto} • {mensajerias}',
-  cta_text: '',
-  cta_link: '',
   bg_color: '',
+  text_color: '',
+  speed: 6, // segundos por mensaje en la cinta en movimiento
+  messages: [
+    { text: 'Envío gratis en compras mayores a {monto}', link: '', label: '' },
+  ],
   start_at: '',
   end_at: '',
 }
