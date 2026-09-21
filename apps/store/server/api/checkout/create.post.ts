@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   )
 
   try {
-    const { items, successUrl, cancelUrl, customerEmail, shippingCost, orderNote } = body
+    const { items, successUrl, cancelUrl, customerEmail, shippingCost, shippingLabel, shippingMethod, shippingAddress, orderNote } = body
 
     if (!items || items.length === 0) {
       throw createError({ statusCode: 400, message: 'El carrito está vacío' })
@@ -73,11 +73,12 @@ export default defineEventHandler(async (event) => {
 
     // Agregar costo de envío si aplica
     if (shippingCost && shippingCost > 0) {
+      const shipLabel = shippingLabel || 'Envío estándar'
       lineItems.push({
         price_data: {
           currency: 'mxn',
           product_data: {
-            name: 'Envío estándar',
+            name: shipLabel,
             description: `Costo de envío a todo México (${deliveryTotalMin}-${deliveryTotalMax} días hábiles)`,
           },
           unit_amount: Math.round(shippingCost * 100), // convertir a centavos
@@ -114,6 +115,9 @@ export default defineEventHandler(async (event) => {
         // Nota general del pedido (opcional). Stripe limita cada valor de
         // metadata a 500 caracteres, por eso acotamos aquí.
         order_note: (orderNote || '').slice(0, 500),
+        // Método de envío elegido y dirección (para guardar en la orden vía webhook)
+        shipping_method: (shippingMethod || '').slice(0, 100),
+        shipping_address: JSON.stringify(shippingAddress || {}).slice(0, 500),
       },
     }
 

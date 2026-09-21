@@ -787,8 +787,12 @@ function onMainImageError() {
     showingVariantImage.value = false
     return
   }
-  const key = productGalleryImages.value[activeGalleryIndex.value]?.key
-  if (key) markImageBroken(key)
+  // Solo se oculta la imagen rota si hay otra disponible. Nunca se deja la
+  // galería vacía: un fallo puntual de red en móvil no debe borrar la foto.
+  if (productGalleryImages.value.length > 1) {
+    const key = productGalleryImages.value[activeGalleryIndex.value]?.key
+    if (key) markImageBroken(key)
+  }
 }
 
 // ===== Gestos de deslizamiento (swipe) en la galería =====
@@ -1174,6 +1178,11 @@ function addToCart() {
     backorder: currentStock.value <= 0,
     prepDaysMin: product.value.prepDaysMin ?? null,
     prepDaysMax: product.value.prepDaysMax ?? null,
+    // 📦 Dimensiones y peso para cotizar envío con Envía.com
+    weightKg: product.value.weightKg ?? null,
+    lengthCm: product.value.lengthCm ?? null,
+    widthCm: product.value.widthCm ?? null,
+    heightCm: product.value.heightCm ?? null,
   }
 
   cartStore.addItem(cartItem)

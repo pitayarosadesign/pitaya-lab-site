@@ -22,6 +22,11 @@ export interface CartItem {
   /** meta opcional de preparación / envío para estimados por ítem */
   prepDaysMin?: number
   prepDaysMax?: number
+  /** Dimensiones y peso de envío (para cotizar con Envía.com) */
+  weightKg?: number
+  lengthCm?: number
+  widthCm?: number
+  heightCm?: number
 }
 
 export interface CartState {
@@ -170,6 +175,10 @@ export const useCartStore = defineStore('cart', {
         name: `${item.name}${item.variant ? ' - ' + item.variant.name : ''}`,
         description: item.subtitle || '',
         image: item.image || undefined,
+        weightKg: item.weightKg,
+        lengthCm: item.lengthCm,
+        widthCm: item.widthCm,
+        heightCm: item.heightCm,
       }))
     },
   },

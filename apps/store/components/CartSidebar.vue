@@ -191,10 +191,16 @@
 
         <!-- Footer con total y checkout (STICKY - siempre visible) -->
         <div v-if="cart.hasItems" class="border-t border-earth-100 px-4 sm:px-6 py-4 bg-white flex-shrink-0 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
-          <!-- ✅ Total + entrega estimada (compacto, siempre visible) -->
+          <!-- ✅ Subtotal + envío (siempre visible, sin cobrar flat sorpresa) -->
           <div class="flex items-center justify-between mb-1">
-            <span class="text-sm font-medium text-earth-500">Total</span>
-            <span class="text-xl font-bold text-earth-900">${{ formatPrice(cart.totalPrice + shippingCost) }}</span>
+            <span class="text-sm font-medium text-earth-500">Subtotal</span>
+            <span class="text-lg font-bold text-earth-900">${{ cart.formattedTotal }}</span>
+          </div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs text-earth-400">Envío</span>
+            <span class="text-xs font-semibold" :class="remainingForFreeShipping <= 0 ? 'text-green-600' : 'text-earth-500'">
+              {{ remainingForFreeShipping <= 0 ? 'Gratis' : 'desde $0 · se calcula al pagar' }}
+            </span>
           </div>
           <p v-if="deliveryConfig.enabled && deliveryEstimate" class="text-[12px] text-earth-500 mb-3">
             <span class="mr-1">{{ deliveryEstimate.hasBackorder ? '📦' : '🚚' }}</span>
@@ -290,14 +296,13 @@
                 </div>
                 <div class="flex items-center justify-between mb-2">
                   <span class="text-sm font-medium text-earth-600">Envío</span>
-                  <span v-if="shippingCost > 0" class="text-sm font-medium text-earth-900">${{ formatPrice(shippingCost) }}</span>
-                  <span v-else class="text-sm font-medium text-green-600">Gratis</span>
+                  <span class="text-xs font-medium text-earth-500">se calcula al pagar</span>
                 </div>
                 <div class="flex items-center justify-between pt-2 border-t border-earth-100">
                   <span class="text-base font-bold text-earth-800">Total</span>
-                  <span class="text-base font-bold text-earth-900">${{ formatPrice(cart.totalPrice + shippingCost) }}</span>
+                  <span class="text-base font-bold text-earth-900">${{ cart.formattedTotal }}</span>
                 </div>
-                <p class="text-[11px] text-earth-400 mt-1">IVA incluido · Envío a todo México</p>
+                <p class="text-[11px] text-earth-400 mt-1">IVA incluido · Envío a todo México se calcula con tu código postal</p>
               </div>
 
               <!-- 🔒 Confianza de pago -->
@@ -402,6 +407,10 @@ function addSuggestedToCart(product) {
     image: product.image || null,
     variant: null,
     quantity: 1,
+    weightKg: product.weightKg ?? null,
+    lengthCm: product.lengthCm ?? null,
+    widthCm: product.widthCm ?? null,
+    heightCm: product.heightCm ?? null,
   })
   // Refrescar sugerencias para quitar el que se acaba de agregar
   loadSuggestedProducts()
@@ -498,36 +507,9 @@ onUnmounted(() => {
 
 async function handleCheckout() {
   if (cart.items.length === 0) return
-  checkoutLoading.value = true
-
-  try {
-    // Stripe es el único proveedor de pago activo
-    const endpoint = '/api/checkout/create'
-
-    const response = await $fetch(endpoint, {
-      method: 'POST',
-      body: {
-        items: cart.getCheckoutItems(),
-        shippingCost: shippingCost.value, // ← Enviamos el costo de envío
-        orderNote: cart.orderNote || '', // ← Nota general del pedido (opcional)
-        successUrl: `${window.location.origin}/checkout/success`,
-        cancelUrl: `${window.location.origin}/checkout/cancel`,
-      },
-    })
-
-    if (response?.url) {
-      // Redirigir al checkout de Stripe
-      window.location.href = response.url
-    } else if (response?.error) {
-      throw new Error(response.error)
-    }
-  } catch (e) {
-    console.error('Error en checkout:', e)
-    // Mostrar el mensaje específico del error (ej: credenciales o rechazo del proveedor)
-    const msg = e?.data?.message || e?.message || 'Ocurrió un error al procesar el pago. Intenta de nuevo.'
-    alert(msg)
-  } finally {
-    checkoutLoading.value = false
-  }
+  // Cierra el drawer y lleva a la página de checkout, donde el cliente elige
+  // método de envío (cotizado en vivo con Envía.com) antes de pagar.
+  cart.closeCart()
+  await navigateTo('/checkout')
 }
 </script>
