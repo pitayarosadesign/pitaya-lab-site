@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-earth-50/60">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-28 lg:pb-10">
       <!-- Encabezado -->
       <div class="mb-8">
         <NuxtLink to="/catalog" class="text-sm text-earth-500 hover:text-primary-600 transition-colors">
@@ -237,7 +237,7 @@
             <button
               @click="handlePay"
               :disabled="!canPay || checkoutLoading"
-              class="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-2xl transition-all flex items-center justify-center gap-2"
+              class="hidden lg:flex w-full bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-2xl transition-all items-center justify-center gap-2"
             >
               <svg v-if="checkoutLoading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
@@ -246,12 +246,34 @@
               <span v-else>🔒</span>
               {{ checkoutLoading ? 'Procesando…' : 'Pagar con Stripe' }}
             </button>
-            <p class="text-center text-[11px] text-earth-400 flex items-center justify-center gap-1">
+            <p class="hidden lg:flex text-center text-[11px] text-earth-400 items-center justify-center gap-1">
               <svg class="w-3.5 h-3.5 text-green-600" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
               Pago 100% seguro con tarjeta
             </p>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Footer fijo móvil: total + método + pagar (solo pantallas menores a lg) -->
+    <div class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-earth-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] px-4 py-3">
+      <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <p class="text-[11px] text-earth-400 truncate">{{ selectedQuote?.label || 'Envío Estándar' }}</p>
+          <p class="text-base font-bold text-earth-900 leading-tight">${{ formatPrice(cart.totalPrice + shippingPrice) }}</p>
+        </div>
+        <button
+          @click="handlePay"
+          :disabled="!canPay || checkoutLoading"
+          class="flex-shrink-0 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold px-6 py-3 rounded-2xl transition-all flex items-center gap-2"
+        >
+          <svg v-if="checkoutLoading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+          <span v-else>🔒</span>
+          {{ checkoutLoading ? 'Procesando…' : 'Pagar' }}
+        </button>
       </div>
     </div>
   </div>
