@@ -82,6 +82,8 @@ export default defineNuxtConfig({
   routeRules: {
     '/api/checkout/webhook': { redirect: false, seo: { redirectToCanonical: false } },
     '/api/checkout/webhook/': { redirect: false, seo: { redirectToCanonical: false } },
+    '/api/shipping/envia-webhook': { redirect: false, seo: { redirectToCanonical: false } },
+    '/api/shipping/envia-webhook/': { redirect: false, seo: { redirectToCanonical: false } },
     // Alias para feeds
     '/sitemap.xml': { redirect: '/api/seo/sitemap.xml' },
     '/merchant-feed.xml': { redirect: '/api/merchant/feed.xml' },
