@@ -33,6 +33,19 @@
         </p>
       </div>
 
+      <!-- 🚚 Detalle de entrega -->
+      <div v-if="shippingMethod" class="bg-white rounded-2xl border border-earth-100 p-6 mb-6 text-left shadow-sm">
+        <h2 class="text-sm font-semibold text-earth-700 mb-2">🚚 Tu entrega</h2>
+        <p class="text-sm text-earth-600 font-medium">{{ shippingMethod }}</p>
+        <p v-if="pickupBranch" class="text-sm text-earth-600 mt-1">📍 Sucursal Punto Post: {{ pickupBranch }}</p>
+      </div>
+
+      <!-- 🎁 Nota / dedicatoria -->
+      <div v-if="orderNotes" class="bg-amber-50 border border-amber-100 rounded-2xl p-6 mb-8 text-left">
+        <h2 class="text-sm font-semibold text-earth-700 mb-2">🎁 Tu nota / dedicatoria</h2>
+        <p class="text-sm text-earth-700 whitespace-pre-line">{{ orderNotes }}</p>
+      </div>
+
       <div class="bg-white rounded-2xl border border-earth-100 p-6 mb-8 shadow-sm">
         <h2 class="text-sm font-semibold text-earth-700 mb-3">¿Qué sigue?</h2>
         <ul class="text-sm text-earth-500 space-y-2 text-left">
@@ -93,6 +106,10 @@ const orderNumber = ref('PIT-XXXX')
 const customerEmail = ref('')
 // 🚚 Fecha estimada de entrega mostrada en la confirmación (asume en stock)
 const successDeadline = ref('')
+// 🚚 Método de entrega, sucursal Punto Post y nota/dedicatoria
+const shippingMethod = ref('')
+const pickupBranch = ref('')
+const orderNotes = ref('')
 
 onMounted(async () => {
   // Limpiar carrito
@@ -134,6 +151,15 @@ onMounted(async () => {
       }
       if (data?.customerEmail) {
         customerEmail.value = data.customerEmail
+      }
+      if (data?.shippingMethod) {
+        shippingMethod.value = data.shippingMethod
+      }
+      if (data?.shippingAddress?.pickup_branch) {
+        pickupBranch.value = data.shippingAddress.pickup_branch
+      }
+      if (data?.notes) {
+        orderNotes.value = data.notes
       }
     } catch (e) {
       console.warn('No se pudo obtener el número de orden')

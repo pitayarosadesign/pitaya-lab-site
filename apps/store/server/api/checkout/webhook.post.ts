@@ -316,7 +316,7 @@ export default defineEventHandler(async (event) => {
 
     const name = shipping?.name || session.customer_details?.name || 'Cliente'
     const street = [shipping?.address?.line1, shipping?.address?.line2].filter(Boolean).join(' ')
-    const phone = shipping?.phone || session.customer_details?.phone || ''
+    const phone = shipping?.phone || getCustomerPhone(session) || ''
     const email = session.customer_details?.email || session.customer_email || ''
     const alias = `PITAYA - ${name}`.slice(0, 60)
 
@@ -401,6 +401,17 @@ export default defineEventHandler(async (event) => {
     ].filter(Boolean).join('\n') || null
   }
 
+  // Teléfono del cliente: nuestro checkout lo captura (Stripe ya no lo pide)
+  function getCustomerPhone(session: Stripe.Checkout.Session) {
+    if (session.customer_details?.phone) return session.customer_details.phone
+    try {
+      const custom = JSON.parse(session.metadata?.shipping_address || '{}') || {}
+      return custom.phone || null
+    } catch {
+      return null
+    }
+  }
+
   try {
     const signature = event.node.req.headers['stripe-signature']
 
@@ -464,7 +475,7 @@ export default defineEventHandler(async (event) => {
             stripe_payment_intent_id: (session.payment_intent as string) || order.stripe_payment_intent_id,
             customer_email: session.customer_details?.email || order.customer_email,
             customer_name: session.customer_details?.name || order.customer_name,
-            customer_phone: session.customer_details?.phone || null,
+            customer_phone: getCustomerPhone(session),
             shipping_cost: session.total_details?.amount_shipping ? session.total_details.amount_shipping / 100 : 0,
             shipping_method: session.metadata?.shipping_method || order.shipping_method || null,
             shipping_address: buildShippingAddress(session, cpValidation),
@@ -500,7 +511,7 @@ export default defineEventHandler(async (event) => {
           await upsertCustomer({
             customer_email: session.customer_details?.email || order.customer_email,
             customer_name: session.customer_details?.name || order.customer_name,
-            customer_phone: session.customer_details?.phone || null,
+            customer_phone: getCustomerPhone(session),
             shipping_address: session.shipping_details || order.shipping_address,
             total: session.amount_total ? session.amount_total / 100 : order.total,
           })
@@ -531,7 +542,7 @@ export default defineEventHandler(async (event) => {
             order_number: order.order_number,
             customer_email: session.customer_details?.email || order.customer_email,
             customer_name: session.customer_details?.name || order.customer_name,
-            customer_phone: session.customer_details?.phone || null,
+            customer_phone: getCustomerPhone(session),
             shipping_address: buildShippingAddress(session, cpValidation),
             shipping_validation: cpValidation,
             total: session.amount_total ? session.amount_total / 100 : order.total,
@@ -571,7 +582,7 @@ export default defineEventHandler(async (event) => {
             order_number: orderNumber,
             customer_email: session.customer_details?.email || 'cliente@email.com',
             customer_name: session.customer_details?.name || 'Cliente',
-            customer_phone: session.customer_details?.phone || null,
+            customer_phone: getCustomerPhone(session),
             status: 'confirmed',
             payment_status: 'paid',
             stripe_session_id: session.id,
@@ -613,7 +624,7 @@ export default defineEventHandler(async (event) => {
           await upsertCustomer({
             customer_email: session.customer_details?.email || 'cliente@email.com',
             customer_name: session.customer_details?.name || 'Cliente',
-            customer_phone: session.customer_details?.phone || null,
+            customer_phone: getCustomerPhone(session),
             shipping_address: session.shipping_details || {},
             total: session.amount_total ? session.amount_total / 100 : 0,
           })
@@ -634,7 +645,7 @@ export default defineEventHandler(async (event) => {
             order_number: orderNumber,
             customer_email: session.customer_details?.email || 'cliente@email.com',
             customer_name: session.customer_details?.name || 'Cliente',
-            customer_phone: session.customer_details?.phone || null,
+            customer_phone: getCustomerPhone(session),
             shipping_address: buildShippingAddress(session, cpValidation),
             shipping_validation: cpValidation,
             total: session.amount_total ? session.amount_total / 100 : 0,

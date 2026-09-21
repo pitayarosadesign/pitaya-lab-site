@@ -35,7 +35,15 @@
               </div>
               <div>
                 <label class="block text-sm font-medium text-earth-700 mb-1">Teléfono *</label>
-                <input v-model="form.phone" type="tel" placeholder="10 dígitos" class="w-full px-4 py-2.5 rounded-xl border border-earth-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none text-sm transition-all" />
+                <input
+                  v-model="form.phone"
+                  type="tel"
+                  placeholder="10 dígitos"
+                  :class="form.phone && !phoneValid ? 'border-red-300' : 'border-earth-200'"
+                  class="w-full px-4 py-2.5 rounded-xl border focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none text-sm transition-all"
+                  @input="form.phone = form.phone.replace(/[^\d+]/g, '').slice(0, 13)"
+                />
+                <p v-if="form.phone && !phoneValid" class="text-xs text-red-600 mt-1">Ingresa un teléfono válido (10 dígitos)</p>
               </div>
               <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-earth-700 mb-1">Email *</label>
@@ -57,8 +65,17 @@
                 </p>
               </div>
               <div>
-                <label class="block text-sm font-medium text-earth-700 mb-1">Calle y número <span class="text-earth-400 font-normal">(para domicilio)</span></label>
-                <input v-model="form.street" type="text" placeholder="Calle, número" class="w-full px-4 py-2.5 rounded-xl border border-earth-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none text-sm transition-all" />
+                <label class="block text-sm font-medium text-earth-700 mb-1">
+                  Calle y número <span v-if="streetRequired" class="text-red-500">*</span> <span class="text-earth-400 font-normal">(para domicilio)</span>
+                </label>
+                <input
+                  v-model="form.street"
+                  type="text"
+                  placeholder="Calle, número"
+                  :class="streetRequired && !streetValid ? 'border-red-300' : 'border-earth-200'"
+                  class="w-full px-4 py-2.5 rounded-xl border focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none text-sm transition-all"
+                />
+                <p v-if="streetRequired && !streetValid" class="text-xs text-red-600 mt-1">Requerido para envío a domicilio</p>
               </div>
               <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-earth-700 mb-1">Colonia / referencias <span class="text-earth-400 font-normal">(para domicilio)</span></label>
@@ -70,6 +87,20 @@
           <!-- Método de envío -->
           <div class="bg-white rounded-2xl border border-earth-100 p-6 space-y-4">
             <h2 class="text-lg font-serif font-bold text-earth-900">2. Método de envío</h2>
+
+            <!-- Progreso hacia el envío gratis a domicilio -->
+            <div
+              v-if="freeShippingUnlocked"
+              class="rounded-xl bg-green-50 border border-green-200 px-4 py-2.5 text-sm text-green-700 font-medium"
+            >
+              Envío a domicilio gratis desbloqueado
+            </div>
+            <div
+              v-else
+              class="rounded-xl bg-primary-50 border border-primary-100 px-4 py-2.5 text-sm text-primary-700"
+            >
+              Te faltan <span class="font-bold">${{ formatPrice(freeShippingRemaining) }}</span> para envío gratis a domicilio
+            </div>
 
             <div class="space-y-3">
               <button
@@ -320,9 +351,31 @@ const selectedQuote = computed(() => {
 
 const shippingPrice = computed(() => selectedQuote.value?.price || 0)
 
+// Progreso hacia el envío gratis (aplica al método Estándar; Punto Post ya es gratis)
+const freeShippingRemaining = computed(() => Math.max(0, FREE_SHIPPING_THRESHOLD.value - cart.totalPrice))
+const freeShippingUnlocked = computed(() => cart.totalPrice >= FREE_SHIPPING_THRESHOLD.value)
+
+// Teléfono: normaliza a 10 dígitos (acepta prefijo +52 / 52)
+function normalizePhone(phone) {
+  let digits = String(phone || '').replace(/\D/g, '')
+  if (digits.startsWith('52') && digits.length === 12) digits = digits.slice(2)
+  return digits
+}
+const phoneValid = computed(() => normalizePhone(form.phone).length === 10)
+
+// Calle y número son obligatorios para envío a domicilio (Estándar)
+const streetRequired = computed(() => selectedMethod.value === 'standard')
+const streetValid = computed(() => !streetRequired.value || form.street.trim().length > 2)
+
 const canPay = computed(() => {
   const branchOk = selectedMethod.value !== 'pointPost' || form.pickupBranch.trim().length > 2
-  return form.name.trim().length > 1 && form.email.includes('@') && form.postalCode.length === 5 && branchOk && !checkoutLoading.value
+  return form.name.trim().length > 1
+    && phoneValid.value
+    && form.email.includes('@')
+    && form.postalCode.length === 5
+    && streetValid.value
+    && branchOk
+    && !checkoutLoading.value
 })
 
 // Cotizar en cuanto el CP tenga 5 dígitos (solo para el estimado de entrega)

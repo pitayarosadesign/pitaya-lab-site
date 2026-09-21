@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
       // Buscar por stripe_session_id (Stripe)
       const { data, error } = await supabaseAdmin
         .from('orders')
-        .select('order_number, status, total, customer_email')
+        .select('order_number, status, total, customer_email, shipping_method, shipping_address, notes')
         .eq('stripe_session_id', sessionId)
         .limit(1)
       if (error) throw error
@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
       // Buscar por order_number
       const { data, error } = await supabaseAdmin
         .from('orders')
-        .select('order_number, status, total, customer_email')
+        .select('order_number, status, total, customer_email, shipping_method, shipping_address, notes')
         .eq('order_number', orderNumber)
         .limit(1)
       if (error) throw error
@@ -46,6 +46,9 @@ export default defineEventHandler(async (event) => {
           status: orders[0].status,
           total: orders[0].total,
           customerEmail: orders[0].customer_email,
+          shippingMethod: orders[0].shipping_method || '',
+          shippingAddress: orders[0].shipping_address || {},
+          notes: orders[0].notes || '',
         },
       }
     }
@@ -56,6 +59,9 @@ export default defineEventHandler(async (event) => {
         status: 'pending',
         total: 0,
         customerEmail: '',
+        shippingMethod: '',
+        shippingAddress: {},
+        notes: '',
       },
     }
   } catch (e) {
@@ -66,6 +72,9 @@ export default defineEventHandler(async (event) => {
         status: 'unknown',
         total: 0,
         customerEmail: '',
+        shippingMethod: '',
+        shippingAddress: {},
+        notes: '',
       },
     }
   }
