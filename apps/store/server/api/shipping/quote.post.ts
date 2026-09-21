@@ -1,10 +1,9 @@
 /**
  * POST /api/shipping/quote
  * ------------------------
- * Cotiza en vivo con Envía.com los 3 métodos de envío preferidos:
- *   1. Paquete Express   -> paquetexpress / ground      (puerta a puerta)
- *   2. Envío Estándar    -> paquetexpress / ground_do   (sucursal -> domicilio)
- *   3. Punto Post        -> puntopost    / Send C2C     (sucursal -> sucursal)
+ * Cotiza en vivo con Envía.com los 2 métodos de envío:
+ *   1. Envío Estándar (entrega a domicilio) -> paquetexpress / ground_do  (sucursal -> puerta)
+ *   2. Recoge cerca de ti (punto)           -> puntopost    / Send C2C   (sucursal -> sucursal)
  *
  * Origen (bodega PITAYA LAB) definido como constantes. El destino se recibe
  * como código postal y se resuelve a ciudad/estado con el Geocodes API de
@@ -33,9 +32,8 @@ const DEFAULT_PACKAGE = { weightKg: 1, lengthCm: 20, widthCm: 20, heightCm: 15 }
 
 // Métodos preferidos -> servicio a extraer de la respuesta de Envía.com
 const METHODS = {
-  express: { carrier: 'paquetexpress', service: 'ground', label: 'Paquete Express' },
   standard: { carrier: 'paquetexpress', service: 'ground_do', label: 'Envío Estándar' },
-  pointPost: { carrier: 'puntopost', service: 'Send C2C', label: 'Punto Post' },
+  pointPost: { carrier: 'puntopost', service: 'Send C2C', label: 'Recoge cerca de ti' },
 }
 
 function enviaHeaders(token: string) {
@@ -74,14 +72,15 @@ async function quoteCarrier(carrier: string, service: string, payload: any, toke
   })
   const json = await res.json()
   if (!res.ok || json?.error) {
-    return { error: json?.error?.message || `HTTP ${res.status}` }
+    return { available: false, error: json?.error?.message || `HTTP ${res.status}` }
   }
   const rates = Array.isArray(json?.data) ? json.data : []
   const match = rates.find(r => r.service === service)
   if (!match) {
-    return { error: `Servicio ${service} no disponible` }
+    return { available: false, error: `Servicio ${service} no disponible` }
   }
   return {
+    available: true,
     carrier,
     service: match.service,
     serviceDescription: match.serviceDescription || '',
@@ -154,9 +153,8 @@ export default defineEventHandler(async (event) => {
     settings: { currency: 'MXN' },
   }
 
-  // Cotizar los 3 métodos en paralelo
-  const [express, standard, pointPost] = await Promise.all([
-    quoteCarrier(METHODS.express.carrier, METHODS.express.service, payload, token),
+  // Cotizar los 2 métodos en paralelo
+  const [standard, pointPost] = await Promise.all([
     quoteCarrier(METHODS.standard.carrier, METHODS.standard.service, payload, token),
     quoteCarrier(METHODS.pointPost.carrier, METHODS.pointPost.service, payload, token),
   ])
@@ -165,7 +163,6 @@ export default defineEventHandler(async (event) => {
     postalCode,
     destination: { city: destination.city, state: destination.state, country: 'MX' },
     methods: {
-      express: { ...METHODS.express, ...express },
       standard: { ...METHODS.standard, ...standard },
       pointPost: { ...METHODS.pointPost, ...pointPost },
     },

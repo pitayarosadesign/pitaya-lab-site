@@ -71,18 +71,9 @@
           <div class="bg-white rounded-2xl border border-earth-100 p-6 space-y-4">
             <h2 class="text-lg font-serif font-bold text-earth-900">2. Método de envío</h2>
 
-            <div v-if="quoteLoading" class="text-center py-8">
-              <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-3"></div>
-              <p class="text-sm text-earth-500">Cotizando envío a tu código postal…</p>
-            </div>
-
-            <p v-else-if="quoteError" class="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-3">
-              {{ quoteError }}
-            </p>
-
-            <div v-else-if="quote" class="space-y-3">
+            <div class="space-y-3">
               <button
-                v-for="m in shippingMethods"
+                v-for="m in visibleMethods"
                 :key="m.key"
                 type="button"
                 @click="selectedMethod = m.key"
@@ -101,16 +92,17 @@
                     </span>
                   </span>
                   <span class="block text-xs text-earth-500 mt-0.5">
-                    {{ m.description }} · Entrega {{ m.deliveryEstimate }}
+                    {{ m.typeText }} · Entrega {{ m.deliveryEstimate }}
                     <template v-if="m.deliveryDate"> ({{ formatDate(m.deliveryDate) }})</template>
+                    <template v-if="quoteLoading && !quote"> · cotizando…</template>
                   </span>
                 </span>
               </button>
-            </div>
 
-            <p v-if="!form.postalCode || form.postalCode.length < 5" class="text-xs text-earth-400">
-              Escribe tu código postal para ver las opciones y costos de envío.
-            </p>
+              <p v-if="pointPostUnavailable" class="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+                Punto Post no está disponible para tu código postal; el envío se entregará a domicilio.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -139,8 +131,7 @@
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-earth-600">Envío</span>
-                <span v-if="!selectedQuote" class="text-earth-400 text-xs">se calcula al pagar</span>
-                <span v-else-if="shippingPrice > 0" class="font-semibold text-earth-900">${{ formatPrice(shippingPrice) }}</span>
+                <span v-if="shippingPrice > 0" class="font-semibold text-earth-900">${{ formatPrice(shippingPrice) }}</span>
                 <span v-else class="font-semibold text-green-600">Gratis</span>
               </div>
               <div class="flex items-center justify-between pt-2 border-t border-earth-100 text-base">
@@ -190,70 +181,85 @@ const form = reactive({
   district: '',
 })
 
-const quote = ref(null)
-const resolvedLocation = ref(null)
-const quoteLoading = ref(false)
-const quoteError = ref('')
-const selectedMethod = ref('pointPost')
+const selectedMethod = ref('standard')
 const checkoutLoading = ref(false)
 
-// Umbral de envío gratis (site_config > shipping_bar)
+// Umbral de envío gratis y costo fijo (site_config > shipping_bar)
 const FREE_SHIPPING_THRESHOLD = ref(799)
+const SHIPPING_FEE = ref(99)
+
+// La cotización de Envía.com solo se usa para enriquecer el estimado de entrega.
+const quote = ref(null)
+const quoteLoading = ref(false)
+const resolvedLocation = ref(null)
 
 async function loadShippingConfig() {
   try {
     const supabase = useNuxtApp()?.$supabase
     if (!supabase) return
     const { data } = await supabase.from('site_config').select('value').eq('key', 'shipping_bar').single()
-    if (data?.value?.free_shipping_min) FREE_SHIPPING_THRESHOLD.value = data.value.free_shipping_min
+    if (data?.value) {
+      if (typeof data.value.free_shipping_min === 'number') FREE_SHIPPING_THRESHOLD.value = data.value.free_shipping_min
+      if (typeof data.value.shipping_fee === 'number') SHIPPING_FEE.value = data.value.shipping_fee
+    }
   } catch (e) {
-    // fallback silencioso a $799
+    // fallback silencioso
   }
 }
 
-// Métodos en el orden que se muestran
-const shippingMethods = computed(() => {
-  if (!quote.value?.methods) return []
-  const m = quote.value.methods
-  return [
-    { key: 'express', label: m.express?.label || 'Paquete Express', price: methodPrice('express'), description: m.express?.dropOffDescription || 'Puerta a puerta', deliveryEstimate: m.express?.deliveryEstimate || '', deliveryDate: m.express?.deliveryDate },
-    { key: 'standard', label: m.standard?.label || 'Envío Estándar', price: methodPrice('standard'), description: m.standard?.dropOffDescription || 'Sucursal → domicilio', deliveryEstimate: m.standard?.deliveryEstimate || '', deliveryDate: m.standard?.deliveryDate },
-    { key: 'pointPost', label: m.pointPost?.label || 'Punto Post', price: 0, description: m.pointPost?.dropOffDescription || 'Sucursal → sucursal', deliveryEstimate: m.pointPost?.deliveryEstimate || '', deliveryDate: m.pointPost?.deliveryDate },
-  ]
+// Costo del Envío Estándar: fijo, gratis a partir del umbral del panel admin.
+const standardPrice = computed(() => {
+  return cart.totalPrice >= FREE_SHIPPING_THRESHOLD.value ? 0 : SHIPPING_FEE.value
 })
 
-// Precio mostrado/cobrado según reglas:
-//  - Punto Post siempre gratis
-//  - Estándar gratis si el subtotal alcanza el umbral
-//  - Express siempre con costo real
-function methodPrice(key) {
-  if (!quote.value?.methods) return 0
-  const raw = quote.value.methods[key]?.price || 0
-  if (key === 'pointPost') return 0
-  if (key === 'standard' && cart.totalPrice >= FREE_SHIPPING_THRESHOLD.value) return 0
-  return raw
-}
+// Los 2 métodos de envío (precios fijos; la ETA viene de la cotización si existe)
+const shippingMethods = computed(() => [
+  {
+    key: 'standard',
+    label: 'Envío Estándar',
+    typeText: 'Entrega a domicilio',
+    price: standardPrice.value,
+    available: true,
+    deliveryEstimate: quote.value?.methods?.standard?.deliveryEstimate || '1-3 días hábiles',
+    deliveryDate: quote.value?.methods?.standard?.deliveryDate || null,
+  },
+  {
+    key: 'pointPost',
+    label: 'Recoge cerca de ti',
+    typeText: 'Punto de recolección cercano',
+    price: 0,
+    // Disponibilidad según la cotización de Envía.com para el CP (si aún no
+    // se cotiza, se muestra optimista y se confirma al escribir el CP).
+    available: quote.value ? quote.value.methods?.pointPost?.available !== false : true,
+    deliveryEstimate: quote.value?.methods?.pointPost?.deliveryEstimate || '5-7 días hábiles',
+    deliveryDate: quote.value?.methods?.pointPost?.deliveryDate || null,
+  },
+])
+
+// Solo se muestran los métodos disponibles en el CP del cliente
+const visibleMethods = computed(() => shippingMethods.value.filter(m => m.available !== false))
+
+// True cuando ya cotizamos y Punto Post no cubre el CP
+const pointPostUnavailable = computed(() => !!quote.value && quote.value.methods?.pointPost?.available === false)
 
 const selectedQuote = computed(() => {
-  if (!quote.value?.methods) return null
   return shippingMethods.value.find(m => m.key === selectedMethod.value) || null
 })
 
 const shippingPrice = computed(() => selectedQuote.value?.price || 0)
 
 const canPay = computed(() => {
-  return form.name.trim().length > 1 && form.email.includes('@') && form.postalCode.length === 5 && !!selectedQuote.value && !quoteLoading.value
+  return form.name.trim().length > 1 && form.email.includes('@') && form.postalCode.length === 5 && !checkoutLoading.value
 })
 
-// Cotizar en cuanto el CP tenga 5 dígitos (debounce)
+// Cotizar en cuanto el CP tenga 5 dígitos (solo para el estimado de entrega)
 let quoteTimer = null
 watch(() => form.postalCode, (cp) => {
   if (quoteTimer) clearTimeout(quoteTimer)
   quote.value = null
   resolvedLocation.value = null
-  quoteError.value = ''
   if (cp.length !== 5) return
-  quoteTimer = setTimeout(fetchQuote, 500)
+  quoteTimer = setTimeout(fetchQuote, 400)
 })
 
 async function fetchQuote() {
@@ -282,8 +288,13 @@ async function fetchQuote() {
     })
     quote.value = res
     resolvedLocation.value = res.destination || null
+    // Si Punto Post no cubre el CP, forzar Envío Estándar
+    if (res.methods?.pointPost?.available === false && selectedMethod.value === 'pointPost') {
+      selectedMethod.value = 'standard'
+    }
   } catch (e) {
-    quoteError.value = e?.data?.message || 'No pudimos cotizar tu envío. Intenta de nuevo.'
+    // No bloquea el checkout: se mantienen los estimados genéricos.
+    quote.value = null
   } finally {
     quoteLoading.value = false
   }
