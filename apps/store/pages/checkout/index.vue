@@ -256,7 +256,7 @@
     </div>
 
     <!-- Footer fijo móvil: total + método + pagar (solo pantallas menores a lg) -->
-    <div class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-earth-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] px-4 py-3">
+    <div class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-earth-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
       <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
         <div class="min-w-0">
           <p class="text-[11px] text-earth-400 truncate">{{ selectedQuote?.label || 'Envío Estándar' }}</p>
