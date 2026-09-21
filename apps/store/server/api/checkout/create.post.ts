@@ -116,8 +116,9 @@ export default defineEventHandler(async (event) => {
         // metadata a 500 caracteres, por eso acotamos aquí.
         order_note: (orderNote || '').slice(0, 500),
         // Método de envío elegido y dirección (para guardar en la orden vía webhook)
-        shipping_method: (shippingMethod || '').slice(0, 100),
+        shipping_method: (shippingLabel || shippingMethod || '').slice(0, 100),
         shipping_address: JSON.stringify(shippingAddress || {}).slice(0, 500),
+        pickup_branch: ((shippingAddress && shippingAddress.pickupBranch) || '').slice(0, 200),
       },
     }
 

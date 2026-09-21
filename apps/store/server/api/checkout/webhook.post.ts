@@ -359,6 +359,25 @@ export default defineEventHandler(async (event) => {
     return result
   }
 
+  // Construye la dirección de envío que se guarda en la orden, uniendo la
+  // dirección que capturamos en el checkout (metadata) con la sucursal Punto Post.
+  function buildShippingAddress(session: Stripe.Checkout.Session, cpValidation: any) {
+    let custom: any = {}
+    try {
+      custom = JSON.parse(session.metadata?.shipping_address || '{}') || {}
+    } catch {
+      // ignorar JSON inválido
+    }
+    const pickupBranch = session.metadata?.pickup_branch || custom.pickupBranch || ''
+    return {
+      ...(session.shipping_details || {}),
+      ...custom,
+      pickup_branch: pickupBranch,
+      neighborhood: session.metadata?.shipping_neighborhood || custom.neighborhood || '',
+      cp_validation: cpValidation,
+    }
+  }
+
   try {
     const signature = event.node.req.headers['stripe-signature']
 
@@ -424,7 +443,8 @@ export default defineEventHandler(async (event) => {
             customer_name: session.customer_details?.name || order.customer_name,
             customer_phone: session.customer_details?.phone || null,
             shipping_cost: session.total_details?.amount_shipping ? session.total_details.amount_shipping / 100 : 0,
-            shipping_address: { ...(session.shipping_details || {}), neighborhood: session.metadata?.shipping_neighborhood || '', cp_validation: cpValidation },
+            shipping_method: session.metadata?.shipping_method || order.shipping_method || null,
+            shipping_address: buildShippingAddress(session, cpValidation),
             paid_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           }
@@ -535,7 +555,8 @@ export default defineEventHandler(async (event) => {
             subtotal: session.amount_subtotal ? session.amount_subtotal / 100 : 0,
             total: session.amount_total ? session.amount_total / 100 : 0,
             shipping_cost: session.total_details?.amount_shipping ? session.total_details.amount_shipping / 100 : 0,
-            shipping_address: { ...(session.shipping_details || {}), neighborhood: session.metadata?.shipping_neighborhood || '', cp_validation: cpValidation },
+            shipping_method: session.metadata?.shipping_method || null,
+            shipping_address: buildShippingAddress(session, cpValidation),
             notes: session.metadata?.order_note || null,
             paid_at: new Date().toISOString(),
           }

@@ -102,6 +102,33 @@
               <p v-if="pointPostUnavailable" class="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
                 Punto Post no está disponible para tu código postal; el envío se entregará a domicilio.
               </p>
+
+              <!-- 📍 Selección de sucursal Punto Post -->
+              <div v-if="selectedMethod === 'pointPost' && !pointPostUnavailable" class="rounded-xl border border-primary-100 bg-primary-50/40 p-4 space-y-3">
+                <p class="text-sm font-semibold text-earth-800">📍 Elige tu sucursal Punto Post</p>
+                <p class="text-xs text-earth-500">
+                  Para que recojas en un punto que te quede cómodo y seguro, ubica tu sucursal más cercana y escríbela abajo.
+                </p>
+                <a
+                  href="https://www.puntopost.mx/map/"
+                  target="_blank"
+                  rel="noopener"
+                  class="inline-flex items-center gap-2 text-sm font-semibold text-primary-600 hover:text-primary-700 underline"
+                >
+                  Abrir localizador de Punto Post
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                </a>
+                <div>
+                  <label class="block text-sm font-medium text-earth-700 mb-1">Sucursal de tu preferencia *</label>
+                  <input
+                    v-model="form.pickupBranch"
+                    type="text"
+                    placeholder="Ej. Punto Post Plaza Centro, Av. Juárez 123"
+                    class="w-full px-4 py-2.5 rounded-xl border border-earth-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none text-sm transition-all"
+                  />
+                  <p class="text-[11px] text-earth-400 mt-1">Copia el nombre y dirección de la sucursal que elijas en el localizador.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -179,6 +206,7 @@ const form = reactive({
   postalCode: '',
   street: '',
   district: '',
+  pickupBranch: '',
 })
 
 const selectedMethod = ref('standard')
@@ -249,7 +277,8 @@ const selectedQuote = computed(() => {
 const shippingPrice = computed(() => selectedQuote.value?.price || 0)
 
 const canPay = computed(() => {
-  return form.name.trim().length > 1 && form.email.includes('@') && form.postalCode.length === 5 && !checkoutLoading.value
+  const branchOk = selectedMethod.value !== 'pointPost' || form.pickupBranch.trim().length > 2
+  return form.name.trim().length > 1 && form.email.includes('@') && form.postalCode.length === 5 && branchOk && !checkoutLoading.value
 })
 
 // Cotizar en cuanto el CP tenga 5 dígitos (solo para el estimado de entrega)
@@ -322,6 +351,7 @@ async function handlePay() {
           state: resolvedLocation.value?.state || '',
           street: form.street || '',
           district: form.district || '',
+          pickupBranch: form.pickupBranch || '',
         },
         successUrl: `${window.location.origin}/checkout/success`,
         cancelUrl: `${window.location.origin}/checkout/cancel`,
