@@ -19,7 +19,7 @@ const ORIGIN = {
   name: 'Pitaya Lab',
   phone: '3312345678',
   street: 'Av. Mariano Otero',
-  number: '',
+  number: 'S/N',
   district: 'Mariano Otero',
   city: 'Zapopan',
   state: 'JA',
@@ -53,10 +53,15 @@ async function resolveZipcode(zipcode: string, token: string) {
     headers: enviaHeaders(token),
   })
   const json = await res.json()
-  if (json?.success && json?.data) {
-    return { city: json.data.city, state: json.data.state, country: json.data.country || 'MX' }
+  // El Geocodes API responde un ARRAY: [{ zip_code, locality, state.code['2digit'], ... }]
+  const entry = Array.isArray(json) ? json[0] : json?.data?.[0]
+  if (!entry) return null
+  const stateCode = entry.state?.code?.['2digit'] || entry.state?.iso_code?.split('-')[1] || ''
+  return {
+    city: entry.locality || entry.regions?.region_2 || entry.state?.name || '',
+    state: stateCode,
+    country: entry.country?.code || 'MX',
   }
-  return null
 }
 
 // Cotiza un carrier y devuelve el rate que coincide con el servicio deseado
@@ -114,7 +119,7 @@ export default defineEventHandler(async (event) => {
     name: body?.name || 'Cliente',
     phone: body?.phone || '0000000000',
     street: body?.street || 'Por confirmar',
-    number: body?.number || '',
+    number: body?.number || 'S/N',
     district: body?.district || resolved?.city || '',
     city: body?.city || resolved?.city || '',
     state: body?.state || resolved?.state || '',
