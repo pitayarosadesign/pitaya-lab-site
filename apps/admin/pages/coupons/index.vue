@@ -42,7 +42,7 @@
             class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400"
           >
             <option value="percentage">Porcentaje (%)</option>
-            <option value="fixed">Monto fijo ($)</option>
+            <option value="fixed_amount">Monto fijo ($)</option>
           </select>
         </div>
         <div>
@@ -134,13 +134,13 @@
               <span class="font-mono text-sm font-bold text-gray-900">{{ coupon.code }}</span>
             </td>
             <td class="px-6 py-4 text-sm text-gray-900">
-              {{ coupon.type === 'percentage' ? `${coupon.value}%` : `$${coupon.value}` }}
+              {{ coupon.discount_type === 'percentage' ? `${coupon.discount_value}%` : `$${coupon.discount_value}` }}
             </td>
             <td class="px-6 py-4 text-sm text-gray-600">
-              {{ coupon.current_uses || 0 }}{{ coupon.max_uses ? ` / ${coupon.max_uses}` : '' }}
+              {{ coupon.usage_count || 0 }}{{ coupon.usage_limit ? ` / ${coupon.usage_limit}` : '' }}
             </td>
             <td class="px-6 py-4 text-sm text-gray-600">
-              {{ coupon.expires_at ? formatDate(coupon.expires_at) : '—' }}
+              {{ coupon.ends_at ? formatDate(coupon.ends_at) : '—' }}
             </td>
             <td class="px-6 py-4">
               <span
@@ -172,7 +172,6 @@
 </template>
 
 <script setup>
-const supabase = useSupabase()
 
 const loading = ref(true)
 const saving = ref(false)
@@ -209,14 +208,10 @@ onMounted(async () => {
 
 async function loadCoupons() {
   try {
-    const { data } = await supabase
-      .from('coupons')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    coupons.value = data || []
+    coupons.value = (await $fetch('/api/coupons')) || []
   } catch (e) {
     console.error('Error cargando cupones:', e)
+    alert('Error al cargar cupones: ' + (e.data?.message || e.message))
   } finally {
     loading.value = false
   }
@@ -228,26 +223,26 @@ async function saveCoupon() {
 
   try {
     const payload = {
-      code: form.code.toUpperCase(),
-      type: form.type,
-      value: Number(form.value),
-      min_purchase: Number(form.minPurchase) || 0,
-      max_uses: Number(form.maxUses) || null,
-      expires_at: form.expiresAt || null,
+      code: form.code.trim().toUpperCase(),
+      discount_type: form.type,
+      discount_value: Number(form.value),
+      minimum_order_amount: Number(form.minPurchase) || 0,
+      usage_limit: Number(form.maxUses) || null,
+      ends_at: form.expiresAt || null,
       is_active: form.isActive,
     }
 
     if (editingCoupon.value) {
-      await supabase.from('coupons').update(payload).eq('id', editingCoupon.value.id)
+      await $fetch(`/api/coupons/${editingCoupon.value.id}`, { method: 'PUT', body: payload })
     } else {
-      await supabase.from('coupons').insert(payload)
+      await $fetch('/api/coupons', { method: 'POST', body: payload })
     }
 
     showForm.value = false
     editingCoupon.value = null
     await loadCoupons()
   } catch (e) {
-    alert('Error al guardar cupón: ' + e.message)
+    alert('Error al guardar cupón: ' + (e.data?.message || e.message))
   } finally {
     saving.value = false
   }
@@ -256,11 +251,11 @@ async function saveCoupon() {
 function editCoupon(coupon) {
   editingCoupon.value = coupon
   form.code = coupon.code
-  form.type = coupon.type
-  form.value = coupon.value
-  form.minPurchase = coupon.min_purchase
-  form.maxUses = coupon.max_uses
-  form.expiresAt = coupon.expires_at ? coupon.expires_at.split('T')[0] : ''
+  form.type = coupon.discount_type
+  form.value = coupon.discount_value
+  form.minPurchase = coupon.minimum_order_amount
+  form.maxUses = coupon.usage_limit
+  form.expiresAt = coupon.ends_at ? coupon.ends_at.split('T')[0] : ''
   form.isActive = coupon.is_active
   showForm.value = true
 }
@@ -268,10 +263,10 @@ function editCoupon(coupon) {
 async function deleteCoupon(id) {
   if (!confirm('¿Eliminar este cupón?')) return
   try {
-    await supabase.from('coupons').delete().eq('id', id)
+    await $fetch(`/api/coupons/${id}`, { method: 'DELETE' })
     coupons.value = coupons.value.filter(c => c.id !== id)
   } catch (e) {
-    alert('Error al eliminar cupón: ' + e.message)
+    alert('Error al eliminar cupón: ' + (e.data?.message || e.message))
   }
 }
 
