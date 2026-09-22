@@ -130,6 +130,10 @@
                 </span>
               </button>
 
+              <p v-if="pointPostBelowMinimum" class="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+                Punto Post solo está disponible en compras a partir de ${{ formatPrice(POINT_POST_MIN_AMOUNT) }}.
+              </p>
+
               <p v-if="pointPostUnavailable" class="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
                 {{ pointPostUnavailableMessage }}
               </p>
@@ -306,6 +310,9 @@ const checkoutLoading = ref(false)
 const FREE_SHIPPING_THRESHOLD = ref(799)
 const SHIPPING_FEE = ref(99)
 
+// Punto Post solo se habilita en compras desde este monto
+const POINT_POST_MIN_AMOUNT = 250
+
 // La cotización de Envía.com solo se usa para enriquecer el estimado de entrega.
 const quote = ref(null)
 const quoteLoading = ref(false)
@@ -330,6 +337,14 @@ const standardPrice = computed(() => {
   return cart.totalPrice >= FREE_SHIPPING_THRESHOLD.value ? 0 : SHIPPING_FEE.value
 })
 
+// Ticket mínimo para que Punto Post esté disponible
+const pointPostBelowMinimum = computed(() => cart.totalPrice < POINT_POST_MIN_AMOUNT)
+
+// Si el carrito baja del mínimo estando en Punto Post, forzar Envío Estándar
+watch(pointPostBelowMinimum, (below) => {
+  if (below && selectedMethod.value === 'pointPost') selectedMethod.value = 'standard'
+})
+
 // Los 2 métodos de envío (precios fijos; la ETA viene de la cotización si existe)
 const shippingMethods = computed(() => [
   {
@@ -348,7 +363,7 @@ const shippingMethods = computed(() => [
     price: 0,
     // Disponibilidad según la cotización de Envía.com para el CP (si aún no
     // se cotiza, se muestra optimista y se confirma al escribir el CP).
-    available: quote.value ? quote.value.methods?.pointPost?.available !== false : true,
+    available: !pointPostBelowMinimum.value && (quote.value ? quote.value.methods?.pointPost?.available !== false : true),
     deliveryEstimate: quote.value?.methods?.pointPost?.deliveryEstimate || '1-5 días hábiles',
     deliveryDate: quote.value?.methods?.pointPost?.deliveryDate || null,
   },
