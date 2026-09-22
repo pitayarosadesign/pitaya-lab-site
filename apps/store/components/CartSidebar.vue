@@ -203,7 +203,7 @@
             </span>
           </div>
           <p v-if="deliveryConfig.enabled && deliveryEstimate" class="text-[12px] text-earth-500 mb-3">
-            <span class="mr-1">{{ deliveryEstimate.hasBackorder ? '📦' : '🚚' }}</span>
+            <span class="mr-1">🚚</span>
             Entrega estimada el
             <strong class="text-earth-700 whitespace-nowrap">{{ deliveryDeadlineText }}</strong>
           </p>
@@ -241,22 +241,17 @@
               <!-- Fecha estimada de recepción -->
               <div
                 v-if="deliveryConfig.enabled && deliveryEstimate"
-                class="rounded-xl border px-3 py-2.5 text-xs"
-                :class="deliveryEstimate.hasBackorder
-                  ? 'bg-amber-50/70 border-amber-200 text-amber-800'
-                  : 'bg-primary-50/60 border-primary-100 text-primary-800'"
+                class="rounded-xl border px-3 py-2.5 text-xs bg-primary-50/60 border-primary-100 text-primary-800"
               >
                 <p class="font-bold leading-snug">
-                  <span class="mr-1">{{ deliveryEstimate.hasBackorder ? '📦' : '🚚' }}</span>
+                  <span class="mr-1">🚚</span>
                   Entrega estimada el <span class="whitespace-nowrap">{{ deliveryDeadlineText }}</span>
                 </p>
-                <p class="font-normal opacity-90 mt-1">
-                  {{
-                    deliveryEstimate.hasBackorder
-                      ? 'Incluye artículos que se preparan en taller.'
-                      : 'Días hábiles, de lunes a viernes.'
-                  }}
-                </p>
+                <ul class="mt-1.5 space-y-1 font-normal opacity-90">
+                  <li>✨ Elaboración artesanal bajo pedido: Listo en 24-48 hrs hábiles</li>
+                  <li>🚚 Envío Express (1-2 días hábiles tras elaboración)</li>
+                  <li v-if="deliveryConfig.localPickupEnabled">📍 Recolección en Punto Post o entrega local: Disponible en 24 hrs tras elaboración</li>
+                </ul>
               </div>
 
               <!-- Desglose -->
@@ -402,32 +397,12 @@ function formatPrice(price) {
 
 // ===== 🚚 Fecha estimada de entrega =====
 const deliveryConfig = reactive({ ...DEFAULT_DELIVERY_CONFIG })
-const deliveryEstimate = ref(null)
 
-// ¿Algún artículo del carrito es sobre pedido?
-const cartHasBackorder = computed(() => cart.items.some(i => i.backorder))
+// Regla: 2 días hábiles de elaboración + 1-2 días hábiles de envío express.
+const delivery = computed(() => estimateDelivery({}, { ...deliveryConfig }))
 
-// Días de preparación efectivos del carrito: el máximo entre los ítems
-// (el ítem que más tarda en prepararse manda sobre la fecha de entrega).
-const cartPrepDays = computed(() => {
-  let min = null
-  let max = null
-  cart.items.forEach((i) => {
-    if (typeof i.prepDaysMin === 'number' && (min === null || i.prepDaysMin > min)) min = i.prepDaysMin
-    if (typeof i.prepDaysMax === 'number' && (max === null || i.prepDaysMax > max)) max = i.prepDaysMax
-  })
-  return { min, max }
-})
-
-// Fecha estimada (se recalcula cuando cambia el carrito o el corte)
-const delivery = computed(() => {
-  const cfg = { ...deliveryConfig } // merge reactivo plano
-  return estimateDelivery({
-    isBackorder: cartHasBackorder.value,
-    prepDaysMin: cartPrepDays.value.min ?? undefined,
-    prepDaysMax: cartPrepDays.value.max ?? undefined,
-  }, cfg)
-})
+// Copia reactiva para el template (se actualiza sola al cambiar la config)
+const deliveryEstimate = computed(() => (deliveryConfig.enabled ? delivery.value : null))
 
 // Texto principal
 const deliveryDeadlineText = computed(() => delivery.value ? formatDeliveryDeadline(delivery.value) : '')
@@ -435,13 +410,7 @@ const deliveryDeadlineText = computed(() => delivery.value ? formatDeliveryDeadl
 async function loadDeliveryConfigFromDB() {
   const cfg = await loadDeliveryConfig()
   Object.assign(deliveryConfig, cfg)
-  deliveryEstimate.value = cfg.enabled ? delivery.value : null
 }
-// Recargar la fecha cuando cambie el contenido del carrito (para el deadline)
-watch(
-  () => [cart.items.length, cartHasBackorder.value],
-  () => { deliveryEstimate.value = deliveryConfig.enabled ? delivery.value : null }
-)
 
 // Bloquear scroll del body cuando el carrito está abierto
 watch(() => cart.isOpen, (open) => {

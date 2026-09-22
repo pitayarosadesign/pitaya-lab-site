@@ -3,44 +3,47 @@
  * =================================
  * Lógica de cálculo de fechas de entrega estimada según las reglas de negocio:
  *
- *  - Todos los pedidos:
- *      * Preparación: 1 a 2 días hábiles (o el valor definido por
- *        producto/categoría, p. ej. Recuerdos = 4 días hábiles).
- *      * Envío de mensajería: 2 a 3 días hábiles.
- *      * Total visible al cliente: 3 a 5 días hábiles.
+ *  - Todos los pedidos (elaboración artesanal bajo pedido):
+ *      * Elaboración en taller: 2 días hábiles (fijo).
+ *      * Envío Express: 1 a 2 días hábiles tras elaboración.
+ *      * Total visible al cliente: 3 a 4 días hábiles.
  *      * Órdenes pagadas antes de las 13:00 hrs (en día hábil) inician la
- *        preparación el mismo día; si no, al siguiente día hábil.
+ *        elaboración el mismo día; si no, al siguiente día hábil.
  *
  * La leyenda predominante es "Entrega estimada el [fecha]" (límite máximo y
- * honesto), calculada sumando días hábiles (lunes a viernes) a la compra.
- * Todos los cálculos usan DÍAS HÁBILES (lunes a viernes).
+ * honesto), calculada sumando DÍAS HÁBILES (lunes a viernes, excluyendo
+ * festivos de México) a la compra.
  */
 
 export interface DeliveryEstimateConfig {
   enabled: boolean
-  /** Horas de corte (local) para envío el mismo día */
+  /** Horas de corte (local) para iniciar elaboración el mismo día */
   sameDayCutoffHour: number
   sameDayCutoffMinute: number
-  /** Días hábiles de envío de mensajería (min y max) */
+  /** Días hábiles de tránsito express (min y max) */
   transitDaysMin: number
-  transitDaysMax: number  /** Días hábiles de preparación (default general 1-2; override por producto/categoría) */
+  transitDaysMax: number
+  /** Días hábiles de elaboración en taller (default fijo 2) */
   prepDaysMin: number
   prepDaysMax: number
   /** Copys configurables */
   backorderNote: string
   cutoffNote: string
+  /** Mostrar badge de recolección local / Punto Post */
+  localPickupEnabled: boolean
 }
 
 export const DEFAULT_DELIVERY_CONFIG: DeliveryEstimateConfig = {
   enabled: true,
   sameDayCutoffHour: 13,
   sameDayCutoffMinute: 0,
-  transitDaysMin: 2,
-  transitDaysMax: 3,
-  prepDaysMin: 1,
+  transitDaysMin: 1,
+  transitDaysMax: 2,
+  prepDaysMin: 2,
   prepDaysMax: 2,
   backorderNote: 'Este artículo se prepara en taller (sobre pedido).',
-  cutoffNote: 'Órdenes pagadas antes de la 1:00 pm inician preparación el mismo día hábil. De lo contrario, al siguiente día hábil.',
+  cutoffNote: 'Órdenes pagadas antes de la 1:00 pm inician elaboración el mismo día hábil. De lo contrario, al siguiente día hábil.',
+  localPickupEnabled: true,
 }
 
 const MXN = new Intl.DateTimeFormat('es-MX', {
@@ -56,11 +59,32 @@ const MXN_MEDIUM = new Intl.DateTimeFormat('es-MX', {
 })
 
 /**
- * ¿Es una fecha día hábil (lunes a viernes)? Ignora festivos (sin tabla).
+ * Festivos federales de México (fijos + los que se recorren a lunes).
+ */
+function isHoliday(date: Date): boolean {
+  const m = date.getMonth() // 0-based
+  const d = date.getDate()
+  const dow = date.getDay()
+
+  // Fijos
+  if ((m === 0 && d === 1) || (m === 4 && d === 1) || (m === 8 && d === 16) || (m === 11 && d === 25)) return true
+  // Primer lunes de febrero (Constitución)
+  if (m === 1 && dow === 1 && d <= 7) return true
+  // Tercer lunes de marzo (Natalicio de Benito Juárez)
+  if (m === 2 && dow === 1 && d >= 15 && d <= 21) return true
+  // Tercer lunes de noviembre (Revolución)
+  if (m === 10 && dow === 1 && d >= 15 && d <= 21) return true
+
+  return false
+}
+
+/**
+ * ¿Es una fecha día hábil (lunes a viernes, excluyendo festivos)?
  */
 function isBusinessDay(date: Date): boolean {
   const dow = date.getDay()
-  return dow !== 0 && dow !== 6
+  if (dow === 0 || dow === 6) return false
+  return !isHoliday(date)
 }
 
 /**
@@ -86,32 +110,31 @@ function isAfterCutoff(date: Date, hour: number, minute: number): boolean {
 }
 
 /**
- * Calcular la fecha de ENVÍO (cuándo sale el paquete del taller).
+ * Calcular la fecha en que arranca la elaboración.
  *  - Si compra en día hábil antes del corte → hoy mismo.
  *  - Si no → siguiente día hábil.
  */
 export function calculateShipDate(
   now: Date,
-  isBackorder: boolean,
+  _isBackorder: boolean,
   cfg = DEFAULT_DELIVERY_CONFIG
 ): Date {
-  // Handle over-edges in timezone realism by comparing local
   const todayIsBusiness = isBusinessDay(now)
-  if (!isBackorder && todayIsBusiness && !isAfterCutoff(now, cfg.sameDayCutoffHour, cfg.sameDayCutoffMinute)) {
-    // Se envía hoy mismo (aún no pasa el corte)
+  if (todayIsBusiness && !isAfterCutoff(now, cfg.sameDayCutoffHour, cfg.sameDayCutoffMinute)) {
+    // La elaboración arranca hoy mismo (aún no pasa el corte)
     return new Date(now)
   }
-  // Se envía el siguiente día hábil (base hoy para cálculo)
+  // Arranca el siguiente día hábil
   return addBusinessDays(now, 1)
 }
 
 /**
  * Rango de fechas estimadas de ENTREGA (min y max) y la fecha "antes de" (máx).
- * Regresa fechas en días hábiles desde la fecha de envío.
+ * Regresa fechas en días hábiles desde la fecha de elaboración.
  *
  * @param opts.isBackorder — true si el carrito contiene al menos un sobre pedido
- * @param opts.prepDaysMin — días hábiles de preparación del carrito (override por producto/categoría)
- * @param opts.prepDaysMax — días hábiles de preparación del carrito (override por producto/categoría)
+ * @param opts.prepDaysMin — días hábiles de elaboración (override por producto/categoría)
+ * @param opts.prepDaysMax — días hábiles de elaboración (override por producto/categoría)
  * @param opts.now — fecha de referencia (default: new Date())
  */
 export function estimateDelivery(
@@ -121,17 +144,16 @@ export function estimateDelivery(
   const now = opts.now || new Date()
   const isBackorder = !!opts.isBackorder
 
-  // Días de preparación: SIEMPRE se suman al envío. Si el producto/categoría
-  // define su propia preparación (ej. Recuerdos = 4), se usa ese valor;
-  // si no, el default general (1-2 días hábiles).
+  // Días de elaboración: default 2 días hábiles (fijo). Se puede sobreescribir
+  // por producto/categoría si se pasan prepDaysMin/prepDaysMax.
   const prepMin = typeof opts.prepDaysMin === 'number' ? opts.prepDaysMin : cfg.prepDaysMin
   const prepMax = typeof opts.prepDaysMax === 'number' ? opts.prepDaysMax : cfg.prepDaysMax
 
-  // Cuándo arranca la preparación: hoy mismo si es día hábil antes del corte
-  // y no es sobre pedido; si no, el siguiente día hábil.
+  // Cuándo arranca la elaboración: hoy mismo si es día hábil antes del corte;
+  // si no, el siguiente día hábil.
   const base = calculateShipDate(now, isBackorder, cfg)
 
-  // Entrega = preparación + tránsito de mensajería (ambos en días hábiles).
+  // Entrega = elaboración + tránsito express (ambos en días hábiles).
   const minDate = addBusinessDays(addBusinessDays(base, prepMin), cfg.transitDaysMin)
   const maxDate = addBusinessDays(addBusinessDays(base, prepMax), cfg.transitDaysMax)
 
