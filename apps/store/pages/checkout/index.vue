@@ -349,7 +349,7 @@ const shippingMethods = computed(() => [
     // Disponibilidad según la cotización de Envía.com para el CP (si aún no
     // se cotiza, se muestra optimista y se confirma al escribir el CP).
     available: quote.value ? quote.value.methods?.pointPost?.available !== false : true,
-    deliveryEstimate: quote.value?.methods?.pointPost?.deliveryEstimate || '5-7 días hábiles',
+    deliveryEstimate: quote.value?.methods?.pointPost?.deliveryEstimate || '1-5 días hábiles',
     deliveryDate: quote.value?.methods?.pointPost?.deliveryDate || null,
   },
 ])
