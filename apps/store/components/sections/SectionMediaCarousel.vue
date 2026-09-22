@@ -15,13 +15,13 @@
       </div>
 
       <!-- Carrusel -->
-      <div
-        v-if="slides.length"
-        class="relative overflow-hidden rounded-3xl border border-earth-200 bg-earth-900 shadow-lg"
-        :style="{ aspectRatio: aspect }"
-        @mouseenter="paused = true"
-        @mouseleave="paused = false"
-      >
+      <div v-if="slides.length" class="max-w-4xl mx-auto">
+        <div
+          class="relative overflow-hidden rounded-3xl border border-earth-200 bg-earth-900 shadow-lg"
+          :style="{ aspectRatio: aspect }"
+          @mouseenter="paused = true"
+          @mouseleave="paused = false"
+        >
         <div
           v-for="(slide, i) in slides"
           :key="i"
@@ -109,6 +109,7 @@
             :class="i === current ? 'w-6 bg-white' : 'w-2 bg-white/50 hover:bg-white/80'"
             :aria-label="'Ir a slide ' + (i + 1)"
           ></button>
+        </div>
         </div>
       </div>
 
