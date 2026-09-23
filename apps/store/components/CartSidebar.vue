@@ -248,9 +248,9 @@
                   Entrega estimada el <span class="whitespace-nowrap">{{ deliveryDeadlineText }}</span>
                 </p>
                 <ul class="mt-1.5 space-y-1 font-normal opacity-90">
-                  <li>✨ Elaboración artesanal bajo pedido: Listo en 24-48 hrs hábiles</li>
-                  <li>🚚 Envío Express (1-2 días hábiles tras elaboración)</li>
-                  <li v-if="deliveryConfig.localPickupEnabled">📍 Recolección en Punto Post o entrega local: Disponible en 24 hrs tras elaboración</li>
+                  <li v-if="deliveryEstimate.isBackorder">✨ Elaboración artesanal bajo pedido: Listo en 24-48 hrs hábiles</li>
+                  <li>🚚 Envío Express (1-2 días hábiles{{ deliveryEstimate.isBackorder ? ' tras elaboración' : '' }})</li>
+                  <li v-if="deliveryConfig.localPickupEnabled">📍 Recolección en Punto Post o entrega local: Disponible en 24 hrs{{ deliveryEstimate.isBackorder ? ' tras elaboración' : '' }}</li>
                 </ul>
               </div>
 
@@ -398,8 +398,14 @@ function formatPrice(price) {
 // ===== 🚚 Fecha estimada de entrega =====
 const deliveryConfig = reactive({ ...DEFAULT_DELIVERY_CONFIG })
 
-// Regla: 2 días hábiles de elaboración + 1-2 días hábiles de envío express.
-const delivery = computed(() => estimateDelivery({}, { ...deliveryConfig }))
+// ¿El carrito incluye artículos bajo pedido (sin stock)?
+const cartHasBackorder = computed(() => cart.items.some(i => i.backorder))
+
+// Bajo pedido: 2 días hábiles de elaboración + 1-2 días de envío express.
+// Con stock: se envía directo (1-2 días hábiles).
+const delivery = computed(() =>
+  estimateDelivery({ isBackorder: cartHasBackorder.value }, { ...deliveryConfig })
+)
 
 // Copia reactiva para el template (se actualiza sola al cambiar la config)
 const deliveryEstimate = computed(() => (deliveryConfig.enabled ? delivery.value : null))

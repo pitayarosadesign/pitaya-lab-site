@@ -3,12 +3,14 @@
  * =================================
  * Lógica de cálculo de fechas de entrega estimada según las reglas de negocio:
  *
- *  - Todos los pedidos (elaboración artesanal bajo pedido):
+ *  - Con stock disponible: se envía directo.
+ *      * Envío Express: 1 a 2 días hábiles.
+ *  - Bajo pedido (sin stock, elaboración artesanal):
  *      * Elaboración en taller: 2 días hábiles (fijo).
  *      * Envío Express: 1 a 2 días hábiles tras elaboración.
  *      * Total visible al cliente: 3 a 4 días hábiles.
- *      * Órdenes pagadas antes de las 13:00 hrs (en día hábil) inician la
- *        elaboración el mismo día; si no, al siguiente día hábil.
+ *  - Órdenes pagadas antes de las 13:00 hrs (en día hábil) inician el proceso
+ *    el mismo día; si no, al siguiente día hábil.
  *
  * La leyenda predominante es "Entrega estimada el [fecha]" (límite máximo y
  * honesto), calculada sumando DÍAS HÁBILES (lunes a viernes, excluyendo
@@ -144,16 +146,20 @@ export function estimateDelivery(
   const now = opts.now || new Date()
   const isBackorder = !!opts.isBackorder
 
-  // Días de elaboración: default 2 días hábiles (fijo). Se puede sobreescribir
-  // por producto/categoría si se pasan prepDaysMin/prepDaysMax.
-  const prepMin = typeof opts.prepDaysMin === 'number' ? opts.prepDaysMin : cfg.prepDaysMin
-  const prepMax = typeof opts.prepDaysMax === 'number' ? opts.prepDaysMax : cfg.prepDaysMax
+  // Elaboración en taller (2 días hábiles, fijo) SOLO para artículos bajo
+  // pedido (sin stock). Con stock disponible el pedido pasa directo a envío.
+  const prepMin = isBackorder
+    ? (typeof opts.prepDaysMin === 'number' ? opts.prepDaysMin : cfg.prepDaysMin)
+    : 0
+  const prepMax = isBackorder
+    ? (typeof opts.prepDaysMax === 'number' ? opts.prepDaysMax : cfg.prepDaysMax)
+    : 0
 
   // Cuándo arranca la elaboración: hoy mismo si es día hábil antes del corte;
   // si no, el siguiente día hábil.
   const base = calculateShipDate(now, isBackorder, cfg)
 
-  // Entrega = elaboración + tránsito express (ambos en días hábiles).
+  // Entrega = elaboración (si aplica) + tránsito express (días hábiles).
   const minDate = addBusinessDays(addBusinessDays(base, prepMin), cfg.transitDaysMin)
   const maxDate = addBusinessDays(addBusinessDays(base, prepMax), cfg.transitDaysMax)
 

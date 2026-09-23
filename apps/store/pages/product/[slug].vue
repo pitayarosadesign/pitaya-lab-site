@@ -377,9 +377,9 @@
                 <span>Entrega estimada el <strong class="whitespace-nowrap">{{ productDeliveryDeadlineText }}</strong></span>
               </p>
               <ul class="mt-2 space-y-1 text-[13px] leading-snug">
-                <li>✨ <strong>Elaboración artesanal bajo pedido:</strong> Listo en 24-48 hrs hábiles</li>
-                <li>🚚 <strong>Envío Express</strong> (1-2 días hábiles tras elaboración)</li>
-                <li v-if="deliveryConfig.localPickupEnabled">📍 <strong>Recolección en Punto Post o entrega local:</strong> Disponible en 24 hrs tras elaboración</li>
+                <li v-if="isMadeToOrder">✨ <strong>Elaboración artesanal bajo pedido:</strong> Listo en 24-48 hrs hábiles</li>
+                <li>🚚 <strong>Envío Express</strong> (1-2 días hábiles{{ isMadeToOrder ? ' tras elaboración' : '' }})</li>
+                <li v-if="deliveryConfig.localPickupEnabled">📍 <strong>Recolección en Punto Post o entrega local:</strong> Disponible en 24 hrs{{ isMadeToOrder ? ' tras elaboración' : '' }}</li>
               </ul>
             </div>
 
@@ -998,15 +998,18 @@ const currentStock = computed(() => {
 })
 
 // ===== 🚚 Entrega estimada (página de producto) =====
+// ¿Producto bajo pedido (sin stock)? Con stock disponible se envía directo.
+const isMadeToOrder = computed(() => currentStock.value <= 0)
+
 // Reloj local para recalcular la fecha en cliente (evita desajustes de zona
 // horaria en SSR y actualiza al pasar el corte de las 13:00).
 const nowTick = ref(new Date())
 let deliveryTickTimer = null
 
-// Regla: 2 días hábiles de elaboración en taller + 1-2 días hábiles de
-// envío express. Todo producto se trata como elaboración artesanal bajo pedido.
+// Bajo pedido: 2 días hábiles de elaboración + 1-2 días de envío express.
+// Con stock: se envía directo (1-2 días hábiles).
 const productDelivery = computed(() =>
-  estimateDelivery({ now: nowTick.value }, { ...deliveryConfig })
+  estimateDelivery({ now: nowTick.value, isBackorder: isMadeToOrder.value }, { ...deliveryConfig })
 )
 const productDeliveryDeadlineText = computed(() =>
   productDelivery.value ? formatDeliveryDeadline(productDelivery.value) : ''
