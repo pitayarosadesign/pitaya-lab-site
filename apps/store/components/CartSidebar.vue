@@ -105,7 +105,8 @@
               <div class="flex items-center gap-2 mt-2">
                 <button
                   @click="cart.updateQuantity(item.id, item.quantity - 1, item.variant?.id)"
-                  class="w-7 h-7 rounded-full bg-white border border-earth-200 flex items-center justify-center text-earth-500 hover:text-earth-700 hover:border-earth-300 transition-all"
+                  :disabled="item.quantity <= (item.minOrderQuantity || 1)"
+                  class="w-7 h-7 rounded-full bg-white border border-earth-200 flex items-center justify-center text-earth-500 hover:text-earth-700 hover:border-earth-300 transition-all disabled:opacity-30"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>

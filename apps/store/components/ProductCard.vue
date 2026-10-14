@@ -109,7 +109,7 @@
             <button
               type="button"
               @click="decrement"
-              :disabled="qty <= 1"
+              :disabled="qty <= minQty"
               class="w-8 h-11 flex items-center justify-center text-earth-500 hover:text-earth-700 disabled:opacity-30 transition-colors"
               aria-label="Disminuir cantidad"
             >−</button>
@@ -128,7 +128,7 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/>
             </svg>
-            Agregar
+            {{ requiresPersonalization ? 'Personalizar' : 'Agregar' }}
           </button>
         </div>
 
@@ -226,6 +226,14 @@ const props = defineProps({
     type: Number,
     default: null
   },
+  minOrderQuantity: {
+    type: Number,
+    default: 1
+  },
+  requiresPersonalization: {
+    type: Boolean,
+    default: false
+  },
   // Query opcional a añadir al enlace de detalle (ej. preselección de aroma)
   linkQuery: {
     type: Object,
@@ -234,10 +242,11 @@ const props = defineProps({
 })
 
 const showToast = ref(false)
-const qty = ref(1)
+const minQty = computed(() => Math.max(1, Number(props.minOrderQuantity) || 1))
+const qty = ref(minQty.value)
 
 function decrement() {
-  qty.value = Math.max(1, qty.value - 1)
+  qty.value = Math.max(minQty.value, qty.value - 1)
 }
 
 function increment() {
@@ -280,6 +289,12 @@ const displayBadge = computed(() => badgeLabel(props.badge, props.isFeatured))
 const badgeStyle = computed(() => badgeClass(displayBadge.value))
 
 function addToCart() {
+  // Productos que requieren personalización: ir al detalle para personalizar.
+  if (props.requiresPersonalization) {
+    navigateTo(productLink.value)
+    return
+  }
+
   cart.addItem({
     id: String(props.productId || props.productSlug || props.productName),
     slug: props.productSlug || '',
@@ -289,11 +304,12 @@ function addToCart() {
     image: props.imageUrl,
     variant: null,
     quantity: qty.value,
+    minOrderQuantity: minQty.value,
     prepDaysMin: props.prepDaysMin,
     prepDaysMax: props.prepDaysMax,
   })
 
-  qty.value = 1
+  qty.value = minQty.value
 
   // Mostrar toast
   showToast.value = true

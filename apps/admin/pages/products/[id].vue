@@ -750,6 +750,8 @@ async function loadProduct() {
     form.badge = data.badge || ''
     form.prep_days_min = data.prep_days_min ?? null
     form.prep_days_max = data.prep_days_max ?? null
+    form.min_order_quantity = data.min_order_quantity ?? 1
+    form.pack_label = data.pack_label || ''
     form.images = data.images || []
 
     // Pre-seleccionar las variantes (aromas) existentes del producto
@@ -1105,6 +1107,8 @@ async function handleSave() {
           prep_days_min: form.prep_days_min === '' || form.prep_days_min == null ? null : Number(form.prep_days_min),
           prep_days_max: form.prep_days_max === '' || form.prep_days_max == null ? null : Number(form.prep_days_max),
           personalization: form.personalization,
+          min_order_quantity: Number(form.min_order_quantity) || 1,
+          pack_label: form.pack_label || null,
         },
         images,
         // En evento enviamos variantOptions; en tienda, el modelo de aromas.

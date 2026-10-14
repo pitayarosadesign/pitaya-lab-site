@@ -27,6 +27,10 @@ export interface CartItem {
   lengthCm?: number
   widthCm?: number
   heightCm?: number
+  /** Cantidad mínima de compra del producto (default 1) */
+  minOrderQuantity?: number
+  /** Datos de personalización capturados en la PDP */
+  personalization?: any
 }
 
 export interface CartState {
@@ -143,7 +147,7 @@ export const useCartStore = defineStore('cart', {
         i => i.id === itemId && i.variant?.id === variantId
       )
       if (item) {
-        item.quantity = Math.max(1, quantity)
+        item.quantity = Math.max(item.minOrderQuantity || 1, quantity)
         saveCart(this.items)
       }
     },
@@ -183,4 +187,3 @@ export const useCartStore = defineStore('cart', {
     },
   },
 })
-

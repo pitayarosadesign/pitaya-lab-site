@@ -114,6 +114,8 @@ export default defineEventHandler(async (event) => {
         // Mayoreo / precio negocio por tramos de cantidad
         wholesale: p.wholesale_tiers || null,
         personalization: p.personalization || null,
+        minOrderQuantity: p.min_order_quantity || 1,
+        packLabel: p.pack_label || null,
         amazonLink: p.amazon_link,
         amazonAsin: p.amazon_asin,
         amazonPrice: p.amazon_price,
@@ -134,4 +136,3 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, message: e.message })
   }
 })
-

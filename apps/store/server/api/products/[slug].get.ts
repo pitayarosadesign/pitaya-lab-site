@@ -108,6 +108,8 @@ export default defineEventHandler(async (event) => {
         // 💼 Mayoreo / precio negocio y 🎨 personalización
         wholesale: product.wholesale_tiers || null,
         personalization: product.personalization || null,
+        minOrderQuantity: product.min_order_quantity || 1,
+        packLabel: product.pack_label || null,
         features: [],
       }
     }

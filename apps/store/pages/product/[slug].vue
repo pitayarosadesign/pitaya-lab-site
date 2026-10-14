@@ -412,6 +412,36 @@
               </span>
             </div>
 
+            <!-- 🎨 Personalización -->
+            <div
+              id="personalizacion"
+              v-if="personalizationConfig?.enabled"
+              class="bg-amber-50/70 border border-amber-200 rounded-2xl p-4 mb-6"
+            >
+              <p class="text-sm font-semibold text-earth-900 mb-3 flex items-center gap-2">
+                <span class="text-lg leading-none">🎨</span>
+                <span>Personaliza tu pedido</span>
+              </p>
+              <div v-for="(field, i) in personalizationConfig.textFields" :key="i" class="mb-3">
+                <label class="block text-xs font-medium text-earth-700 mb-1">
+                  {{ field.label }} <span v-if="field.required" class="text-red-500">*</span>
+                </label>
+                <input
+                  v-model="personalizationForm.fields[i]"
+                  type="text"
+                  class="w-full px-3 py-2 rounded-lg border border-earth-200 bg-white focus:border-primary-400 outline-none transition-all text-sm"
+                />
+              </div>
+              <div v-if="personalizationConfig.file?.enabled" class="mb-1">
+                <label class="block text-xs font-medium text-earth-700 mb-1">
+                  Adjunta tu diseño o arte <span v-if="personalizationConfig.file.required" class="text-red-500">*</span>
+                </label>
+                <input type="file" :accept="personalizationFileAccept" @change="onPersonalizationFile" class="text-sm" />
+                <p v-if="personalizationForm.fileName" class="text-xs text-earth-500 mt-1">📎 {{ personalizationForm.fileName }}</p>
+              </div>
+              <p v-if="personalizationError" class="text-xs text-red-600 mt-2">{{ personalizationError }}</p>
+            </div>
+
             <!-- Botones de acción -->
             <div class="space-y-3">
               <!-- Cantidad -->
@@ -421,7 +451,7 @@
                   <button
                     type="button"
                     @click="decrementQty"
-                    :disabled="quantity <= 1"
+                    :disabled="quantity <= minOrderQuantity"
                     class="w-10 h-11 flex items-center justify-center text-earth-500 hover:text-earth-700 disabled:opacity-30 transition-colors"
                     aria-label="Disminuir cantidad"
                   >−</button>
@@ -434,6 +464,10 @@
                   >+</button>
                 </div>
               </div>
+
+              <p v-if="minOrderQuantity > 1 || product.packLabel" class="text-xs text-amber-600 -mt-1">
+                📦 {{ product.packLabel || `Mínimo ${minOrderQuantity} piezas` }}
+              </p>
 
               <!-- Agregar al carrito -->
               <button
@@ -597,6 +631,8 @@
               :is-featured="rp.isFeatured"
               :prep-days-min="rp.prepDaysMin"
               :prep-days-max="rp.prepDaysMax"
+              :min-order-quantity="rp.minOrderQuantity"
+              :requires-personalization="!!rp.personalization?.enabled"
             />
           </div>
         </div>
@@ -997,6 +1033,63 @@ const currentStock = computed(() => {
   return product.value.stock
 })
 
+// ===== 📦 Mínimo de compra y 🎨 personalización =====
+const minOrderQuantity = computed(() => Math.max(1, Number(product.value?.minOrderQuantity) || 1))
+
+const personalizationConfig = computed(() => product.value?.personalization || null)
+const personalizationForm = reactive({ fields: {}, fileName: '', fileData: '' })
+const personalizationError = ref('')
+
+const personalizationFileAccept = computed(() => {
+  const types = personalizationConfig.value?.file?.types || ['image']
+  return types
+    .map(t => (t === 'image' ? 'image/*' : t === 'pdf' ? 'application/pdf' : ''))
+    .filter(Boolean)
+    .join(',') || '*'
+})
+
+function onPersonalizationFile(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  const maxMb = personalizationConfig.value?.file?.maxMb || 5
+  if (file.size > maxMb * 1024 * 1024) {
+    personalizationError.value = `El archivo excede el tamaño máximo de ${maxMb} MB.`
+    e.target.value = ''
+    return
+  }
+  personalizationError.value = ''
+  personalizationForm.fileName = file.name
+  const reader = new FileReader()
+  reader.onload = () => { personalizationForm.fileData = String(reader.result || '') }
+  reader.readAsDataURL(file)
+}
+
+function validatePersonalization() {
+  const cfg = personalizationConfig.value
+  if (!cfg?.enabled) return true
+  personalizationError.value = ''
+  for (let i = 0; i < (cfg.textFields || []).length; i++) {
+    const f = cfg.textFields[i]
+    const val = String(personalizationForm.fields[i] || '').trim()
+    if (f.required && !val) {
+      personalizationError.value = `Completa el campo obligatorio: ${f.label}`
+      return false
+    }
+  }
+  if (cfg.file?.enabled && cfg.file.required && !personalizationForm.fileData) {
+    personalizationError.value = 'Adjunta el archivo requerido para personalizar.'
+    return false
+  }
+  return true
+}
+
+function resetPersonalization() {
+  personalizationForm.fields = {}
+  personalizationForm.fileName = ''
+  personalizationForm.fileData = ''
+  personalizationError.value = ''
+}
+
 // ===== 🚚 Entrega estimada (página de producto) =====
 // ¿Producto bajo pedido (sin stock)? Con stock disponible se envía directo.
 const isMadeToOrder = computed(() => currentStock.value <= 0)
@@ -1059,7 +1152,7 @@ function formatPrice(price) {
 const quantity = ref(1)
 
 function decrementQty() {
-  quantity.value = Math.max(1, quantity.value - 1)
+  quantity.value = Math.max(minOrderQuantity.value, quantity.value - 1)
 }
 
 function incrementQty() {
@@ -1069,6 +1162,13 @@ function incrementQty() {
 // Agregar al carrito
 function addToCart() {
   if (!product.value || !isPurchasable.value) return
+
+  // 🎨 Validar personalización obligatoria antes de agregar
+  if (!validatePersonalization()) {
+    const el = document.getElementById('personalizacion')
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    return
+  }
 
   const cartStore = useCartStore()
 
@@ -1096,10 +1196,19 @@ function addToCart() {
     lengthCm: product.value.lengthCm ?? null,
     widthCm: product.value.widthCm ?? null,
     heightCm: product.value.heightCm ?? null,
+    minOrderQuantity: minOrderQuantity.value,
+    personalization: personalizationConfig.value?.enabled
+      ? {
+          fields: { ...personalizationForm.fields },
+          fileName: personalizationForm.fileName || null,
+          fileData: personalizationForm.fileData || null,
+        }
+      : null,
   }
 
   cartStore.addItem(cartItem)
-  quantity.value = 1
+  quantity.value = minOrderQuantity.value
+  resetPersonalization()
 
   // 🎉 Toast de confirmación con miniatura y acciones
   showAddToast.value = true

@@ -198,6 +198,8 @@
               :is-featured="product.isFeatured"
               :prep-days-min="product.prepDaysMin"
               :prep-days-max="product.prepDaysMax"
+              :min-order-quantity="product.minOrderQuantity"
+              :requires-personalization="!!product.personalization?.enabled"
               :link-query="activeFragrance ? { aroma: selectedAroma?.slug || selectedAroma?.name } : null"
             />
           </div>
