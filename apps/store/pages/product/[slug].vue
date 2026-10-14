@@ -418,27 +418,57 @@
               v-if="personalizationConfig?.enabled"
               class="bg-amber-50/70 border border-amber-200 rounded-2xl p-4 mb-6"
             >
-              <p class="text-sm font-semibold text-earth-900 mb-3 flex items-center gap-2">
+              <p class="text-sm font-semibold text-earth-900 mb-1 flex items-center gap-2">
                 <span class="text-lg leading-none">🎨</span>
                 <span>Personaliza tu pedido</span>
               </p>
+              <p class="text-xs text-earth-500 mb-3">
+                Los campos <span class="font-semibold text-red-500">Obligatorios</span> deben completarse para agregar el producto al carrito.
+              </p>
+
               <div v-for="(field, i) in personalizationConfig.textFields" :key="i" class="mb-3">
-                <label class="block text-xs font-medium text-earth-700 mb-1">
-                  {{ field.label }} <span v-if="field.required" class="text-red-500">*</span>
+                <label class="flex items-center gap-2 text-xs font-medium text-earth-700 mb-1">
+                  <span>{{ field.label }}</span>
+                  <span v-if="field.required" class="px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-[10px] font-semibold leading-none">Obligatorio</span>
+                  <span v-else class="px-1.5 py-0.5 rounded-full bg-earth-100 text-earth-500 text-[10px] font-medium leading-none">Opcional</span>
                 </label>
                 <input
                   v-model="personalizationForm.fields[i]"
                   type="text"
+                  :placeholder="field.required ? 'Escribe aquí' : 'Escribe aquí (opcional)'"
                   class="w-full px-3 py-2 rounded-lg border border-earth-200 bg-white focus:border-primary-400 outline-none transition-all text-sm"
                 />
               </div>
+
               <div v-if="personalizationConfig.file?.enabled" class="mb-1">
-                <label class="block text-xs font-medium text-earth-700 mb-1">
-                  Adjunta tu diseño o arte <span v-if="personalizationConfig.file.required" class="text-red-500">*</span>
+                <label class="flex items-center gap-2 text-xs font-medium text-earth-700 mb-1">
+                  <span>Adjunta tu diseño o arte</span>
+                  <span v-if="personalizationConfig.file.required" class="px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-[10px] font-semibold leading-none">Obligatorio</span>
+                  <span v-else class="px-1.5 py-0.5 rounded-full bg-earth-100 text-earth-500 text-[10px] font-medium leading-none">Opcional</span>
                 </label>
-                <input type="file" :accept="personalizationFileAccept" @change="onPersonalizationFile" class="text-sm" />
-                <p v-if="personalizationForm.fileName" class="text-xs text-earth-500 mt-1">📎 {{ personalizationForm.fileName }}</p>
+
+                <label class="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg border border-dashed border-earth-300 bg-white text-earth-600 hover:border-primary-400 hover:text-primary-700 cursor-pointer transition-colors text-sm">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                  </svg>
+                  <span>{{ personalizationForm.fileName || 'Subir archivo' }}</span>
+                  <input
+                    ref="personalizationFileInput"
+                    type="file"
+                    :accept="personalizationFileAccept"
+                    @change="onPersonalizationFile"
+                    class="hidden"
+                  />
+                </label>
+
+                <p class="text-xs text-earth-500 mt-1">{{ personalizationFileHint }}</p>
+
+                <div v-if="personalizationForm.fileName" class="flex items-center gap-2 mt-1">
+                  <span class="text-xs text-earth-600 truncate">📎 {{ personalizationForm.fileName }}</span>
+                  <button type="button" @click="clearPersonalizationFile" class="text-[11px] text-red-500 hover:text-red-700 font-medium shrink-0">Quitar</button>
+                </div>
               </div>
+
               <p v-if="personalizationError" class="text-xs text-red-600 mt-2">{{ personalizationError }}</p>
             </div>
 
@@ -1039,6 +1069,7 @@ const minOrderQuantity = computed(() => Math.max(1, Number(product.value?.minOrd
 const personalizationConfig = computed(() => product.value?.personalization || null)
 const personalizationForm = reactive({ fields: {}, fileName: '', fileData: '' })
 const personalizationError = ref('')
+const personalizationFileInput = ref(null)
 
 const personalizationFileAccept = computed(() => {
   const types = personalizationConfig.value?.file?.types || ['image']
@@ -1046,6 +1077,16 @@ const personalizationFileAccept = computed(() => {
     .map(t => (t === 'image' ? 'image/*' : t === 'pdf' ? 'application/pdf' : ''))
     .filter(Boolean)
     .join(',') || '*'
+})
+
+const personalizationFileHint = computed(() => {
+  const cfg = personalizationConfig.value?.file
+  if (!cfg?.enabled) return ''
+  const labels = (cfg.types || ['image', 'pdf'])
+    .map(t => (t === 'image' ? 'JPG/PNG' : t === 'pdf' ? 'PDF' : t.toUpperCase()))
+    .join(' o ')
+  const maxMb = cfg.maxMb || 5
+  return `Formatos: ${labels} · Peso máximo: ${maxMb} MB.`
 })
 
 function onPersonalizationFile(e) {
@@ -1062,6 +1103,13 @@ function onPersonalizationFile(e) {
   const reader = new FileReader()
   reader.onload = () => { personalizationForm.fileData = String(reader.result || '') }
   reader.readAsDataURL(file)
+}
+
+function clearPersonalizationFile() {
+  personalizationForm.fileName = ''
+  personalizationForm.fileData = ''
+  personalizationError.value = ''
+  if (personalizationFileInput.value) personalizationFileInput.value.value = ''
 }
 
 function validatePersonalization() {
@@ -1088,6 +1136,7 @@ function resetPersonalization() {
   personalizationForm.fileName = ''
   personalizationForm.fileData = ''
   personalizationError.value = ''
+  if (personalizationFileInput.value) personalizationFileInput.value.value = ''
 }
 
 // ===== 🚚 Entrega estimada (página de producto) =====
