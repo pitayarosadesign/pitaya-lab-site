@@ -500,23 +500,33 @@
                 </div>
 
                 <!-- Cantidad libre con mínimo -->
-                <div v-else class="flex items-center justify-between gap-3 mt-2">
-                  <div class="flex items-center border border-earth-200 rounded-xl bg-white">
+                <div v-else class="mt-2">
+                  <div class="flex items-center gap-2">
                     <button
                       type="button"
                       @click="decrementQty"
                       :disabled="quantity <= minOrderQuantity"
-                      class="w-10 h-11 flex items-center justify-center text-earth-500 hover:text-earth-700 disabled:opacity-30 transition-colors"
+                      class="w-10 h-11 flex items-center justify-center rounded-lg border border-earth-200 text-earth-500 hover:text-earth-700 disabled:opacity-30 transition-colors"
                       aria-label="Disminuir cantidad"
                     >−</button>
-                    <span class="w-10 text-center text-base font-bold text-earth-800">{{ quantity }}</span>
+                    <input
+                      v-model.number="quantity"
+                      type="number"
+                      :min="minOrderQuantity"
+                      inputmode="numeric"
+                      @blur="clampQuantity"
+                      @change="clampQuantity"
+                      class="w-24 h-11 text-center text-base font-bold text-earth-800 border border-earth-200 rounded-lg focus:border-primary-400 outline-none transition-all"
+                      aria-label="Cantidad de piezas"
+                    />
                     <button
                       type="button"
                       @click="incrementQty"
-                      class="w-10 h-11 flex items-center justify-center text-earth-500 hover:text-earth-700 transition-colors"
+                      class="w-10 h-11 flex items-center justify-center rounded-lg border border-earth-200 text-earth-500 hover:text-earth-700 transition-colors"
                       aria-label="Aumentar cantidad"
                     >+</button>
                   </div>
+                  <p v-if="quantityError" class="text-xs text-red-600 mt-1">{{ quantityError }}</p>
                 </div>
 
                 <!-- Cálculo de monto por pieza (solo formato fijo) -->
@@ -1249,6 +1259,16 @@ function formatPrice(price) {
 
 // Cantidad seleccionada
 const quantity = ref(1)
+const quantityError = ref('')
+
+function clampQuantity() {
+  const n = Math.floor(Number(quantity.value))
+  if (!Number.isFinite(n) || n < minOrderQuantity.value) {
+    quantity.value = minOrderQuantity.value
+  } else {
+    quantity.value = n
+  }
+}
 
 function decrementQty() {
   quantity.value = Math.max(minOrderQuantity.value, quantity.value - 1)
@@ -1258,9 +1278,25 @@ function incrementQty() {
   quantity.value = quantity.value + 1
 }
 
+// Sincroniza la cantidad con el mínimo/formato cuando cambia el producto
+watch(minOrderQuantity, (min) => {
+  const opts = quantityOptions.value
+  if (quantity.value < min || (opts.length && !opts.includes(quantity.value))) {
+    quantity.value = opts.length ? opts[0] : min
+  }
+  quantityError.value = ''
+})
+
 // Agregar al carrito
 function addToCart() {
   if (!product.value || !isPurchasable.value) return
+
+  const qty = Number(quantity.value || 0)
+  if (qty < minOrderQuantity.value) {
+    quantityError.value = `El mínimo de compra es ${minOrderQuantity.value} piezas.`
+    return
+  }
+  quantityError.value = ''
 
   const cartStore = useCartStore()
 
