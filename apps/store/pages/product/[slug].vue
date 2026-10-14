@@ -474,30 +474,60 @@
 
             <!-- Botones de acción -->
             <div class="space-y-3">
-              <!-- Cantidad -->
-              <div class="flex items-center justify-between gap-3">
+              <!-- Cantidad / Formato de venta -->
+              <div>
                 <span class="text-sm font-semibold text-earth-700">Cantidad</span>
-                <div class="flex items-center border border-earth-200 rounded-xl bg-white">
-                  <button
-                    type="button"
-                    @click="decrementQty"
-                    :disabled="quantity <= minOrderQuantity"
-                    class="w-10 h-11 flex items-center justify-center text-earth-500 hover:text-earth-700 disabled:opacity-30 transition-colors"
-                    aria-label="Disminuir cantidad"
-                  >−</button>
-                  <span class="w-10 text-center text-base font-bold text-earth-800">{{ quantity }}</span>
-                  <button
-                    type="button"
-                    @click="incrementQty"
-                    class="w-10 h-11 flex items-center justify-center text-earth-500 hover:text-earth-700 transition-colors"
-                    aria-label="Aumentar cantidad"
-                  >+</button>
-                </div>
-              </div>
 
-              <p v-if="minOrderQuantity > 1 || product.packLabel" class="text-xs text-amber-600 -mt-1">
-                📦 {{ product.packLabel || `Mínimo ${minOrderQuantity} piezas` }}
-              </p>
+                <!-- Formato de venta fijo (ej. 12, 24, 48 pzas) -->
+                <div v-if="quantityOptions.length >= 1" class="flex flex-wrap gap-2 mt-2">
+                  <button
+                    v-for="opt in quantityOptions"
+                    :key="opt"
+                    type="button"
+                    @click="quantity = opt"
+                    class="px-4 py-2 rounded-xl border text-sm font-semibold transition-colors"
+                    :class="quantity === opt ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-earth-700 border-earth-200 hover:border-primary-300'"
+                  >
+                    {{ opt }} pzas
+                  </button>
+                </div>
+
+                <!-- Cantidad libre con mínimo -->
+                <div v-else class="flex items-center justify-between gap-3 mt-2">
+                  <div class="flex items-center border border-earth-200 rounded-xl bg-white">
+                    <button
+                      type="button"
+                      @click="decrementQty"
+                      :disabled="quantity <= minOrderQuantity"
+                      class="w-10 h-11 flex items-center justify-center text-earth-500 hover:text-earth-700 disabled:opacity-30 transition-colors"
+                      aria-label="Disminuir cantidad"
+                    >−</button>
+                    <span class="w-10 text-center text-base font-bold text-earth-800">{{ quantity }}</span>
+                    <button
+                      type="button"
+                      @click="incrementQty"
+                      class="w-10 h-11 flex items-center justify-center text-earth-500 hover:text-earth-700 transition-colors"
+                      aria-label="Aumentar cantidad"
+                    >+</button>
+                  </div>
+                </div>
+
+                <!-- Cálculo de monto por pieza (solo formato fijo) -->
+                <div v-if="quantityOptions.length >= 1" class="mt-2 text-sm text-earth-700">
+                  <p>
+                    Monto por pieza:
+                    <span class="font-bold text-earth-900">${{ formatPrice(activePrice) }}</span>
+                  </p>
+                  <p>
+                    Total:
+                    <span class="font-bold text-primary-700">${{ formatPrice(activePrice * quantity) }}</span> MXN
+                  </p>
+                </div>
+
+                <p v-if="minOrderQuantity > 1 || product.packLabel" class="text-xs text-amber-600 mt-1">
+                  📦 {{ product.packLabel || `Mínimo ${minOrderQuantity} piezas` }}
+                </p>
+              </div>
 
               <!-- Agregar al carrito -->
               <button
@@ -1064,7 +1094,18 @@ const currentStock = computed(() => {
 })
 
 // ===== 📦 Mínimo de compra y 🎨 personalización =====
-const minOrderQuantity = computed(() => Math.max(1, Number(product.value?.minOrderQuantity) || 1))
+const quantityOptions = computed(() =>
+  (product.value?.quantityOptions || [])
+    .map(n => Number(n))
+    .filter(n => Number.isFinite(n) && n > 0)
+    .sort((a, b) => a - b)
+)
+
+const minOrderQuantity = computed(() =>
+  quantityOptions.value.length
+    ? quantityOptions.value[0]
+    : Math.max(1, Number(product.value?.minOrderQuantity) || 1)
+)
 
 const personalizationConfig = computed(() => product.value?.personalization || null)
 const personalizationForm = reactive({ fields: {}, fileName: '', fileData: '' })

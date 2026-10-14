@@ -114,8 +114,9 @@ export default defineEventHandler(async (event) => {
         // Mayoreo / precio negocio por tramos de cantidad
         wholesale: p.wholesale_tiers || null,
         personalization: p.personalization || null,
-        minOrderQuantity: p.min_order_quantity || 1,
+        minOrderQuantity: p.quantity_options?.length ? Math.min(...p.quantity_options) : (p.min_order_quantity || 1),
         packLabel: p.pack_label || null,
+        quantityOptions: p.quantity_options || [],
         amazonLink: p.amazon_link,
         amazonAsin: p.amazon_asin,
         amazonPrice: p.amazon_price,

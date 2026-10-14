@@ -69,6 +69,11 @@
             <input v-model="form.pack_label" type="text" placeholder="Ej. Pack de 10 piezas" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all" />
             <p class="text-xs text-gray-400 mt-1">Opcional. Se muestra junto a la cantidad en tienda.</p>
           </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Formato de venta (cantidades)</label>
+            <input v-model="form.quantity_options" type="text" placeholder="Ej. 12, 24, 48" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all" />
+            <p class="text-xs text-gray-400 mt-1">Cantidades en las que se vende (separadas por coma). Vacío = cantidad libre con mínimo. Se usa para el monto por pieza.</p>
+          </div>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Canal de venta *</label>
