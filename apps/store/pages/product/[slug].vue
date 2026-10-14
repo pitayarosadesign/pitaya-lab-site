@@ -1085,14 +1085,14 @@ const personalizationFileHint = computed(() => {
   const labels = (cfg.types || ['image', 'pdf'])
     .map(t => (t === 'image' ? 'JPG/PNG' : t === 'pdf' ? 'PDF' : t.toUpperCase()))
     .join(' o ')
-  const maxMb = cfg.maxMb || 5
+  const maxMb = cfg.maxMb || 10
   return `Formatos: ${labels} · Peso máximo: ${maxMb} MB.`
 })
 
 function onPersonalizationFile(e) {
   const file = e.target.files?.[0]
   if (!file) return
-  const maxMb = personalizationConfig.value?.file?.maxMb || 5
+  const maxMb = personalizationConfig.value?.file?.maxMb || 10
   if (file.size > maxMb * 1024 * 1024) {
     personalizationError.value = `El archivo excede el tamaño máximo de ${maxMb} MB.`
     e.target.value = ''

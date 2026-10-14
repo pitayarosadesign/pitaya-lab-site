@@ -145,7 +145,7 @@ const emit = defineEmits(['update:modelValue'])
 const DEFAULTS = {
   enabled: false,
   textFields: [],
-  file: { enabled: false, types: ['image', 'pdf'], maxMb: 5, required: false },
+  file: { enabled: false, types: ['image', 'pdf'], maxMb: 10, required: false },
 }
 
 // Estado normalizado (siempre con la estructura completa).
@@ -157,7 +157,7 @@ const value = computed(() => {
     file: {
       enabled: !!v.file?.enabled,
       types: Array.isArray(v.file?.types) && v.file.types.length ? v.file.types : ['image', 'pdf'],
-      maxMb: v.file?.maxMb ?? 5,
+      maxMb: v.file?.maxMb ?? 10,
       required: !!v.file?.required,
     },
   }
