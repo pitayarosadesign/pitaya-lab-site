@@ -423,28 +423,25 @@
                 <span>Personaliza tu pedido</span>
               </p>
               <p class="text-xs text-earth-500 mb-3">
-                Los campos <span class="font-semibold text-red-500">Obligatorios</span> deben completarse para agregar el producto al carrito.
+                Este producto incluye personalización (tipografía, color y diseño).
+                Tras tu pago te contactamos por WhatsApp para finalizarla.
               </p>
 
               <div v-for="(field, i) in personalizationConfig.textFields" :key="i" class="mb-3">
-                <label class="flex items-center gap-2 text-xs font-medium text-earth-700 mb-1">
-                  <span>{{ field.label }}</span>
-                  <span v-if="field.required" class="px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-[10px] font-semibold leading-none">Obligatorio</span>
-                  <span v-else class="px-1.5 py-0.5 rounded-full bg-earth-100 text-earth-500 text-[10px] font-medium leading-none">Opcional</span>
+                <label class="block text-xs font-medium text-earth-700 mb-1">
+                  {{ field.label }}
                 </label>
                 <input
                   v-model="personalizationForm.fields[i]"
                   type="text"
-                  :placeholder="field.required ? 'Escribe aquí' : 'Escribe aquí (opcional)'"
+                  placeholder="Escribe aquí"
                   class="w-full px-3 py-2 rounded-lg border border-earth-200 bg-white focus:border-primary-400 outline-none transition-all text-sm"
                 />
               </div>
 
               <div v-if="personalizationConfig.file?.enabled" class="mb-1">
-                <label class="flex items-center gap-2 text-xs font-medium text-earth-700 mb-1">
-                  <span>Adjunta tu diseño o arte</span>
-                  <span v-if="personalizationConfig.file.required" class="px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-[10px] font-semibold leading-none">Obligatorio</span>
-                  <span v-else class="px-1.5 py-0.5 rounded-full bg-earth-100 text-earth-500 text-[10px] font-medium leading-none">Opcional</span>
+                <label class="block text-xs font-medium text-earth-700 mb-1">
+                  Adjunta tu diseño o arte (opcional)
                 </label>
 
                 <label class="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg border border-dashed border-earth-300 bg-white text-earth-600 hover:border-primary-400 hover:text-primary-700 cursor-pointer transition-colors text-sm">
@@ -470,6 +467,16 @@
               </div>
 
               <p v-if="personalizationError" class="text-xs text-red-600 mt-2">{{ personalizationError }}</p>
+
+              <p class="text-xs text-earth-500 mt-2 pt-2 border-t border-amber-200">
+                ¿Prefieres afinar los detalles antes de comprar?
+                <a
+                  :href="personalizationWhatsappLink"
+                  target="_blank"
+                  rel="noopener"
+                  class="font-semibold text-green-700 hover:underline"
+                >Escríbenos por WhatsApp</a>
+              </p>
             </div>
 
             <!-- Botones de acción -->
@@ -1153,24 +1160,26 @@ function clearPersonalizationFile() {
   if (personalizationFileInput.value) personalizationFileInput.value.value = ''
 }
 
-function validatePersonalization() {
+// Enlace de WhatsApp con el resumen de personalización precargado
+const personalizationWhatsappLink = computed(() => {
+  const p = product.value
+  if (!p) return WHATSAPP_URL()
+  const lines = [
+    `Hola 👋, quiero personalizar: ${p.name}`,
+    `Cantidad: ${quantity.value} piezas`,
+  ]
   const cfg = personalizationConfig.value
-  if (!cfg?.enabled) return true
-  personalizationError.value = ''
-  for (let i = 0; i < (cfg.textFields || []).length; i++) {
-    const f = cfg.textFields[i]
+  for (let i = 0; i < (cfg?.textFields || []).length; i++) {
     const val = String(personalizationForm.fields[i] || '').trim()
-    if (f.required && !val) {
-      personalizationError.value = `Completa el campo obligatorio: ${f.label}`
-      return false
-    }
+    if (val) lines.push(`${cfg.textFields[i].label}: ${val}`)
   }
-  if (cfg.file?.enabled && cfg.file.required && !personalizationForm.fileData) {
-    personalizationError.value = 'Adjunta el archivo requerido para personalizar.'
-    return false
-  }
-  return true
-}
+  lines.push(
+    personalizationForm.fileName
+      ? `Ya tengo diseño (${personalizationForm.fileName})`
+      : 'Aún no tengo diseño, necesito ayuda con la personalización.'
+  )
+  return whatsappLinkWithMessage(lines.join('\n'))
+})
 
 function resetPersonalization() {
   personalizationForm.fields = {}
@@ -1252,13 +1261,6 @@ function incrementQty() {
 // Agregar al carrito
 function addToCart() {
   if (!product.value || !isPurchasable.value) return
-
-  // 🎨 Validar personalización obligatoria antes de agregar
-  if (!validatePersonalization()) {
-    const el = document.getElementById('personalizacion')
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    return
-  }
 
   const cartStore = useCartStore()
 

@@ -90,6 +90,14 @@ export default defineEventHandler(async (event) => {
                 </ol>
               </div>
 
+              <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px;margin:20px 0;">
+                <h3 style="color:#166534;font-size:14px;margin:0 0 10px;">🎨 ¿Tu pedido incluye personalización?</h3>
+                <p style="color:#374151;font-size:13px;margin:0 0 12px;">
+                  Continúa por WhatsApp para finalizar tipografía, color y diseño.
+                </p>
+                <a href="https://wa.me/523333856064?text=${encodeURIComponent('Hola 👋, mi pedido es ' + order.order_number + '. Quiero continuar con la personalización (tipografía, color y diseño).')}" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;font-size:14px;font-weight:bold;padding:12px 20px;border-radius:8px;">Continuar por WhatsApp</a>
+              </div>
+
               <div style="background:#f9fafb;border-radius:12px;padding:20px;margin:20px 0;">
                 <h3 style="color:#374151;font-size:14px;margin:0 0 10px;">🚚 Envío a:</h3>
                 <p style="color:#6b7280;font-size:13px;margin:0;">

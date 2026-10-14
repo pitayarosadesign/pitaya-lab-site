@@ -23,7 +23,7 @@
           >+ Agregar campo</button>
         </div>
         <p class="text-xs text-gray-400">
-          El cliente escribirá un valor en cada campo (ej. "Escribe los nombres", "Fecha del evento").
+          Campos opcionales. El cliente escribirá un valor en cada uno (ej. "Escribe los nombres", "Fecha del evento").
         </p>
 
         <div v-if="textFields.length === 0" class="text-sm text-gray-400">Aún no hay campos de texto.</div>
@@ -36,15 +36,6 @@
             placeholder="Etiqueta (ej. Escribe los nombres)"
             class="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm"
           />
-          <label class="flex items-center gap-1.5 text-xs text-gray-500 whitespace-nowrap cursor-pointer select-none">
-            <input
-              type="checkbox"
-              :checked="f.required"
-              @change="setTextField(fi, 'required', $event.target.checked)"
-              class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-400"
-            />
-            Obligatorio
-          </label>
           <button
             type="button"
             @click="removeTextField(fi)"
@@ -67,7 +58,7 @@
         </label>
 
         <template v-if="file.enabled">
-          <p class="text-xs text-gray-400">El cliente podrá subir su diseño o arte para personalizar el producto.</p>
+          <p class="text-xs text-gray-400">El cliente podrá subir su diseño o arte (opcional). Para diseños más específicos, se le invita a contactar por WhatsApp.</p>
           <div class="flex flex-wrap items-center gap-4">
             <label class="flex items-center gap-1.5 text-sm text-gray-600 cursor-pointer select-none">
               <input
@@ -98,22 +89,13 @@
               />
               MB
             </label>
-            <label class="flex items-center gap-1.5 text-sm text-gray-600 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                :checked="file.required"
-                @change="setFile('required', $event.target.checked)"
-                class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-400"
-              />
-              Obligatorio
-            </label>
           </div>
         </template>
       </div>
     </template>
 
     <p v-else class="text-xs text-gray-400">
-      Actívalo para recuerdos o productos que el cliente deba personalizar (texto y/o archivo).
+      Actívalo para recuerdos o productos que el cliente pueda personalizar (texto y/o archivo).
     </p>
   </div>
 </template>

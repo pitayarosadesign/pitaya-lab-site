@@ -68,6 +68,22 @@
         </ul>
       </div>
 
+      <!-- 💬 Continuar personalización / dudas -->
+      <div class="bg-green-50 border border-green-100 rounded-2xl p-6 mb-8 text-left">
+        <h2 class="text-sm font-semibold text-earth-700 mb-2">💬 ¿Tu pedido incluye personalización?</h2>
+        <p class="text-sm text-earth-600 mb-3">
+          Continúa por WhatsApp con tu número de pedido para finalizar tipografía, color y diseño. También resolvemos cualquier duda.
+        </p>
+        <a
+          :href="personalizationWhatsappLink"
+          target="_blank"
+          rel="noopener"
+          class="inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-5 rounded-xl transition-all active:scale-95"
+        >
+          Continuar por WhatsApp
+        </a>
+      </div>
+
       <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
         <NuxtLink
           to="/catalog"
@@ -110,6 +126,16 @@ const successDeadline = ref('')
 const shippingMethod = ref('')
 const pickupBranch = ref('')
 const orderNotes = ref('')
+
+// 💬 Enlace de WhatsApp para continuar personalización / soporte del pedido
+const personalizationWhatsappLink = computed(() => {
+  const order = orderNumber.value && orderNumber.value !== 'PIT-XXXX' ? orderNumber.value : ''
+  return whatsappLinkWithMessage(
+    order
+      ? `Hola 👋, mi pedido es ${order}. Quiero continuar con la personalización (tipografía, color y diseño).`
+      : 'Hola 👋, quiero continuar con la personalización de mi pedido.'
+  )
+})
 
 onMounted(async () => {
   // Limpiar carrito
