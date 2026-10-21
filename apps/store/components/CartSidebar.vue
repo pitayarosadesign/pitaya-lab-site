@@ -99,7 +99,10 @@
               >
                 🏭 Sobre pedido
               </span>
-              <p class="text-sm font-medium text-earth-900 mt-1">${{ formatPrice(item.price) }}</p>
+              <p class="text-sm font-medium text-earth-900 mt-1">
+                ${{ formatPrice(cart.unitPrice(item)) }}
+                <span v-if="cart.unitPrice(item) < item.price" class="text-[10px] font-semibold text-primary-700 ml-1">Mayoreo</span>
+              </p>
 
               <!-- Cantidad -->
               <div class="flex items-center gap-2 mt-2">
@@ -135,7 +138,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                 </svg>
               </button>
-              <p class="text-sm font-bold text-earth-900">${{ formatPrice(item.price * item.quantity) }}</p>
+              <p class="text-sm font-bold text-earth-900">${{ formatPrice(cart.unitPrice(item) * item.quantity) }}</p>
             </div>
           </div>
 

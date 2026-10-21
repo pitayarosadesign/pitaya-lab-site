@@ -301,6 +301,7 @@ function addToCart() {
     name: props.productName,
     subtitle: '',
     price: props.price,
+    wholesale: props.wholesale || null,
     image: props.imageUrl,
     variant: null,
     quantity: qty.value,

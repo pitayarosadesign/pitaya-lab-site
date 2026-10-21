@@ -1313,6 +1313,8 @@ function addToCart() {
     subtitle: product.value.subtitle,
     // Precio: el de la variante seleccionada si existe, si no el del producto
     price: selectedVariant.value?.price ?? product.value.price,
+    // 💼 Config de mayoreo para aplicar descuento por volumen en el carrito
+    wholesale: product.value?.wholesale || null,
     // Imagen: la de la variante seleccionada si existe, si no la del producto
     image: selectedVariant.value?.imageUrl || product.value.image,
     variant: selectedVariant.value ? {
