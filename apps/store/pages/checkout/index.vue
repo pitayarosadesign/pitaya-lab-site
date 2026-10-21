@@ -254,6 +254,9 @@
               <svg class="w-3.5 h-3.5 text-green-600" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
               Pago 100% seguro con tarjeta
             </p>
+            <p class="hidden lg:block text-center text-[11px] text-earth-400 mt-1">
+              💳 Meses sin intereses con tarjetas participantes. Consulta la disponibilidad al pagar.
+            </p>
           </div>
         </div>
       </div>

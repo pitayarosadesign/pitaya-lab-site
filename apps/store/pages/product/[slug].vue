@@ -574,11 +574,17 @@
                 </div>
 
                 <!-- Métodos de pago (Stripe: tarjetas de crédito/débito) -->
-                <div class="flex flex-wrap items-center gap-1.5 mb-3">
+                <div class="flex flex-wrap items-center gap-1.5 mb-2">
                   <span class="inline-flex items-center px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700">VISA</span>
                   <span class="inline-flex items-center px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700">MasterCard</span>
                   <span class="inline-flex items-center px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700">AMEX</span>
+                  <span class="inline-flex items-center px-2 py-1 bg-primary-50 border border-primary-200 rounded-lg text-[10px] font-bold text-primary-700">MSI</span>
                 </div>
+
+                <!-- Meses sin intereses -->
+                <p class="text-[11px] text-earth-500 mb-3">
+                  💳 Meses sin intereses con tarjetas de crédito participantes (Visa/Mastercard). Consulta la disponibilidad al momento de pagar, según tu monto.
+                </p>
 
                 <!-- Garantías -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-3 border-t border-earth-100">
