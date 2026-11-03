@@ -41,6 +41,15 @@ export default defineEventHandler(async (event) => {
       query = query.eq('product_categories.slug', category)
     }
 
+    // Búsqueda por texto (nombre, subtítulo, descripción, SKU)
+    if (search) {
+      const q = String(search).trim().replace(/[%_,\\]/g, ' ').trim()
+      if (q) {
+        const pattern = `%${q}%`
+        query = query.or(`name.ilike.${pattern},subtitle.ilike.${pattern},description.ilike.${pattern},sku.ilike.${pattern}`)
+      }
+    }
+
     // Solo destacados
     if (featured === 'true') {
       query = query.eq('is_featured', true)

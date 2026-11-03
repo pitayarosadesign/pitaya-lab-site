@@ -985,7 +985,7 @@ const visibleAromas = computed(() =>
 const aromaMetaById = computed(() => {
   const m = {}
   aromas.value.forEach(a => {
-    m[a.id] = { category: a.categoryLabel, categoryKey: a.category, hotel: a.hotel_reference }
+    m[a.id] = { family: a.family, category: a.categoryLabel, categoryKey: a.category, hotel: a.hotel_reference }
   })
   return m
 })
@@ -996,22 +996,32 @@ function productAttrKeys(p) {
   const hotels = new Set()
   ;(p.fragrances || []).forEach(f => {
     const meta = aromaMetaById.value[f.id] || {}
-    if (meta.categoryKey) cats.add(meta.categoryKey)
+    if (meta.family) cats.add(meta.family)
     if (meta.hotel) hotels.add(String(meta.hotel).toLowerCase())
   })
   return { cats: Array.from(cats), hotels: Array.from(hotels) }
 }
 
-// Opciones faceta "Colección": aromas que tienen colección, con conteos
+// Opciones faceta "Colección": familias olfativas (floral, oriental, amaderada, cítrica)
 const familyOptions = computed(() => {
+  const order = ['floral', 'oriental', 'amaderada', 'citrica']
   const seen = {}
   aromas.value
-    .filter(a => a.category)
+    .filter(a => a.family)
     .forEach(a => {
-      seen[a.category] = { key: a.category, label: a.categoryLabel || a.category, icon: '⊛' }
+      if (!seen[a.family]) {
+        seen[a.family] = {
+          key: a.family,
+          label: GALLERY_FAMILIES[a.family]?.label || a.family,
+          icon: GALLERY_FAMILIES[a.family]?.emoji || '⊛',
+        }
+      }
     })
-  const list = Object.values(seen)
-  list.sort((a, b) => (a.label || '').localeCompare(b.label || ''))
+  const list = order.map(k => seen[k]).filter(Boolean)
+  // Familias que no estén en el orden canónico (datos nuevos) al final
+  Object.values(seen).forEach(o => {
+    if (!list.includes(o)) list.push(o)
+  })
   const base = applyActiveFilters(products.value, { family: true })
   return list.map(o => ({
     ...o,
@@ -1040,13 +1050,10 @@ const hotelOptions = computed(() => {
 const familyAllCount = computed(() => applyActiveFilters(products.value, { family: true }).length)
 const hotelAllCount = computed(() => applyActiveFilters(products.value, { hotel: true }).length)
 
-// Color de acento por colección (hash estable del slug)
-const FAMILY_COLORS = ['#f59e0b', '#10b981', '#6366f1', '#ec4899', '#14b8a6', '#f43f5e', '#8b5cf6', '#3b82f6']
+// Color de acento por familia olfativa
+const FAMILY_COLORS = { floral: '#ec4899', oriental: '#f59e0b', amaderada: '#8b5cf6', citrica: '#10b981' }
 function familyColor(key) {
-  let h = 0
-  const s = String(key)
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0
-  return FAMILY_COLORS[h % FAMILY_COLORS.length]
+  return FAMILY_COLORS[key] || '#6366f1'
 }
 
 function resetFilters() {

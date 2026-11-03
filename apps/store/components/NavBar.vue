@@ -106,6 +106,11 @@
               </div>
             </div>
           </div>
+          <!-- 🔍 Búsqueda -->
+          <div class="w-44 lg:w-60">
+            <SearchBar />
+          </div>
+
           <!-- Carrito -->
           <button
             @click="cart.openCart()"
@@ -152,6 +157,11 @@
             </svg>
           </button>
         </div>
+      </div>
+
+      <!-- 🔍 Búsqueda móvil -->
+      <div class="md:hidden pb-3">
+        <SearchBar />
       </div>
       </div>
     </div>
