@@ -699,8 +699,10 @@ const activeFilterCount = computed(() => {
 // Indica si hay algún filtro activo (para el punto indicador en móvil)
 const hasActiveFilters = computed(() => activeFilterCount.value > 0)
 
-// Acordeones del drawer (qué facetas están abiertas)
-const openSections = reactive({ aroma: true, family: false, hotel: false })
+// Acordeones del drawer (qué facetas están abiertas).
+// "Colección olfativa" abierta por defecto (agrupa por familia); el listado
+// de aromas individuales queda colapsado para no saturar con todas las fragancias.
+const openSections = reactive({ aroma: false, family: true, hotel: false })
 
 // Cuántos aromas se muestran antes de "Ver más"
 const AROMAS_PREVIEW = 8
