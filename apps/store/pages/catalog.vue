@@ -57,6 +57,44 @@
           </button>
         </div>
 
+        <!-- 🌸 Explora por aroma (atajo visual rápido) -->
+        <div v-if="popularAromas.length" class="pt-3 pb-1">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs font-bold uppercase tracking-wider text-earth-500 flex items-center gap-1.5">
+              <span class="text-sm">🌸</span> Explora por aroma
+            </p>
+            <button
+              type="button"
+              @click="exploreAllAromas"
+              class="text-xs font-semibold text-primary-600 hover:text-primary-700 transition-colors whitespace-nowrap"
+            >
+              Ver todos ({{ popularAromas.length }}) →
+            </button>
+          </div>
+          <div class="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1">
+            <button
+              v-for="aroma in popularAromas.slice(0, 10)"
+              :key="aroma.id"
+              @click="selectAromaAndScroll(aroma)"
+              class="flex flex-col items-center gap-1.5 shrink-0 w-[76px] group"
+              :aria-label="`Filtrar por ${aroma.name}`"
+            >
+              <span
+                class="w-14 h-14 rounded-full flex items-center justify-center text-2xl border-2 bg-gradient-to-br from-primary-50 to-amber-50 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-lg"
+                :class="activeFragrance === aroma.id ? 'border-primary-500 ring-4 ring-primary-100' : 'border-transparent group-hover:border-primary-200'"
+              >
+                {{ aroma.emoji || '🌸' }}
+              </span>
+              <span
+                class="text-[11px] font-medium text-earth-700 leading-tight text-center line-clamp-2 transition-colors"
+                :class="activeFragrance === aroma.id ? 'text-primary-700 font-semibold' : 'group-hover:text-primary-700'"
+              >
+                {{ aroma.name }}
+              </span>
+            </button>
+          </div>
+        </div>
+
         <!-- 📌 Toolbar de filtrado (discreto, a demanda mediante panel lateral) -->
         <!-- Línea: contador + botón Filtrar que abre el drawer de facetas -->
         <div class="flex items-center justify-between flex-wrap gap-2 py-3">
@@ -73,7 +111,7 @@
             >Limpiar todo</button>
             <button
               @click="filtersOpen = true"
-              class="inline-flex items-center gap-2 rounded-full border border-earth-200 bg-white text-earth-700 hover:text-primary-700 hover:border-primary-300 text-sm font-medium px-4 py-2 transition-colors shadow-sm"
+              class="inline-flex items-center gap-2 rounded-full bg-primary-600 text-white hover:bg-primary-700 text-sm font-semibold px-4 py-2 transition-all shadow-sm hover:shadow-md"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
               Filtrar
@@ -125,7 +163,7 @@
     </section>
 
     <!-- Grid de productos -->
-    <section v-if="catalogConfig.blocks.grid.enabled" class="py-12">
+    <section id="catalog-grid" v-if="catalogConfig.blocks.grid.enabled" class="py-12 scroll-mt-24">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Cargando -->
         <div v-if="loading" class="text-center py-20">
@@ -208,7 +246,7 @@
     </section>
 
     <!-- 🌸 Panel de experiencia olfativa -->
-    <section v-if="catalogConfig.blocks.olfactory.enabled" class="py-10 bg-gradient-to-b from-primary-50/50 to-white">
+    <section id="explora-aromas" v-if="catalogConfig.blocks.olfactory.enabled" class="py-10 bg-gradient-to-b from-primary-50/50 to-white scroll-mt-24">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Cuando hay un aroma seleccionado: panel detallado -->
         <div v-if="selectedAroma" class="bg-white rounded-3xl border border-earth-100 shadow-sm overflow-hidden grid grid-cols-1 md:grid-cols-3 gap-0">
@@ -1088,6 +1126,22 @@ function selectAroma(aroma) {
   activeHotel.value = 'all'
   searchQuery.value = aroma.name
   showSuggestions.value = false
+}
+
+// Selecciona un aroma desde la franja superior y lleva al cliente a los resultados
+function selectAromaAndScroll(aroma) {
+  selectAroma(aroma)
+  nextTick(() => {
+    document.getElementById('catalog-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  })
+}
+
+// "Ver todos" de la franja superior: limpia la selección y baja a la galería completa
+function exploreAllAromas() {
+  clearAromaSelection()
+  nextTick(() => {
+    document.getElementById('explora-aromas')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  })
 }
 
 // Aplica un filtro por aroma desde la URL (?aroma=slug) al llegar al catálogo.
