@@ -281,17 +281,6 @@
         </div>
       </div>
 
-      <!-- 💼 Mayoreo / Precio de Negocio -->
-      <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-        <div>
-          <h2 class="text-lg font-semibold text-gray-900">Mayoreo / Precio de Negocio</h2>
-          <p class="text-sm text-gray-400 mt-0.5">
-            Define tramos por cantidad. El catálogo mostrará automáticamente el "precio negocio" según el volumen.
-          </p>
-        </div>
-        <FormsProductWholesaleEditor v-model="form.wholesale_tiers" />
-      </div>
-
       <!-- Variantes por dimensiones (Recuerdos / Eventos) -->
       <div v-if="isEventChannel" class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
         <div>
@@ -626,8 +615,6 @@ const form = reactive({
   gtin: '', amazon_asin: '', images: [],
   is_active: true, is_featured: false, google_category: '', free_shipping: false,
   amazon_link: '', compare_at_price: '', cost_price: '',
-  wholesale_enabled: false, wholesale_price: '', wholesale_min_qty: 20,
-  wholesale_tiers: null,
   category: '', sales_channel: 'directa', badge: '',
   prep_days_min: null,
   prep_days_max: null,
@@ -759,10 +746,6 @@ async function loadProduct() {
     form.amazon_link = data.amazon_link || ''
     form.compare_at_price = data.compare_at_price || ''
     form.cost_price = data.cost_price || ''
-    form.wholesale_enabled = data.wholesale_enabled || false
-    form.wholesale_price = data.wholesale_price || ''
-    form.wholesale_min_qty = data.wholesale_min_qty || 20
-    form.wholesale_tiers = data.wholesale_tiers || null
     form.sales_channel = data.sales_channel || 'directa'
     form.personalization = data.personalization || null
     form.badge = data.badge || ''
@@ -1116,10 +1099,6 @@ async function handleSave() {
           amazon_link: form.amazon_link || null,
           compare_at_price: form.compare_at_price ? parseFloat(form.compare_at_price) : null,
           cost_price: form.cost_price ? parseFloat(form.cost_price) : null,
-          wholesale_enabled: form.wholesale_enabled,
-          wholesale_price: form.wholesale_price ? parseFloat(form.wholesale_price) : null,
-          wholesale_min_qty: parseInt(form.wholesale_min_qty) || 20,
-          wholesale_tiers: form.wholesale_tiers,
           category_id: categoryId,
           sales_channel: form.sales_channel,
           badge: form.badge || null,
