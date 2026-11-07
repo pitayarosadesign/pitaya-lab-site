@@ -281,12 +281,12 @@
         </div>
       </div>
 
-      <!-- Variantes por dimensiones (Recuerdos / Eventos) -->
-      <div v-if="isEventChannel" class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+      <!-- Variantes por dimensiones (Aroma, Tamaño/Volumen, Color…) -->
+      <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
         <div>
           <h2 class="text-lg font-semibold text-gray-900">Variantes del producto</h2>
           <p class="text-sm text-gray-400 mt-0.5">
-            Crea las opciones de este recuerdo (ej. Tipo y Color). Cada combinación tendrá su propio precio y stock.
+            Define hasta 2 dimensiones (ej. Aroma y Tamaño). Cada combinación tendrá su propio precio, stock y SKU.
           </p>
         </div>
         <FormsVariantOptionsEditor
@@ -295,7 +295,7 @@
           v-model:dimensions="variantDimensions"
           v-model:combo-meta="variantComboMeta"
           :scents="allScents"
-          :allow-aroma="false"
+          :allow-aroma="!isEventChannel"
           :base-sku="form.sku"
           :loading-profiles="loadingProfiles"
         />
@@ -312,173 +312,6 @@
         <FormsProductPersonalizationEditor v-model="form.personalization" />
       </div>
 
-      <!-- Variantes (Aromas) — productos de tienda -->
-      <div v-if="!isEventChannel" class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-lg font-semibold text-gray-900">🧴 Disponible en estos Aromas</h2>
-            <p class="text-sm text-gray-400 mt-0.5">Selecciona en cuáles perfiles aromáticos estará disponible este producto</p>
-          </div>
-          <span class="text-xs font-medium px-3 py-1 rounded-full bg-primary-50 text-primary-700">
-            {{ selectedScentCount }} / {{ allScents.length }} seleccionados
-          </span>
-        </div>
-
-        <div v-if="loadingProfiles" class="py-8 text-center text-gray-400 text-sm">
-          Cargando perfiles aromáticos...
-        </div>
-
-        <!-- Agrupado por colección -->
-        <div v-else class="space-y-6">
-          <div v-for="group in scentGroups" :key="group.collection.id || group.collection.name" class="border border-gray-100 rounded-xl overflow-hidden">
-            <div class="flex items-center gap-3 px-4 py-3 bg-gray-50 border-b border-gray-100">
-              <span class="text-lg">{{ group.collection.icon || '🌸' }}</span>
-              <div>
-                <h3 class="text-sm font-semibold text-gray-800">{{ group.collection.name }}</h3>
-                <p v-if="group.collection.subtitle" class="text-xs text-gray-400">{{ group.collection.subtitle }}</p>
-              </div>
-              <div class="ml-auto">
-                <button
-                  type="button"
-                  @click="toggleAllInGroup(group)"
-                  class="text-xs font-medium text-primary-600 hover:text-primary-700"
-                >
-                  {{ group.selectedCount === group.scents.length ? 'Quitar todos' : 'Seleccionar todos' }}
-                </button>
-              </div>
-            </div>
-            <div class="p-4 space-y-2">
-              <div
-                v-for="scent in group.scents"
-                :key="scent.id"
-                class="rounded-lg border transition-all"
-                :class="isScentSelected(scent.id) ? 'border-primary-400 bg-primary-50/40' : 'border-gray-200 hover:border-gray-300'"
-              >
-                <!-- Fila de selección -->
-                <div class="flex items-center gap-3 p-3">
-                  <input
-                    type="checkbox"
-                    :checked="isScentSelected(scent.id)"
-                    @change="toggleScent(scent.id)"
-                    class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 flex-shrink-0"
-                  />
-                  <label @click.stop class="flex-1 min-w-0 cursor-pointer" @click="toggleScent(scent.id)">
-                    <div class="flex items-center gap-2">
-                      <span class="text-sm font-medium text-gray-800 truncate">{{ scent.name }}</span>
-                      <span v-if="scent.emoji" class="text-base">{{ scent.emoji }}</span>
-                    </div>
-                    <p v-if="scent.subtitle" class="text-xs text-gray-400 truncate">{{ scent.subtitle }}</p>
-                  </label>
-                  </div>
-
-                <!-- Campos de la variante (solo si está seleccionada) -->
-                <div v-if="isScentSelected(scent.id)" class="px-3 pb-3 pl-11 space-y-2">
-                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <div>
-                      <label class="block text-[11px] font-medium text-gray-500 mb-1">Precio ($)</label>
-                      <input
-                        v-model="variantData[scent.id].price"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        :placeholder="`Usa el del producto ($${formatPrice(form.price)})`"
-                        class="w-full px-2.5 py-1.5 rounded-md border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label class="block text-[11px] font-medium text-gray-500 mb-1">Stock</label>
-                      <input
-                        v-model="variantData[scent.id].stock"
-                        type="number"
-                        min="0"
-                        placeholder="0"
-                        class="w-full px-2.5 py-1.5 rounded-md border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label class="block text-[11px] font-medium text-gray-500 mb-1">SKU</label>
-                      <input
-                        v-model="variantData[scent.id].sku"
-                        type="text"
-                        placeholder="Auto"
-                        class="w-full px-2.5 py-1.5 rounded-md border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label class="block text-[11px] font-medium text-gray-500 mb-1">GTIN</label>
-                      <input
-                        v-model="variantData[scent.id].gtin"
-                        type="text"
-                        placeholder="Opcional"
-                        class="w-full px-2.5 py-1.5 rounded-md border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm font-mono"
-                      />
-                    </div>
-                  </div>
-
-                  <!-- Imagen de la variante: se elige de la galería del producto.
-                       Si no se elige ninguna, en la tienda se mostrará la imagen
-                       principal del producto para este aroma. -->
-                  <div class="pt-1">
-                    <label class="block text-[11px] font-medium text-gray-500 mb-1.5">
-                      Imagen para este aroma <span class="text-gray-400 font-normal">(opcional · de la galería del producto)</span>
-                    </label>
-
-                    <!-- Imagen asignada + botón para abrir el selector en grande.
-                         Solo se pueden asignar imágenes YA subidas (con URL pública):
-                         las imágenes nuevas (solo preview local) todavía no tienen URL
-                         y asignarlas guardaría una blob: URL inválida, lo que rompe la
-                         imagen y produce el error 'Not allowed to load local resource'. -->
-                    <div class="flex items-center gap-3">
-                      <div class="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 bg-white flex-shrink-0 flex items-center justify-center">
-                        <img v-if="variantData[scent.id].imageUrl" :src="useOptimizedImage(variantData[scent.id].imageUrl, { width: 200, quality: 70, format: 'webp' })" alt="Imagen del aroma" class="w-full h-full object-cover" loading="lazy" />
-                        <span v-else class="text-gray-300 text-xl">🖼️</span>
-                      </div>
-                      <div class="flex-1 min-w-0">
-                        <div class="flex flex-wrap items-center gap-2">
-                          <button
-                            type="button"
-                            :disabled="!hasSelectableImages"
-                            @click="openImagePicker(scent.id)"
-                            class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                          >
-                            {{ variantData[scent.id].imageUrl ? 'Cambiar imagen' : 'Elegir imagen' }}
-                          </button>
-                          <button
-                            v-if="variantData[scent.id].imageUrl"
-                            type="button"
-                            @click="variantData[scent.id].imageUrl = ''"
-                            class="text-[11px] text-red-500 hover:text-red-700 font-medium"
-                          >
-                            Quitar
-                          </button>
-                        </div>
-                        <p class="text-[10px] text-gray-400 mt-1">
-                          Se mostrará en la ficha del producto al seleccionar este aroma.
-                        </p>
-                      </div>
-                    </div>
-                    <p v-if="!hasSelectableImages" class="text-[10px] text-gray-400 mt-1.5">
-                      {{ form.images.length === 0
-                        ? 'Sube imágenes en la sección "📸 Imágenes" para poder asignarlas a cada aroma.'
-                        : 'Las imágenes nuevas deben guardarse primero para poder asignarlas a un aroma.' }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div v-if="allScents.length === 0" class="py-8 text-center border-2 border-dashed border-gray-200 rounded-xl">
-            <p class="text-3xl mb-2">🌸</p>
-            <p class="text-sm text-gray-400">No hay perfiles aromáticos configurados.</p>
-            <p class="text-xs text-gray-400 mt-1">Crea perfiles aromáticos desde Colecciones en el panel.</p>
-          </div>
-        </div>
-
-        <p class="text-xs text-gray-400">
-          💡 Al seleccionar un aroma puedes definir su stock, SKU y GTIN propios. Si dejas el SKU vacío se genera automáticamente.
-        </p>
-      </div>
 
       <!-- Botones -->
       <div class="flex items-center justify-end gap-3">
@@ -494,73 +327,6 @@
     <div v-else-if="!loading" class="text-center py-16">
       <p class="text-gray-400">Producto no encontrado</p>
       <NuxtLink to="/products" class="text-primary-600 hover:text-primary-700 text-sm mt-2 inline-block">← Volver a productos</NuxtLink>
-    </div>
-
-    <!-- Modal: Selector de imagen para la variante (lightbox de la galería) -->
-    <div v-if="imagePicker.open" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div class="absolute inset-0 bg-black/50" @click="closeImagePicker"></div>
-      <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
-        <!-- Encabezado -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900">Elegir imagen para el aroma</h3>
-            <p class="text-xs text-gray-400 mt-0.5">Selecciona una foto de la galería del producto.</p>
-          </div>
-          <button @click="closeImagePicker" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
-        </div>
-
-        <!-- Cuerpo: galería (izq) + vista grande (der) -->
-        <div class="flex-1 overflow-hidden flex flex-col md:flex-row">
-          <!-- Galería -->
-          <div class="flex-1 overflow-y-auto p-5">
-            <div v-if="selectableImages.length > 0" class="grid grid-cols-3 sm:grid-cols-4 gap-3">
-              <button
-                v-for="(gimg, gIdx) in selectableImages"
-                :key="gimg.id || gIdx"
-                type="button"
-                @click="imagePicker.selected = gimg.url"
-                @dblclick="confirmImagePicker"
-                class="relative aspect-square rounded-xl overflow-hidden border-2 transition-all"
-                :class="imagePicker.selected === gimg.url
-                  ? 'border-primary-500 ring-2 ring-primary-200'
-                  : 'border-gray-200 hover:border-gray-300'"
-              >
-                <img :src="useOptimizedImage(gimg.url, { width: 400, quality: 75, format: 'webp' })" :alt="'Imagen ' + (gIdx + 1)" class="w-full h-full object-cover" loading="lazy" />
-                <span v-if="gimg.is_primary" class="absolute top-1 left-1 bg-primary-600 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">Principal</span>
-                <span v-if="imagePicker.selected === gimg.url" class="absolute bottom-1 right-1 bg-primary-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">✓</span>
-              </button>
-            </div>
-            <div v-else class="py-16 text-center text-gray-400 text-sm">
-              No hay imágenes subidas disponibles para asignar.
-            </div>
-          </div>
-
-          <!-- Vista grande -->
-          <div class="md:w-80 border-t md:border-t-0 md:border-l border-gray-100 p-5 flex flex-col">
-            <p class="text-xs font-semibold text-gray-500 mb-2">Vista previa</p>
-            <div class="flex-1 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center min-h-[200px]">
-              <img v-if="imagePicker.selected" :src="useOptimizedImage(imagePicker.selected, { width: 800, quality: 80, format: 'webp' })" alt="Vista previa" class="w-full h-full object-contain" />
-              <span v-else class="text-gray-300 text-3xl">🖼️</span>
-            </div>
-            <p class="text-[11px] text-gray-400 mt-2">Doble clic en una imagen para asignarla directamente.</p>
-          </div>
-        </div>
-
-        <!-- Pie -->
-        <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100">
-          <button type="button" @click="closeImagePicker" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-800">Cancelar</button>
-          <button
-            type="button"
-            :disabled="!imagePicker.selected"
-            @click="confirmImagePicker"
-            class="px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-          >
-            Usar esta imagen
-          </button>
-        </div>
-      </div>
     </div>
 
     <!-- Modal: Nueva categoría -->
@@ -632,51 +398,14 @@ const showCategoryModal = ref(false)
 const creatingCategory = ref(false)
 const newCategory = reactive({ name: '', slug: '', description: '' })
 
-// ===== Variantes (perfiles aromáticos) =====
-const selectedScents = ref(new Set())
-const scentGroups = ref([])
+// ===== Variantes por dimensiones (Aroma, Tamaño/Volumen, Color…) =====
+const isEventChannel = computed(() => form.sales_channel === 'evento')
 const allScents = ref([])
 const loadingProfiles = ref(false)
-const selectedScentCount = computed(() => selectedScents.value.size)
-// Datos por variante: { [profileId]: { stock, sku, gtin } }
-const variantData = reactive({})
-
-// ===== Variantes por dimensiones (Recuerdos / Eventos) =====
-// El editor de dimensiones solo se usa en el canal "evento". En productos
-// de tienda se mantiene el editor de aromas legacy (intacto).
-const isEventChannel = computed(() => form.sales_channel === 'evento')
 const variantEditorRef = ref(null)
 const useVariantOptions = ref(false)
 const variantDimensions = ref([])
 const variantComboMeta = ref({})
-
-// ===== Selector de imagen para la variante (lightbox) =====
-// Solo se pueden asignar imágenes ya subidas (con URL pública). Las imágenes
-// nuevas (solo preview local) no tienen URL todavía y asignarlas guardaría una
-// blob: URL inválida (rompe la imagen y da 'Not allowed to load local resource').
-const imagePicker = reactive({ open: false, scentId: null, selected: '' })
-
-const selectableImages = computed(() => form.images.filter(img => !!img.url))
-const hasSelectableImages = computed(() => selectableImages.value.length > 0)
-
-function openImagePicker(scentId) {
-  imagePicker.scentId = scentId
-  imagePicker.selected = variantData[scentId]?.imageUrl || ''
-  imagePicker.open = true
-}
-
-function closeImagePicker() {
-  imagePicker.open = false
-  imagePicker.scentId = null
-  imagePicker.selected = ''
-}
-
-function confirmImagePicker() {
-  if (!imagePicker.scentId || !imagePicker.selected) return
-  if (!variantData[imagePicker.scentId]) variantData[imagePicker.scentId] = {}
-  variantData[imagePicker.scentId].imageUrl = imagePicker.selected
-  closeImagePicker()
-}
 
 async function loadCategories() {
   try {
@@ -756,35 +485,9 @@ async function loadProduct() {
     form.quantity_options = (data.quantity_options || []).join(', ')
     form.images = data.images || []
 
-    // Pre-seleccionar las variantes (aromas) existentes del producto
-    if (data.variants && data.variants.length > 0) {
-      const profileIds = data.variants
-        .filter(v => v.fragrance_profile_id)
-        .map(v => v.fragrance_profile_id)
-      selectedScents.value = new Set(profileIds)
-
-      // Cargar datos de cada variante (stock, sku, gtin, precio, imagen)
-      for (const v of data.variants) {
-        if (v.fragrance_profile_id) {
-          if (!variantData[v.fragrance_profile_id]) {
-            variantData[v.fragrance_profile_id] = { stock: 0, sku: '', gtin: '', price: '', compare_at_price: '', imageUrl: '', imagePreview: '' }
-          }
-          variantData[v.fragrance_profile_id].stock = v.stock || 0
-          variantData[v.fragrance_profile_id].sku = v.sku || ''
-          variantData[v.fragrance_profile_id].gtin = v.gtin || ''
-          variantData[v.fragrance_profile_id].price = v.price ?? ''
-          variantData[v.fragrance_profile_id].compare_at_price = v.compare_at_price ?? ''
-          // Imagen de la variante (si se eligió una de la galería del producto).
-          // Solo se conserva si coincide con una imagen de la galería actual.
-          variantData[v.fragrance_profile_id].imageUrl = v.image_url || ''
-        }
-      }
-      updateGroupCounts()
-    }
-
-    // Hidratar el editor de dimensiones (canal evento). El endpoint devuelve
-    // `variantOptions` reconstruido cuando el producto usa el modelo flexible.
+    // Hidratar el editor de variantes por dimensiones.
     if (data.variantOptions) {
+      // Modelo flexible existente.
       useVariantOptions.value = true
       variantDimensions.value = data.variantOptions.dimensions || []
       const meta = {}
@@ -792,6 +495,31 @@ async function loadProduct() {
         if (c?.label) meta[c.label] = { price: c.price ?? '', stock: c.stock ?? '' }
       }
       variantComboMeta.value = meta
+    } else if (!isEventChannel.value && data.variants && data.variants.length > 0) {
+      // Productos de tienda legacy (solo aroma): convertir a una dimensión
+      // "Aroma" para poder seguir editándolos en el editor unificado.
+      const scentIds = [...new Set(
+        data.variants.filter(v => v.fragrance_profile_id).map(v => v.fragrance_profile_id)
+      )]
+      if (scentIds.length > 0) {
+        useVariantOptions.value = true
+        variantDimensions.value = [{
+          type: 'Aroma',
+          customName: '',
+          scentIds,
+          customValues: [],
+          newValue: '',
+          bulkOpen: false,
+          bulkText: '',
+        }]
+        const meta = {}
+        for (const v of data.variants) {
+          if (v.fragrance_profile_id && v.name) {
+            meta[v.name] = { price: v.price ?? '', stock: v.stock ?? '' }
+          }
+        }
+        variantComboMeta.value = meta
+      }
     }
 
     // Resolver el slug de la categoría a partir del category_id
@@ -815,43 +543,6 @@ async function loadScentProfiles() {
 
     const activeProfiles = profiles.filter(p => p.is_active !== false)
 
-    // Agrupar por FAMILIA olfativa (clasificación vigente; ya no hay colecciones)
-    const FAM = {
-      floral: { name: 'Florales', icon: '🌸', subtitle: 'Frescas y románticas' },
-      oriental: { name: 'Orientales', icon: '✨', subtitle: 'Cálidas y envolventes' },
-      amaderada: { name: 'Amaderadas', icon: '🪵', subtitle: 'Terrosas y profundas' },
-      citrica: { name: 'Cítricas', icon: '🍋', subtitle: 'Vibrantes y luminosas' },
-    }
-    const groups = []
-    const groupMap = new Map()
-    for (const p of activeProfiles) {
-      const fam = p.olfactive_family
-      const meta = FAM[fam] || { name: 'Otros aromas', icon: '🌸', subtitle: '' }
-      const colKey = fam || 'sin-familia'
-      const colName = meta.name
-      const colIcon = meta.icon
-      const colSubtitle = meta.subtitle
-
-      if (!groupMap.has(colKey)) {
-        const g = {
-          collection: { id: colKey, name: colName, icon: colIcon, subtitle: colSubtitle },
-          scents: [],
-          selectedCount: 0,
-        }
-        groupMap.set(colKey, g)
-        groups.push(g)
-      }
-      groupMap.get(colKey).scents.push({
-        id: p.id,
-        name: p.name,
-        subtitle: p.subtitle,
-        experience: p.experience,
-        emoji: p.emoji,
-        olfactive_family: p.olfactive_family,
-      })
-    }
-
-    scentGroups.value = groups
     allScents.value = activeProfiles.map(p => ({
       id: p.id,
       name: p.name,
@@ -860,37 +551,11 @@ async function loadScentProfiles() {
       emoji: p.emoji,
       olfactive_family: p.olfactive_family,
     }))
-
-    // Inicializar datos de variante para cada aroma
-    for (const p of activeProfiles) {
-      if (!variantData[p.id]) {
-        variantData[p.id] = { stock: 0, sku: '', gtin: '', price: '', compare_at_price: '', imageUrl: '', imagePreview: '' }
-      }
-    }
   } catch (e) {
     console.error('Error cargando perfiles aromáticos:', e)
   } finally {
     loadingProfiles.value = false
   }
-}
-
-function isScentSelected(scentId) { return selectedScents.value.has(scentId) }
-
-function toggleScent(scentId) {
-  selectedScents.value.has(scentId) ? selectedScents.value.delete(scentId) : selectedScents.value.add(scentId)
-  updateGroupCounts()
-}
-
-function toggleAllInGroup(group) {
-  const allSelected = group.scents.every(s => selectedScents.value.has(s.id))
-  group.scents.forEach(s => allSelected ? selectedScents.value.delete(s.id) : selectedScents.value.add(s.id))
-  updateGroupCounts()
-}
-
-function updateGroupCounts() {
-  scentGroups.value.forEach(g => {
-    g.selectedCount = g.scents.filter(s => selectedScents.value.has(s.id)).length
-  })
 }
 
 function triggerUpload() { fileInput.value?.click() }
@@ -1054,28 +719,17 @@ async function handleSave() {
     const selectedCat = categories.value.find(c => c.slug === form.category)
     const categoryId = selectedCat?.id || null
 
-    // Procesar variantes: datos de inventario/códigos/precio + imagen propia
-    // (opcional, elegida de la galería del producto). Si imageUrl queda vacío,
-    // en la tienda se mostrará la imagen principal del producto para ese aroma.
-    const variantProfileIds = []
-    for (const profileId of selectedScents.value) {
-      const vd = variantData[profileId] || {}
-      variantProfileIds.push({
-        profileId,
-        stock: vd.stock || 0,
-        sku: vd.sku || '',
-        gtin: vd.gtin || '',
-        price: vd.price,
-        compare_at_price: vd.compare_at_price,
-        imageUrl: vd.imageUrl || '',
-      })
+    // Variantes por dimensiones (unificado para todos los canales).
+    // Si el editor no produce payload (sin variantes), enviamos combinaciones
+    // vacías para que el API elimine las variantes existentes del producto.
+    const builtOptions = variantEditorRef.value ? variantEditorRef.value.buildPayload() : null
+    const variantOptions = builtOptions || {
+      type1: null,
+      type2: null,
+      isAroma1: false,
+      isAroma2: false,
+      combinations: [],
     }
-
-    // Variantes por dimensiones (solo canal evento). Se envían como
-    // `variantOptions` y tienen prioridad sobre `variantProfileIds` en el API.
-    const variantOptions = isEventChannel.value && variantEditorRef.value
-      ? variantEditorRef.value.buildPayload()
-      : null
 
     await $fetch('/api/products/update', {
       method: 'PUT',
@@ -1112,10 +766,7 @@ async function handleSave() {
             : null,
         },
         images,
-        // En evento enviamos variantOptions; en tienda, el modelo de aromas.
-        ...(isEventChannel.value
-          ? { variantOptions }
-          : { variantProfileIds }),
+        variantOptions,
       },
     })
 

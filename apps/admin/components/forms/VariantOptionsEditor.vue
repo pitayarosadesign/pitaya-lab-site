@@ -378,8 +378,10 @@ function buildPayload() {
       const price = (meta.price === '' || meta.price == null) ? null : parseFloat(meta.price)
       const stock = (meta.stock === '' || meta.stock == null) ? 0 : (parseInt(meta.stock) || 0)
       return {
-        value1: c.values[0] ?? null,
-        value2: c.values[1] ?? null,
+        // Para la dimensión "Aroma" se envía el NOMBRE del perfil (legible en
+        // la tienda y para resolver fragrance_profile_id por nombre en el API).
+        value1: dims[0]?.type === 'Aroma' ? scentNameById(c.values[0]) : (c.values[0] ?? null),
+        value2: dims[1]?.type === 'Aroma' ? scentNameById(c.values[1]) : (c.values[1] ?? null),
         label: c.label,
         sku: c.sku,
         price,

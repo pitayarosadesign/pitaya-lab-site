@@ -755,8 +755,10 @@ function buildVariantOptionsPayload() {
     isAroma1: dims[0]?.type === 'Aroma',
     isAroma2: dims[1]?.type === 'Aroma',
     combinations: combos.map(c => ({
-      value1: c.values[0] ?? null,
-      value2: c.values[1] ?? null,
+      // Para "Aroma" se envía el NOMBRE del perfil (no el id), para que la
+      // tienda lo muestre y el API resuelva fragrance_profile_id por nombre.
+      value1: dims[0]?.type === 'Aroma' ? scentNameById(c.values[0]) : (c.values[0] ?? null),
+      value2: dims[1]?.type === 'Aroma' ? scentNameById(c.values[1]) : (c.values[1] ?? null),
       label: c.label,
       sku: c.sku,
       price: c.price ? parseFloat(c.price) : null,

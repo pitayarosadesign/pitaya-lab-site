@@ -313,6 +313,14 @@ async function syncVariantOptions(supabaseAdmin, productId, variantOptions, base
     return data?.id || null
   }
 
+  // 0. Capturar las variantes actuales para preservar imagen/GTIN que el
+  // editor de dimensiones no gestiona (al migrar productos legacy de aroma).
+  const { data: existing } = await supabaseAdmin
+    .from('product_variants')
+    .select('name, image_url, gtin')
+    .eq('product_id', productId)
+  const existingByName = new Map((existing || []).map(v => [v.name, v]))
+
   // 1. Borrar TODAS las variantes actuales del producto (reemplazo completo).
   const { error: delError } = await supabaseAdmin
     .from('product_variants')
@@ -338,6 +346,9 @@ async function syncVariantOptions(supabaseAdmin, productId, variantOptions, base
 
     const profileId = (await resolveProfileId(c.value1, isAroma1)) || (await resolveProfileId(c.value2, isAroma2))
 
+    // Preservar imagen/GTIN de la variante previa con el mismo nombre (label).
+    const prev = existingByName.get(c.label)
+
     rows.push({
       product_id: productId,
       name: c.label,
@@ -349,6 +360,8 @@ async function syncVariantOptions(supabaseAdmin, productId, variantOptions, base
       option_value_2: c.value2 ?? null,
       price: (c.price === null || c.price === undefined || c.price === '') ? null : parseFloat(c.price),
       stock: (c.stock === undefined || c.stock === null || c.stock === '') ? 0 : (parseInt(c.stock) || 0),
+      image_url: prev?.image_url || null,
+      gtin: prev?.gtin || null,
       sort_order: i,
       is_active: true,
     })
