@@ -673,41 +673,54 @@ const catalogConfig = reactive({
   },
 })
 
-// Cargar configuración editable desde site_config
-async function loadCatalogConfig() {
-  try {
-    const supabase = useNuxtApp().$supabase
-    if (!supabase) return
-    const { data, error } = await supabase
-      .from('site_config')
-      .select('value')
-      .eq('key', 'catalog_page')
-      .single()
-    if (error) throw error
-    if (data?.value) {
-      Object.assign(catalogConfig.header, data.value.header)
-      if (data.value.blocks) {
-        // Merge de bloques con defaults (para tolerar configs existentes sin `blocks`)
-        Object.assign(catalogConfig.blocks,
-          typeof data.value.blocks === 'object' && data.value.blocks
-            ? data.value.blocks
-            : { header: { enabled: true, compact: false } }
-        )
-        // Normalizar cada bloque para que tengo enabled (default true)
-        Object.keys(catalogConfig.blocks).forEach((k) => {
-          const b = catalogConfig.blocks[k]
-          catalogConfig.blocks[k] = typeof b === 'object' && b ? { enabled: true, ...b } : { enabled: true }
-        })
-      }
-    }
-  } catch (e) {
-    console.warn('Usando configuración por defecto del catálogo:', e.message)
+// Cargar configuración editable desde site_config (SSR: la respuesta se comparte
+// vía payload para que servidor y cliente hidraten exactamente lo mismo).
+const { data: catalogConfigData } = await useAsyncData('catalog-config', async () => {
+  const supabase = useNuxtApp().$supabase
+  if (!supabase) return null
+  const { data, error } = await supabase
+    .from('site_config')
+    .select('value')
+    .eq('key', 'catalog_page')
+    .single()
+  if (error) return null
+  return data?.value || null
+})
+
+function applyCatalogConfig(value) {
+  if (!value) return
+  Object.assign(catalogConfig.header, value.header)
+  if (value.blocks) {
+    // Merge de bloques con defaults (para tolerar configs existentes sin `blocks`)
+    Object.assign(catalogConfig.blocks,
+      typeof value.blocks === 'object' && value.blocks
+        ? value.blocks
+        : { header: { enabled: true, compact: false } }
+    )
+    // Normalizar cada bloque para que tengo enabled (default true)
+    Object.keys(catalogConfig.blocks).forEach((k) => {
+      const b = catalogConfig.blocks[k]
+      catalogConfig.blocks[k] = typeof b === 'object' && b ? { enabled: true, ...b } : { enabled: true }
+    })
   }
 }
+applyCatalogConfig(catalogConfigData.value)
 
-// Categorías cargadas dinámicamente desde la base de datos
-const categories = ref([
+// Categorías cargadas dinámicamente desde la base de datos (SSR).
+const { data: categoriesData } = await useAsyncData('catalog-categories', async () => {
+  const supabase = useNuxtApp().$supabase
+  if (!supabase) return []
+  const { data, error } = await supabase
+    .from('product_categories')
+    .select('id, name, slug')
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true })
+  if (error) return []
+  return data || []
+})
+const categories = computed(() => [
   { id: 'all', label: 'Todos' },
+  ...(categoriesData.value || []).map(c => ({ id: c.slug, label: c.name })),
 ])
 
 const activeCategory = ref('all')
@@ -717,7 +730,6 @@ const activeFamily = ref('all') // slug de colección
 const activeHotel = ref('all')  // hotel_reference (normalizado)
 const searchQuery = ref('')
 const showSuggestions = ref(false)
-const loading = ref(true)
 
 // Estado del panel de filtros (colapsable dentro de la barra, en cualquier viewport)
 const filtersOpen = ref(false)
@@ -745,11 +757,29 @@ const openSections = reactive({ aroma: false, family: true, hotel: false })
 const AROMAS_PREVIEW = 8
 const showAllAromas = ref(false)
 
-// Productos desde API
-const products = ref([])
+// Productos desde API (SSR: useFetch comparte la respuesta vía payload).
+const { data: productsData, pending: productsPending } = await useFetch('/api/products', {
+  default: () => ({ products: [] }),
+})
+const products = computed(() => productsData.value?.products || [])
 
-// Perfiles aromáticos crudos (fragancias activas) desde la base de datos
-const aromasRaw = ref([])
+// `loading` refleja el pending real de la carga de productos (false en SSR,
+// por lo que la grilla ya viene renderizada del servidor, sin parpadeo).
+const loading = computed(() => productsPending.value)
+
+// Perfiles aromáticos crudos (fragancias activas) desde la base de datos (SSR).
+const { data: aromasData } = await useAsyncData('catalog-aromas', async () => {
+  const supabase = useNuxtApp().$supabase
+  if (!supabase) return []
+  const { data, error } = await supabase
+    .from('fragrance_profiles')
+    .select('*')
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true })
+  if (error) return []
+  return data || []
+})
+const aromasRaw = computed(() => (aromasData.value || []).map(mapAroma))
 
 // Ids de fragancias presentes en al menos un producto activo del catálogo.
 // Se usa para ocultar aromas que no tienen productos disponibles.
@@ -901,39 +931,26 @@ function getScentById(id) {
   return aromas.value.find(s => s.id === id)
 }
 
-// Cargar perfiles aromáticos desde fragrance_profiles
-async function loadAromas() {
-  try {
-    const supabase = useNuxtApp().$supabase
-    if (!supabase) return
-    const { data, error } = await supabase
-      .from('fragrance_profiles')
-      .select('*')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true })
-    if (error) throw error
-    // Mapear a la forma esperada por la plantilla
-    aromasRaw.value = (data || []).map(p => ({
-      id: p.id,
-      name: p.name,
-      slug: p.slug || '',
-      emoji: p.emoji || '🌸',
-      family: p.olfactive_family || '',
-      description: p.experience || p.subtitle || p.description || '',
-      image: p.image_url,
-      subtitle: p.subtitle || '',
-      experience: p.experience || '',
-      notes: p.notes || '',
-      hotel_reference: p.inspiracion || '',
-      // Sin tabla de colecciones: la "categoría" es la fragancia en sí (catálogo maestro)
-      category: p.slug || '',
-      categoryLabel: p.name || 'Perfil',
-      vibe: p.experience || p.subtitle || '',
-      bestFor: p.notes || p.description || p.inspiracion || '',
-      notesList: parseNotes(p.notes),
-    }))
-  } catch (e) {
-    console.warn('No se pudieron cargar los perfiles aromáticos:', e.message)
+// Mapear un perfil aromático crudo a la forma esperada por la plantilla.
+function mapAroma(p) {
+  return {
+    id: p.id,
+    name: p.name,
+    slug: p.slug || '',
+    emoji: p.emoji || '🌸',
+    family: p.olfactive_family || '',
+    description: p.experience || p.subtitle || p.description || '',
+    image: p.image_url,
+    subtitle: p.subtitle || '',
+    experience: p.experience || '',
+    notes: p.notes || '',
+    hotel_reference: p.inspiracion || '',
+    // Sin tabla de colecciones: la "categoría" es la fragancia en sí (catálogo maestro)
+    category: p.slug || '',
+    categoryLabel: p.name || 'Perfil',
+    vibe: p.experience || p.subtitle || '',
+    bestFor: p.notes || p.description || p.inspiracion || '',
+    notesList: parseNotes(p.notes),
   }
 }
 
@@ -1146,7 +1163,6 @@ function exploreAllAromas() {
 // Aplica un filtro por aroma desde la URL (?aroma=slug) al llegar al catálogo.
 // Se ejecuta después de cargar los perfiles aromáticos.
 function applyAromaFromUrl() {
-  if (!import.meta.client) return
   try {
     const route = useRoute()
 
@@ -1246,45 +1262,6 @@ function categoryIcon(label) {
   return map[key] || '🛍️'
 }
 
-// Cargar categorías desde Supabase
-async function loadCategories() {
-  try {
-    const supabase = useNuxtApp().$supabase
-    if (!supabase) return
-    const { data, error } = await supabase
-      .from('product_categories')
-      .select('id, name, slug')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true })
-    if (error) throw error
-    if (Array.isArray(data) && data.length) {
-      categories.value = [
-        { id: 'all', label: 'Todos' },
-        ...data.map(c => ({ id: c.slug, label: c.name })),
-      ]
-    }
-  } catch (e) {
-    console.warn('No se pudieron cargar las categorías:', e.message)
-    // Mantener solo "Todos" (sin categorías estáticas hardcodeadas)
-    categories.value = [{ id: 'all', label: 'Todos' }]
-  }
-}
-
-// Cargar productos únicamente desde Supabase (vía API). Si no hay productos,
-// se muestra el estado vacío de la UI ("No hay productos en esta categoría").
-async function loadProducts() {
-  loading.value = true
-  try {
-    const data = await $fetch('/api/products')
-    products.value = data?.products || []
-  } catch (e) {
-    console.warn('Error cargando productos:', e.message)
-    products.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
 // Aplicar categoría desde la URL (?categoria=slug) para enlaces directos del menú
 // (ej. /catalog?categoria=recuerdos). Se valida contra las categorías cargadas.
 function applyCategoryFromUrl() {
@@ -1321,11 +1298,12 @@ watch([activeCategory, activeFragrance, activeFamily, activeHotel], () => {
   syncFiltersToUrl()
 })
 
-onMounted(async () => {
-  loadCatalogConfig()
-  loadCategories().then(applyCategoryFromUrl)
-  await Promise.all([loadProducts(), loadAromas()])
-  applyAromaFromUrl()
+// Aplicar filtros desde la URL (?categoria=, ?aroma=, ?coleccion=, ?inspiracion=)
+// tanto en servidor como en cliente: el SSR ya renderiza el catálogo filtrado.
+applyCategoryFromUrl()
+applyAromaFromUrl()
+
+onMounted(() => {
   nextTick(() => { urlSyncEnabled = true })
 })
 </script>
