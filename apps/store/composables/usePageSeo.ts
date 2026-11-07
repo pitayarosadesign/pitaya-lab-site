@@ -23,13 +23,15 @@ export interface PageSeoDefaults {
 
 export function usePageSeo(path: string, defaults: PageSeoDefaults = {}) {
   const { data } = useFetch('/api/site/seo', {
-    default: () => ({ value: null }),
+    default: () => ({ value: null, global: null }),
   })
 
   const meta = computed(() => {
     const map = (data.value?.value as Record<string, PageSeoDefaults> | null) || {}
+    const global = (data.value?.global as PageSeoDefaults | null) || {}
     const override = map[path] || {}
-    const pick = (key: keyof PageSeoDefaults) => override[key] || defaults[key] || undefined
+    // Precedencia: override de la ruta > default de la página > SEO global.
+    const pick = (key: keyof PageSeoDefaults) => override[key] || defaults[key] || global[key] || undefined
     return {
       title: pick('title'),
       description: pick('description'),

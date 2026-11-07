@@ -33,6 +33,9 @@
     <!-- Entrega estimada (carrito y checkout) -->
     <EditorDeliveryEstimateEditor />
 
+    <!-- SEO global (título/descripción/robots por defecto) -->
+    <EditorSeoGlobalEditor />
+
     <!-- SEO de páginas fijas -->
     <EditorSeoEditor />
 

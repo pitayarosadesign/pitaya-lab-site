@@ -15,7 +15,8 @@ export default defineEventHandler(async (event) => {
     auth: { persistSession: false, autoRefreshToken: false }
   })
 
-  const BASE_URL = 'https://www.pitayalab.com.mx'
+  // URL base configurable desde el admin (site_config.seo_global.baseUrl).
+  let BASE_URL = 'https://www.pitayalab.com.mx'
 
   // Páginas estáticas
   const staticPages = [
@@ -30,6 +31,14 @@ export default defineEventHandler(async (event) => {
   ]
 
   try {
+    // Leer URL base configurable desde el admin (fallback al dominio actual).
+    const { data: seoConfig } = await supabase
+      .from('site_config')
+      .select('value')
+      .eq('key', 'seo_global')
+      .maybeSingle()
+    if (seoConfig?.value?.baseUrl) BASE_URL = String(seoConfig.value.baseUrl).replace(/\/$/, '')
+
     // Obtener productos activos
     const { data: products } = await supabase
       .from('products')
