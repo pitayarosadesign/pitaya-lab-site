@@ -51,6 +51,38 @@
         </label>
       </div>
 
+      <!-- Redes sociales -->
+      <div class="border-t border-gray-100 pt-4">
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <p class="text-sm font-medium text-gray-800">Redes sociales</p>
+            <p class="text-xs text-gray-400">Se muestran como iconos en el footer.</p>
+          </div>
+          <button @click="addSocial" class="text-sm text-primary-600 hover:text-primary-700 font-medium">+ Agregar red</button>
+        </div>
+        <div
+          v-for="(s, i) in form.social"
+          :key="i"
+          class="grid grid-cols-1 md:grid-cols-[160px_1fr_auto] gap-3 items-end mb-2"
+        >
+          <select v-model="s.network" class="px-3 py-2.5 rounded-lg border border-gray-200 text-sm">
+            <option value="instagram">Instagram</option>
+            <option value="facebook">Facebook</option>
+            <option value="tiktok">TikTok</option>
+            <option value="pinterest">Pinterest</option>
+            <option value="youtube">YouTube</option>
+          </select>
+          <input
+            v-model.trim="s.url"
+            type="url"
+            placeholder="https://..."
+            class="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-mono"
+          />
+          <button @click="form.social.splice(i, 1)" class="text-red-400 hover:text-red-600 text-sm px-2 py-2.5">Eliminar</button>
+        </div>
+        <p v-if="!form.social.length" class="text-xs text-gray-400">Sin redes configuradas.</p>
+      </div>
+
       <div class="flex items-center justify-end pt-3 border-t border-gray-100">
         <button
           @click="save"
@@ -72,7 +104,12 @@ const form = reactive({
   amazon_link: 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329?',
   stripe_link: 'https://climate.stripe.com/Ul0lzt',
   show_stripe: true,
+  social: [],
 })
+
+function addSocial() {
+  form.social.push({ network: 'instagram', url: '' })
+}
 
 async function load() {
   try {
@@ -82,7 +119,10 @@ async function load() {
       .eq('key', 'footer')
       .maybeSingle()
     if (error) throw error
-    if (data?.value) Object.assign(form, data.value)
+    if (data?.value) {
+      Object.assign(form, data.value)
+      if (!Array.isArray(form.social)) form.social = []
+    }
   } catch (e) {
     console.warn('No se pudo cargar el footer:', e.message)
   }

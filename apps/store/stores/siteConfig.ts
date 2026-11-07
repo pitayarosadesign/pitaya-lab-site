@@ -9,7 +9,7 @@
  * aplican si Supabase no responde o no tiene el registro esperado.
  */
 
-import { defaultBrand, defaultFooter, defaultNavLinks, defaultShipping, defaultShippingBar } from '~/utils/siteDefaults'
+import { defaultBrand, defaultContact, defaultFooter, defaultNavLinks, defaultShipping, defaultShippingBar } from '~/utils/siteDefaults'
 
 export const useSiteConfigStore = defineStore('siteConfig', () => {
   // 🚚 Barra de envíos (configurable: site_config.shipping_bar)
@@ -23,6 +23,9 @@ export const useSiteConfigStore = defineStore('siteConfig', () => {
 
   // 🦶 Footer (descripción y enlaces): site_config.footer
   const footer = reactive({ ...defaultFooter })
+
+  // 📞 Contacto (email, teléfono, WhatsApp): site_config.contact
+  const contact = reactive({ ...defaultContact })
 
   // 🧭 Enlaces del menú: site_config.nav_links
   const navLinks = ref(defaultNavLinks.map(link => ({ ...link })))
@@ -56,6 +59,9 @@ export const useSiteConfigStore = defineStore('siteConfig', () => {
         const ft = byKey('footer')
         if (ft) Object.assign(footer, ft)
 
+        const ct = byKey('contact')
+        if (ct) Object.assign(contact, ct)
+
         const nv = byKey('nav_links')
         if (Array.isArray(nv) && nv.length) {
           navLinks.value = nv.map((link: any) => ({ ...link }))
@@ -70,5 +76,5 @@ export const useSiteConfigStore = defineStore('siteConfig', () => {
     return pending
   }
 
-  return { shippingBar, shipping, brand, footer, navLinks, loaded, fetchConfig }
+  return { shippingBar, shipping, brand, footer, contact, navLinks, loaded, fetchConfig }
 })

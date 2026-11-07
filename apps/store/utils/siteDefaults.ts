@@ -17,6 +17,15 @@ export const defaultFooter = {
   amazon_link: 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329?',
   stripe_link: 'https://climate.stripe.com/Ul0lzt',
   show_stripe: true,
+  social: [],
+}
+
+// Datos de contacto (fuente única de verdad): site_config.contact.
+// El footer, el botón flotante de WhatsApp y B2B deben leer de aquí.
+export const defaultContact = {
+  email: 'contacto@pitayalab.com.mx',
+  phone: '',
+  whatsapp: '523333856064',
 }
 
 export const defaultShippingBar = {

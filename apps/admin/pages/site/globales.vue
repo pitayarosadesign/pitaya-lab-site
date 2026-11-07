@@ -50,6 +50,9 @@
 
     <!-- Pie de página -->
     <EditorFooterEditor />
+
+    <!-- Contacto (correo, teléfono, WhatsApp) -->
+    <EditorContactEditor />
   </div>
 </template>
 

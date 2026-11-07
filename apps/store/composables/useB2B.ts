@@ -48,14 +48,21 @@ export const DEFAULT_B2B = {
   },
 }
 
-// Número de WhatsApp (compartido)
+// Número de WhatsApp (fallback si site_config.contact no responde)
 export const WHATSAPP = '523333856064'
-export const WHATSAPP_URL = () => `https://wa.me/${WHATSAPP}`
+
+// Número vigente desde site_config.contact (fuente única de verdad).
+function currentWhatsapp() {
+  const site = useSiteConfigStore()
+  return site.contact.whatsapp || WHATSAPP
+}
+
+export const WHATSAPP_URL = () => `https://wa.me/${currentWhatsapp()}`
 
 // Enlace de WhatsApp prefilled (para mensaje de cotización)
 export function whatsappLinkWithMessage(message: string = '') {
   const q = encodeURIComponent(message)
-  return `https://wa.me/${WHATSAPP}${q ? `?text=${q}` : ''}`
+  return `https://wa.me/${currentWhatsapp()}${q ? `?text=${q}` : ''}`
 }
 
 /**
