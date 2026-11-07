@@ -219,9 +219,23 @@
                 v-for="aroma in popularAromas.slice(0, 4)"
                 :key="aroma.id"
                 @click="selectAroma(aroma)"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-earth-200 text-earth-600 hover:border-primary-300 hover:text-primary-700 text-sm font-medium transition-colors"
+                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-earth-200 text-earth-600 hover:border-primary-300 hover:text-primary-700 text-sm font-medium transition-colors"
               >
-                {{ aroma.emoji || '🌸' }} {{ aroma.name }}
+                <span class="w-6 h-6 rounded-full overflow-hidden bg-earth-100 flex-shrink-0">
+                  <img
+                    v-if="aroma.image"
+                    :src="useOptimizedImage(aroma.image, { width: 96, quality: 80 })"
+                    :alt="aroma.name"
+                    class="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <span
+                    v-else
+                    class="w-full h-full flex items-center justify-center text-xs font-serif font-semibold text-primary-700"
+                  >{{ aroma.name.charAt(0) }}</span>
+                </span>
+                {{ aroma.name }}
               </button>
             </div>
           </div>
@@ -502,7 +516,20 @@
                       @click="pickAromaFromDrawer(aroma)"
                       class="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-primary-50/50 text-left transition-colors"
                     >
-                      <span class="text-base">{{ aroma.emoji || '🌸' }}</span>
+                      <span class="w-6 h-6 rounded-full overflow-hidden bg-earth-100 flex-shrink-0">
+                        <img
+                          v-if="aroma.image"
+                          :src="useOptimizedImage(aroma.image, { width: 96, quality: 80 })"
+                          :alt="aroma.name"
+                          class="w-full h-full object-cover"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <span
+                          v-else
+                          class="w-full h-full flex items-center justify-center text-xs font-serif font-semibold text-primary-700"
+                        >{{ aroma.name.charAt(0) }}</span>
+                      </span>
                       <span class="text-sm font-medium text-earth-800 flex-1 truncate">{{ aroma.name }}</span>
                       <span class="text-[10px] text-earth-400">{{ aroma.categoryLabel }}</span>
                     </button>
@@ -534,8 +561,22 @@
                     <span class="w-4 flex-shrink-0 text-primary-600">
                       <svg v-if="activeFragrance === aroma.id" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
                     </span>
+                    <span class="w-6 h-6 rounded-full overflow-hidden bg-earth-100 flex-shrink-0">
+                      <img
+                        v-if="aroma.image"
+                        :src="useOptimizedImage(aroma.image, { width: 96, quality: 80 })"
+                        :alt="aroma.name"
+                        class="w-full h-full object-cover"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <span
+                        v-else
+                        class="w-full h-full flex items-center justify-center text-xs font-serif font-semibold text-primary-700"
+                      >{{ aroma.name.charAt(0) }}</span>
+                    </span>
                     <span class="text-sm flex-1 truncate" :class="activeFragrance === aroma.id ? 'font-semibold text-primary-700' : 'text-earth-700'">
-                      {{ aroma.emoji || '🌸' }} {{ aroma.name }}
+                      {{ aroma.name }}
                     </span>
                     <span class="text-[10px] text-earth-300 flex-shrink-0">{{ aromaProductCounts[aroma.id] || 0 }}</span>
                   </button>
