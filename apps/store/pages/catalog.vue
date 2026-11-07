@@ -80,10 +80,21 @@
               :aria-label="`Filtrar por ${aroma.name}`"
             >
               <span
-                class="w-14 h-14 rounded-full flex items-center justify-center text-2xl border-2 bg-gradient-to-br from-primary-50 to-amber-50 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-lg"
-                :class="activeFragrance === aroma.id ? 'border-primary-500 ring-4 ring-primary-100' : 'border-transparent group-hover:border-primary-200'"
+                class="w-14 h-14 rounded-full overflow-hidden border-2 bg-earth-100 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-lg shrink-0"
+                :class="activeFragrance === aroma.id ? 'border-primary-500 ring-4 ring-primary-100' : 'border-white group-hover:border-primary-200'"
               >
-                {{ aroma.emoji || '🌸' }}
+                <img
+                  v-if="aroma.image"
+                  :src="useOptimizedImage(aroma.image, { width: 160, quality: 80 })"
+                  :alt="aroma.name"
+                  class="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <span
+                  v-else
+                  class="w-full h-full flex items-center justify-center text-lg font-serif font-semibold text-primary-700 bg-gradient-to-br from-primary-50 to-amber-50"
+                >{{ aroma.name.charAt(0) }}</span>
               </span>
               <span
                 class="text-[11px] font-medium text-earth-700 leading-tight text-center line-clamp-2 transition-colors"
