@@ -296,7 +296,7 @@ const barMessages = computed(() => {
 })
 
 function substituteTokens(text) {
-  const threshold = Number(siteConfig.shipping.free_shipping_min) || shippingBar.free_shipping_min || 0
+  const threshold = Number(siteConfig.shipping.free_shipping_min) || 0
   const monto = `$${formatPrice(threshold)} MXN`
   return String(text).replace(/\{monto\}/g, monto)
 }

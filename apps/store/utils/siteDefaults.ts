@@ -21,8 +21,6 @@ export const defaultFooter = {
 
 export const defaultShippingBar = {
   enabled: false,
-  free_shipping_min: 200,
-  shipping_fee: 50,
   bg_color: '',
   text_color: '',
   speed: 6, // segundos por mensaje en la cinta en movimiento

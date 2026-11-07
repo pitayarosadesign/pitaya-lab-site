@@ -99,22 +99,6 @@
         </div>
       </div>
 
-      <!-- Ajustes del carrito (envío) -->
-      <div class="border-t border-gray-100 pt-4">
-        <p class="text-sm font-medium text-gray-800 mb-1">Ajustes de envío del carrito</p>
-        <p class="text-xs text-gray-400 mb-3">Estos valores alimentan la barra de progreso de envío gratis y el costo de envío en el carrito (no son mensajes de la cinta).</p>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Monto mínimo envío gratis ($)</label>
-            <input v-model.number="config.free_shipping_min" type="number" min="0" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Costo de envío menor ($)</label>
-            <input v-model.number="config.shipping_fee" type="number" min="0" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm" />
-          </div>
-        </div>
-      </div>
-
       <!-- Programación -->
       <div class="border-t border-gray-100 pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -153,8 +137,6 @@ const EMPTY_MESSAGE = { text: '', link: '', label: '' }
 // Config de la cinta promocional. Por defecto DESACTIVADA hasta cargar la real.
 const config = reactive({
   enabled: false,
-  free_shipping_min: 200,
-  shipping_fee: 50,
   bg_color: '',
   text_color: '',
   speed: 6,
