@@ -92,6 +92,7 @@ function buildVariantOptions(variants) {
       sku: v.sku,
       price: v.price,
       stock: v.stock,
+      gtin: v.gtin || null,
     })),
   }
 }

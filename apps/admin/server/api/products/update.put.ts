@@ -41,7 +41,18 @@ export default defineEventHandler(async (event) => {
       await syncManualVariants(supabaseAdmin, id, variants, baseSku)
     }
 
-    // 3. Si hay imágenes nuevas para subir
+    // 3. Recalcular stock principal como suma del stock de las variantes
+    //    (solo modelo flexible por dimensiones; sin variantes se conserva el
+    //    stock enviado en el formulario).
+    if (hasVariantOptions && Array.isArray(variantOptions.combinations) && variantOptions.combinations.length > 0) {
+      const totalStock = variantOptions.combinations.reduce((sum, c) => sum + (parseInt(c.stock) || 0), 0)
+      await supabaseAdmin
+        .from('products')
+        .update({ stock: totalStock })
+        .eq('id', id)
+    }
+
+    // 4. Si hay imágenes nuevas para subir
     if (Array.isArray(images) && images.length > 0) {
       const hasPrimary = images.some(img => img.is_primary)
       if (hasPrimary) {
@@ -85,7 +96,7 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // 4. Actualizar is_primary y sort_order de imágenes existentes
+    // 5. Actualizar is_primary y sort_order de imágenes existentes
     if (Array.isArray(images) && images.length > 0) {
       const hasPrimary = images.some(img => img.is_primary)
       if (hasPrimary) {
@@ -361,7 +372,9 @@ async function syncVariantOptions(supabaseAdmin, productId, variantOptions, base
       price: (c.price === null || c.price === undefined || c.price === '') ? null : parseFloat(c.price),
       stock: (c.stock === undefined || c.stock === null || c.stock === '') ? 0 : (parseInt(c.stock) || 0),
       image_url: prev?.image_url || null,
-      gtin: prev?.gtin || null,
+      // GTIN por combinación: el valor enviado por el editor manda; si un
+      // cliente antiguo no lo envía (undefined), se preserva el previo.
+      gtin: c.gtin !== undefined ? c.gtin : (prev?.gtin || null),
       sort_order: i,
       is_active: true,
     })

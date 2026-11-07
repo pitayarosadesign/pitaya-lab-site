@@ -156,7 +156,11 @@
         <h2 class="text-lg font-semibold text-gray-900">Inventario</h2>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Stock</label>
-          <input v-model="form.stock" type="number" min="0" placeholder="0" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
+          <div v-if="hasVariants" class="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-100 bg-gray-50">
+            <span class="font-semibold text-gray-800">{{ variantStockTotal }}</span>
+            <span class="text-xs text-gray-400">(suma de variantes)</span>
+          </div>
+          <input v-else v-model="form.stock" type="number" min="0" placeholder="0" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all" />
         </div>
       </div>
 
@@ -660,6 +664,13 @@ const generatedCombinations = computed(() => {
 
   build(0, [])
   return combos
+})
+
+// Stock principal derivado (solo lectura): suma del stock de las variantes.
+// El backend recalcula y persiste este mismo total al guardar.
+const variantStockTotal = computed(() => {
+  if (!hasVariants.value) return null
+  return generatedCombinations.value.reduce((sum, c) => sum + (parseInt(c.stock) || 0), 0)
 })
 
 function slugify(str) {

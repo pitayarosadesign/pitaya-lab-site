@@ -106,6 +106,7 @@ export default defineEventHandler(async (event) => {
           sku: c.sku,
           price: c.price,
           stock: c.stock,
+          gtin: c.gtin || null,
           fragrance_profile_id: profileId1 || profileId2 || null,
           option_type_1: type1,
           option_value_1: c.value1,
@@ -162,6 +163,17 @@ export default defineEventHandler(async (event) => {
         .from('product_variants')
         .insert(variants)
       if (varError) throw varError
+    }
+
+    // 4. Recalcular stock principal como suma del stock de las variantes
+    //    (solo modelo flexible por dimensiones; sin variantes se conserva el
+    //    stock enviado en el formulario).
+    if (variantOptions && Array.isArray(variantOptions.combinations) && variantOptions.combinations.length > 0) {
+      const totalStock = variantOptions.combinations.reduce((sum, c) => sum + (parseInt(c.stock) || 0), 0)
+      await supabaseAdmin
+        .from('products')
+        .update({ stock: totalStock })
+        .eq('id', product.id)
     }
 
     return { success: true, product }

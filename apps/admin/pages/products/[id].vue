@@ -69,7 +69,11 @@
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Stock</label>
-            <input v-model="form.stock" type="number" min="0" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all" />
+            <div v-if="useVariantOptions" class="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-100 bg-gray-50">
+              <span class="font-semibold text-gray-800">{{ variantStockTotal }}</span>
+              <span class="text-xs text-gray-400">(suma de variantes)</span>
+            </div>
+            <input v-else v-model="form.stock" type="number" min="0" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-primary-400 outline-none transition-all" />
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">GTIN (código barras)</label>
@@ -407,6 +411,13 @@ const useVariantOptions = ref(false)
 const variantDimensions = ref([])
 const variantComboMeta = ref({})
 
+// Stock principal derivado (solo lectura): suma del stock de las variantes.
+// El backend recalcula y persiste este mismo total al guardar.
+const variantStockTotal = computed(() => {
+  if (!useVariantOptions.value) return null
+  return Object.values(variantComboMeta.value).reduce((sum, m) => sum + (parseInt(m?.stock) || 0), 0)
+})
+
 async function loadCategories() {
   try {
     const data = await $fetch('/api/categories/list')
@@ -489,10 +500,26 @@ async function loadProduct() {
     if (data.variantOptions) {
       // Modelo flexible existente.
       useVariantOptions.value = true
-      variantDimensions.value = data.variantOptions.dimensions || []
+      const dims = data.variantOptions.dimensions || []
+      const combos = data.variantOptions.combinations || []
+
+      // El endpoint reconstruye las dimensiones con scentIds vacíos (no
+      // resuelve ids de aroma); los rellenamos aquí a partir de los NOMBRES
+      // guardados en las combinaciones y del catálogo de aromas ya cargado.
+      dims.forEach((dim, di) => {
+        if (dim.type === 'Aroma') {
+          const field = di === 0 ? 'value1' : 'value2'
+          const names = new Set(combos.map(c => c[field]).filter(Boolean))
+          dim.scentIds = allScents.value
+            .filter(s => names.has(s.name))
+            .map(s => s.id)
+        }
+      })
+      variantDimensions.value = dims
+
       const meta = {}
-      for (const c of (data.variantOptions.combinations || [])) {
-        if (c?.label) meta[c.label] = { price: c.price ?? '', stock: c.stock ?? '' }
+      for (const c of combos) {
+        if (c?.label) meta[c.label] = { price: c.price ?? '', stock: c.stock ?? '', gtin: c.gtin ?? '' }
       }
       variantComboMeta.value = meta
     } else if (!isEventChannel.value && data.variants && data.variants.length > 0) {
@@ -515,7 +542,7 @@ async function loadProduct() {
         const meta = {}
         for (const v of data.variants) {
           if (v.fragrance_profile_id && v.name) {
-            meta[v.name] = { price: v.price ?? '', stock: v.stock ?? '' }
+            meta[v.name] = { price: v.price ?? '', stock: v.stock ?? '', gtin: v.gtin ?? '' }
           }
         }
         variantComboMeta.value = meta

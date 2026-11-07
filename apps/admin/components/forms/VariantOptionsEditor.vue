@@ -145,7 +145,7 @@
       <div v-if="combos.length > 0" class="border border-gray-100 rounded-xl overflow-hidden">
         <div class="px-4 py-3 bg-gray-50 border-b border-gray-100">
           <h3 class="text-sm font-semibold text-gray-800">Combinaciones ({{ combos.length }})</h3>
-          <p class="text-xs text-gray-400 mt-0.5">Cada combinación tendrá su propio precio, stock y SKU en la tienda.</p>
+          <p class="text-xs text-gray-400 mt-0.5">Cada combinación tendrá su propio precio, stock, SKU y GTIN en la tienda.</p>
         </div>
         <div class="divide-y divide-gray-100">
           <div v-for="combo in combos" :key="combo.label" class="px-4 py-3 flex items-center gap-3">
@@ -154,6 +154,15 @@
               <p class="text-[10px] text-gray-400 font-mono">{{ combo.sku }}</p>
             </div>
             <div class="flex items-center gap-2">
+              <input
+                :value="comboMeta[combo.label]?.gtin ?? ''"
+                @input="setComboField(combo.label, 'gtin', $event.target.value)"
+                type="text"
+                maxlength="14"
+                inputmode="numeric"
+                placeholder="GTIN"
+                class="w-28 px-2 py-1.5 rounded-md border border-gray-200 focus:border-primary-400 outline-none transition-all text-sm font-mono"
+              />
               <input
                 :value="comboMeta[combo.label]?.price ?? ''"
                 @input="setComboField(combo.label, 'price', $event.target.value)"
@@ -377,6 +386,7 @@ function buildPayload() {
       const meta = comboMeta.value[c.label] || {}
       const price = (meta.price === '' || meta.price == null) ? null : parseFloat(meta.price)
       const stock = (meta.stock === '' || meta.stock == null) ? 0 : (parseInt(meta.stock) || 0)
+      const gtin = String(meta.gtin ?? '').trim()
       return {
         // Para la dimensión "Aroma" se envía el NOMBRE del perfil (legible en
         // la tienda y para resolver fragrance_profile_id por nombre en el API).
@@ -386,6 +396,7 @@ function buildPayload() {
         sku: c.sku,
         price,
         stock,
+        gtin: gtin || null,
       }
     }),
   }
