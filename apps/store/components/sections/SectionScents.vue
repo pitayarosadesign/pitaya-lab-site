@@ -16,13 +16,15 @@
         <div
           v-for="scent in scents"
           :key="scent.id"
-          class="group relative rounded-2xl overflow-hidden aspect-square bg-earth-100 cursor-default shadow-sm hover:shadow-xl transition-all duration-500"
+          class="group relative rounded-2xl overflow-hidden aspect-square bg-earth-100 shadow-sm hover:shadow-xl transition-all duration-500 cursor-pointer"
+          @click="toggleScent(scent.id)"
         >
           <img
             v-if="scent.image_url"
             :src="useOptimizedImage(scent.image_url, { width: 600, quality: 80 })"
             :alt="`Aroma ${scent.name} - PITAYA LAB`"
-            class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+            class="w-full h-full object-cover transform transition-transform duration-700"
+            :class="isOpen(scent.id) ? 'scale-110' : 'group-hover:scale-110'"
             loading="lazy"
             decoding="async"
           />
@@ -30,21 +32,35 @@
             <span class="text-5xl">{{ scent.emoji || '🌸' }}</span>
           </div>
 
-          <div class="absolute inset-0 bg-gradient-to-t from-earth-900/80 via-earth-900/20 to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-500"></div>
+          <!-- Gradiente inferior: siempre oscuro para que el nombre sea legible -->
+          <div
+            class="absolute inset-0 bg-gradient-to-t from-earth-950/90 via-earth-900/25 to-transparent transition-opacity duration-500"
+            :class="isOpen(scent.id) ? 'opacity-100' : 'opacity-70 group-hover:opacity-90'"
+          ></div>
 
-          <div class="absolute bottom-0 left-0 right-0 p-4">
-            <h4 class="text-white font-semibold text-lg font-serif">{{ scent.name }}</h4>
-            <p v-if="scent.subtitle" class="text-white/70 text-xs mt-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-              {{ scent.subtitle }}
-            </p>
-            <p v-if="scent.experience" class="text-white/70 text-xs mt-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-              {{ scent.experience }}
-            </p>
-            <div v-if="scent.notes" class="mt-2 space-y-0.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-              <p v-for="note in splitNotes(scent.notes)" :key="note" class="text-white/60 text-[11px] leading-snug">
-                {{ note }}
-              </p>
+          <div class="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+            <h4 class="text-white font-semibold text-base sm:text-lg font-serif drop-shadow">{{ scent.name }}</h4>
+
+            <!-- Descripción colapsable: se abre al tocar (móvil) o al hover (escritorio) -->
+            <div
+              class="grid transition-all duration-300"
+              :class="isOpen(scent.id)
+                ? 'grid-rows-[1fr] opacity-100 translate-y-0'
+                : 'grid-rows-[0fr] opacity-0 translate-y-2 group-hover:grid-rows-[1fr] group-hover:opacity-100 group-hover:translate-y-0'"
+            >
+              <div class="overflow-hidden">
+                <p v-if="scent.subtitle" class="text-white/80 text-xs mt-1">{{ scent.subtitle }}</p>
+                <p v-if="scent.experience" class="text-white/80 text-xs mt-1">{{ scent.experience }}</p>
+                <div v-if="scent.notes" class="mt-1.5 space-y-0.5">
+                  <p v-for="note in splitNotes(scent.notes)" :key="note" class="text-white/70 text-[11px] leading-snug">{{ note }}</p>
+                </div>
+              </div>
             </div>
+
+            <!-- Hint táctil solo en móvil y con la tarjeta cerrada -->
+            <p v-if="!isOpen(scent.id)" class="mt-1.5 inline-flex items-center gap-1 text-[10px] text-white/60 sm:hidden">
+              Toca para ver detalles
+            </p>
           </div>
         </div>
       </div>
@@ -64,6 +80,13 @@ const props = defineProps({
 
 const supabase = useNuxtApp().$supabase
 const scents = ref([])
+
+// Tarjeta abierta (descripción visible al tocar, útil en móvil).
+const openScentId = ref(null)
+function isOpen(id) { return openScentId.value === id }
+function toggleScent(id) {
+  openScentId.value = openScentId.value === id ? null : id
+}
 
 async function loadScents() {
   if (!supabase) return
