@@ -123,6 +123,7 @@ onMounted(loadConfig)
 const currentDate = new Date().toLocaleDateString('es-MX', {
   year: 'numeric',
   month: 'long',
-  day: 'numeric'
+  day: 'numeric',
+  timeZone: 'America/Mexico_City',
 })
 </script>

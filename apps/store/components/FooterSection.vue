@@ -137,7 +137,7 @@
           </div>
 
           <p class="mt-6 text-xs text-earth-500">
-            © {{ new Date().getFullYear() }} {{ brand.name }}. Todos los derechos reservados.
+            © {{ currentYear }} {{ brand.name }}. Todos los derechos reservados.
           </p>
         </div>
       </div>
@@ -153,6 +153,13 @@ const siteConfig = useSiteConfigStore()
 const brand = siteConfig.brand
 const footer = siteConfig.footer
 const contact = siteConfig.contact
+
+// Año actual con zona horaria fija: evita el desajuste de hidratación entre el
+// render del servidor (UTC) y el del cliente (hora local de México).
+const currentYear = new Date().toLocaleDateString('es-MX', {
+  year: 'numeric',
+  timeZone: 'America/Mexico_City',
+})
 
 // 🧭 El footer usa los mismos enlaces que el menú superior (sin "Inicio").
 const navLinks = computed(() => siteConfig.navLinks.filter(link => link.path !== '/'))
