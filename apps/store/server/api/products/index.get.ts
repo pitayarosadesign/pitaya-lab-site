@@ -120,8 +120,6 @@ export default defineEventHandler(async (event) => {
         badge: p.badge || null,
         prepDaysMin: p.prep_days_min ?? p.product_categories?.prep_days_min ?? null,
         prepDaysMax: p.prep_days_max ?? p.product_categories?.prep_days_max ?? null,
-        // Mayoreo / precio negocio por tramos de cantidad
-        wholesale: p.wholesale_tiers || null,
         personalization: p.personalization || null,
         minOrderQuantity: p.quantity_options?.length ? Math.min(...p.quantity_options) : (p.min_order_quantity || 1),
         packLabel: p.pack_label || null,

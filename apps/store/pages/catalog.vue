@@ -231,7 +231,6 @@
               :price="product.price"
               :product-id="product.id"
               :fragrances="product.fragrances"
-              :wholesale="product.wholesale"
               :badge="product.badge"
               :is-featured="product.isFeatured"
               :prep-days-min="product.prepDaysMin"

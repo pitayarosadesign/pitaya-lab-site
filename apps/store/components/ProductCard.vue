@@ -90,12 +90,6 @@
         <p class="text-xl font-bold text-earth-900">
           ${{ formatPrice(price) }} <span class="text-sm font-normal text-earth-400">MXN</span>
         </p>
-        <!-- Precio negocio (mayoreo) -->
-        <p v-if="wholesaleBest" class="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-primary-700">
-          Precio negocio: desde
-          <span class="text-primary-800">${{ formatPrice(wholesaleBest.price) }}</span>
-          <span class="font-normal text-earth-400">({{ wholesaleBest.min }}+ pzas)</span>
-        </p>
         <meta itemprop="price" :content="String(price)" />
         <meta itemprop="priceCurrency" content="MXN" />
         <meta itemprop="availability" content="https://schema.org/InStock" />
@@ -167,7 +161,6 @@
 </template>
 
 <script setup>
-import { normalizeWholesale, getBestWholesaleUnitPrice } from '~/composables/useWholesale'
 import { badgeLabel, badgeClass } from '~/composables/useBadge'
 
 const cart = useCartStore()
@@ -200,11 +193,6 @@ const props = defineProps({
   price: {
     type: Number,
     default: 0
-  },
-  // Config de mayoreo del producto (wholesale_tiers). Ver useWholesale.
-  wholesale: {
-    type: Object,
-    default: null
   },
   fragrances: {
     type: Array,
@@ -273,17 +261,6 @@ function formatPrice(price) {
   return Number(price).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-// Precio negocio más bajo (tramo de mayor volumen), para mostrarlo en la tarjeta.
-const wholesaleBest = computed(() => {
-  const cfg = normalizeWholesale(props.wholesale)
-  if (!cfg) return null
-  const top = cfg.tiers[cfg.tiers.length - 1]
-  return {
-    min: top.min,
-    price: getBestWholesaleUnitPrice(props.price, cfg),
-  }
-})
-
 // Distintivo visible: el badge manual o, si está vacío, "Best Seller" para destacados.
 const displayBadge = computed(() => badgeLabel(props.badge, props.isFeatured))
 const badgeStyle = computed(() => badgeClass(displayBadge.value))
@@ -301,7 +278,6 @@ function addToCart() {
     name: props.productName,
     subtitle: '',
     price: props.price,
-    wholesale: props.wholesale || null,
     image: props.imageUrl,
     variant: null,
     quantity: qty.value,

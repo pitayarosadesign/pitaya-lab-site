@@ -5,8 +5,6 @@
  * Persistencia en localStorage
  */
 
-import { normalizeWholesale, getWholesaleUnitPrice } from '~/composables/useWholesale'
-
 export interface CartItem {
   id: string
   slug: string
@@ -33,8 +31,6 @@ export interface CartItem {
   minOrderQuantity?: number
   /** Datos de personalización capturados en la PDP */
   personalization?: any
-  /** Config de mayoreo (wholesale_tiers) para aplicar descuento por volumen */
-  wholesale?: any
 }
 
 export interface CartState {
@@ -90,12 +86,6 @@ function saveOrderNote(note: string) {
   }
 }
 
-// Precio unitario efectivo aplicando mayoreo por volumen (si el ítem tiene tiers)
-function unitPriceFor(item: CartItem): number {
-  const cfg = normalizeWholesale(item.wholesale)
-  return getWholesaleUnitPrice(item.price, cfg, item.quantity)
-}
-
 export const useCartStore = defineStore('cart', {
   state: (): CartState => ({
     items: [],
@@ -106,11 +96,11 @@ export const useCartStore = defineStore('cart', {
   getters: {
     totalItems: (state) => state.items.reduce((sum, item) => sum + item.quantity, 0),
 
-    totalPrice: (state) => state.items.reduce((sum, item) => sum + unitPriceFor(item) * item.quantity, 0),
+    totalPrice: (state) => state.items.reduce((sum, item) => sum + item.price * item.quantity, 0),
 
     formattedTotal: (state) => {
       return state.items
-        .reduce((sum, item) => sum + unitPriceFor(item) * item.quantity, 0)
+        .reduce((sum, item) => sum + item.price * item.quantity, 0)
         .toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     },
 
@@ -118,8 +108,8 @@ export const useCartStore = defineStore('cart', {
 
     itemCount: (state) => state.items.length,
 
-    // Precio unitario efectivo (aplica mayoreo por volumen) de un ítem
-    unitPrice: () => (item: CartItem) => unitPriceFor(item),
+    // Precio unitario efectivo del ítem
+    unitPrice: () => (item: CartItem) => item.price,
   },
 
   actions: {
@@ -187,7 +177,7 @@ export const useCartStore = defineStore('cart', {
     // Obtener items agrupados para el checkout
     getCheckoutItems() {
       return this.items.map(item => ({
-        price: Math.round(unitPriceFor(item) * 100), // Stripe usa centavos
+        price: Math.round(item.price * 100), // Stripe usa centavos
         quantity: item.quantity,
         name: `${item.name}${item.variant ? ' - ' + item.variant.name : ''}`,
         description: item.subtitle || '',

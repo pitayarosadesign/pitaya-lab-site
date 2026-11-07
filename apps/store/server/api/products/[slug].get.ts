@@ -105,8 +105,7 @@ export default defineEventHandler(async (event) => {
         freeShipping: product.free_shipping,
         gtin: product.gtin,
         brand: product.brand,
-        // 💼 Mayoreo / precio negocio y 🎨 personalización
-        wholesale: product.wholesale_tiers || null,
+        // 🎨 Personalización
         personalization: product.personalization || null,
         minOrderQuantity: product.quantity_options?.length ? Math.min(...product.quantity_options) : (product.min_order_quantity || 1),
         packLabel: product.pack_label || null,

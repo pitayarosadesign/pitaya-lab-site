@@ -101,7 +101,6 @@
               </span>
               <p class="text-sm font-medium text-earth-900 mt-1">
                 ${{ formatPrice(cart.unitPrice(item)) }}
-                <span v-if="cart.unitPrice(item) < item.price" class="text-[10px] font-semibold text-primary-700 ml-1">Mayoreo</span>
               </p>
 
               <!-- Cantidad -->
