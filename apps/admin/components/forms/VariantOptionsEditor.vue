@@ -214,7 +214,7 @@
  * `variantOptions` listo para enviar al API. `comboMeta` guarda
  * { price, stock } por etiqueta de combinación.
  */
-import { ref, computed, watch } from 'vue'
+import { computed } from 'vue'
 
 const props = defineProps({
   hasVariants: { type: Boolean, default: false },
@@ -237,20 +237,23 @@ const emit = defineEmits([
   'update:comboMeta',
 ])
 
-// Estado local espejo (se sincroniza con el padre vía watch + emit)
-const hasVariants = ref(props.hasVariants)
-const dimensions = ref(props.dimensions || [])
-const comboMeta = ref({ ...(props.comboMeta || {}) })
+// Estado espejo vía computeds get/set (sin watches bidireccionales).
+// Los watches profundos previos creaban un bucle infinito emit→prop→watch
+// al escribir stock/precio/GTIN y congelaban la página.
+const hasVariants = computed({
+  get: () => props.hasVariants,
+  set: (v) => emit('update:hasVariants', v),
+})
 
-// Sincronía entrante (padre -> componente)
-watch(() => props.hasVariants, (v) => { hasVariants.value = v })
-watch(() => props.dimensions, (v) => { if (v !== dimensions.value) dimensions.value = v })
-watch(() => props.comboMeta, (v) => { comboMeta.value = { ...v } }, { deep: true })
+const dimensions = computed({
+  get: () => props.dimensions,
+  set: (v) => emit('update:dimensions', v),
+})
 
-// Sincronía saliente (componente -> padre)
-watch(hasVariants, (v) => emit('update:hasVariants', v))
-watch(dimensions, (v) => emit('update:dimensions', v), { deep: true })
-watch(comboMeta, (v) => emit('update:comboMeta', { ...v }), { deep: true })
+const comboMeta = computed({
+  get: () => props.comboMeta,
+  set: (v) => emit('update:comboMeta', v),
+})
 
 function setHasVariants(v) {
   hasVariants.value = v
