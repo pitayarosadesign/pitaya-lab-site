@@ -501,6 +501,73 @@
             <span class="text-sm font-medium text-gray-700">Mostrar mensaje "Todos los aromas disponibles"</span>
           </label>
         </div>
+
+        <!-- 🌾 Selección manual de aromas (solo sección de aromas) -->
+        <div v-if="section.type === 'scents'" class="md:col-span-2">
+          <div class="flex items-center justify-between">
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Aromas que se mostrarán {{ curatedScentsActive ? `(${section.content.scent_ids.length} seleccionados)` : '(automático: todos los aromas activos)' }}
+            </label>
+            <button
+              v-if="curatedScentsActive"
+              type="button"
+              @click="section.content.scent_ids = []"
+              class="text-xs text-primary-600 hover:text-primary-700 font-medium"
+            >Limpiar selección (mostrar todos)</button>
+          </div>
+          <p class="text-xs text-gray-400 mb-2">
+            Elige solo los aromas de esta temporada. Se muestran en este orden. Si dejas vacío, se muestran todos los aromas activos.
+          </p>
+
+          <!-- Seleccionados (se muestran primero, en orden) -->
+          <div v-if="selectedScentList.length" class="space-y-1.5 mb-2">
+            <div
+              v-for="(s, index) in selectedScentList"
+              :key="s.id"
+              class="flex items-center gap-3 p-2 rounded-lg border border-primary-200 bg-primary-50/60"
+            >
+              <img v-if="s.image_url" :src="s.image_url" alt="" class="w-9 h-9 rounded-md object-cover border border-primary-100 flex-shrink-0" @error="onPreviewImgError($event)" />
+              <div v-else class="w-9 h-9 rounded-md bg-gray-100 border border-primary-100 flex items-center justify-center text-sm flex-shrink-0">{{ s.emoji || '🌸' }}</div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-800 truncate">{{ s.name }}</p>
+                <p class="text-[11px] text-gray-400 truncate">{{ s.subtitle || '—' }}</p>
+              </div>
+              <div class="flex items-center gap-1 flex-shrink-0">
+                <button type="button" @click="moveScent(section.content.scent_ids, index, -1)" :disabled="index === 0" class="text-gray-400 hover:text-gray-600 disabled:opacity-25 text-xs px-1" title="Subir">↑</button>
+                <button type="button" @click="moveScent(section.content.scent_ids, index, 1)" :disabled="index === selectedScentList.length - 1" class="text-gray-400 hover:text-gray-600 disabled:opacity-25 text-xs px-1" title="Bajar">↓</button>
+                <button type="button" @click="removeScent(s.id)" class="text-red-400 hover:text-red-600 text-xs px-1" title="Quitar">✕</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selector de aromas no elegidos -->
+          <div class="border border-gray-200 rounded-xl p-2 bg-white max-h-52 overflow-y-auto">
+            <template v-if="loadingScents">
+              <p class="text-sm text-gray-400 px-2 py-3">Cargando aromas…</p>
+            </template>
+            <template v-else-if="choosableScents.length">
+              <label
+                v-for="s in choosableScents"
+                :key="s.id"
+                class="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-gray-50 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  class="text-primary-600 rounded"
+                  :checked="isScentSelected(s.id)"
+                  @change="toggleScent(s, $event)"
+                />
+                <img v-if="s.image_url" :src="s.image_url" alt="" class="w-7 h-7 rounded object-cover flex-shrink-0" @error="onPreviewImgError($event)" />
+                <div v-else class="w-7 h-7 rounded bg-gray-100 flex items-center justify-center text-sm flex-shrink-0">{{ s.emoji || '🌸' }}</div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm text-gray-700 truncate">{{ s.name }}</p>
+                  <p class="text-[11px] text-gray-400 truncate">{{ s.subtitle || '—' }}</p>
+                </div>
+              </label>
+            </template>
+            <p v-else class="text-sm text-gray-400 px-2 py-3">No quedan aromas por elegir (o el catálogo está vacío).</p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1473,6 +1540,84 @@ function moveCatalogProduct(ids, index, delta) {
   ids.splice(to, 0, moved)
 }
 
+// ===== Selección manual de aromas (sección "scents") =====
+// Catálogo de aromas (fragrance_profiles) para curar la sección por temporada.
+const scentOptions = ref([])
+const loadingScents = ref(false)
+
+// ¿Está activa la selección manual de aromas en esta sección?
+const curatedScentsActive = computed(() =>
+  Array.isArray(section.value?.content?.scent_ids) && section.value.content.scent_ids.length > 0
+)
+
+// Aromas ya seleccionados, en el orden guardado en `scent_ids`.
+const selectedScentList = computed(() => {
+  const ids = section.value?.content?.scent_ids
+  if (!Array.isArray(ids) || !ids.length) return []
+  const byId = new Map(scentOptions.value.map(s => [s.id, s]))
+  return ids.map(id => byId.get(id)).filter(Boolean)
+})
+
+// Aromas que aún no están seleccionados (para el picker).
+const choosableScents = computed(() => {
+  const ids = section.value?.content?.scent_ids
+  const chosen = new Set(Array.isArray(ids) ? ids : [])
+  return scentOptions.value.filter(s => !chosen.has(s.id))
+})
+
+function isScentSelected(id) {
+  const ids = section.value?.content?.scent_ids
+  return Array.isArray(ids) && ids.includes(id)
+}
+
+function toggleScent(scent, event) {
+  ensureContent()
+  if (!Array.isArray(section.value.content.scent_ids)) {
+    section.value.content.scent_ids = []
+  }
+  const idx = section.value.content.scent_ids.indexOf(scent.id)
+  if (event.target.checked) {
+    if (idx === -1) section.value.content.scent_ids.push(scent.id)
+  } else if (idx !== -1) {
+    section.value.content.scent_ids.splice(idx, 1)
+  }
+}
+
+function removeScent(id) {
+  const ids = section.value?.content?.scent_ids
+  if (!Array.isArray(ids)) return
+  const idx = ids.indexOf(id)
+  if (idx !== -1) ids.splice(idx, 1)
+}
+
+// Reordena un aroma dentro de la selección manual.
+function moveScent(ids, index, delta) {
+  if (!Array.isArray(ids)) return
+  const to = index + delta
+  if (to < 0 || to >= ids.length) return
+  const [moved] = ids.splice(index, 1)
+  ids.splice(to, 0, moved)
+}
+
+async function loadScentOptions() {
+  if (loadingScents.value) return
+  loadingScents.value = true
+  try {
+    const { data, error } = await supabase
+      .from('fragrance_profiles')
+      .select('id, name, subtitle, emoji, image_url')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
+    if (error) throw error
+    scentOptions.value = data || []
+  } catch (e) {
+    console.warn('Error cargando aromas para selector:', e.message)
+    scentOptions.value = []
+  } finally {
+    loadingScents.value = false
+  }
+}
+
 async function loadCatalogProducts() {
   if (loadingCatalog.value) return
   loadingCatalog.value = true
@@ -2049,6 +2194,15 @@ onMounted(() => {
 watch(
   () => props.section?.type,
   (t) => { if (t === 'products') loadCatalogProducts() }
+)
+
+// Carga los aromas cuando la sección es de tipo "scents" (selección manual).
+onMounted(() => {
+  if (props.section?.type === 'scents') loadScentOptions()
+})
+watch(
+  () => props.section?.type,
+  (t) => { if (t === 'scents') loadScentOptions() }
 )
 </script>
 

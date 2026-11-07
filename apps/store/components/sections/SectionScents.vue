@@ -76,7 +76,18 @@ async function loadScents() {
       .order('sort_order', { ascending: true })
 
     if (error) throw error
-    if (data) scents.value = data
+
+    let list = data || []
+
+    // Si la sección tiene aromas curados (ej. por temporada), se muestran solo
+    // esos, en el orden elegido en el editor de secciones.
+    const ids = props.content?.scent_ids
+    if (Array.isArray(ids) && ids.length > 0) {
+      const byId = new Map(list.map(s => [s.id, s]))
+      list = ids.map(id => byId.get(id)).filter(Boolean)
+    }
+
+    scents.value = list
   } catch (e) {
     console.warn('Error cargando aromas:', e.message)
   }
