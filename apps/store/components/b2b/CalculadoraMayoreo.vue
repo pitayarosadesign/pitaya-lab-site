@@ -154,19 +154,20 @@ const tiers = [
   { min: 100, max: null, discount_percent: 35, label: 'Nivel 3', description: 'Socios comerciales grandes o compras recurrentes' },
 ]
 
-// Fallback estático si no hay productos con mayoreo habilitado
+// Fallback estático si no hay productos de catálogo disponibles
 const FALLBACK_PRODUCTS = [
-  { key: 'bruma', label: 'Bruma Aromática', size: '225 ml', retailPrice: 299, qty: 0, wholesalePrice: null, wholesaleMinQty: 20 },
-  { key: 'aceite', label: 'Aceite Aromático', size: '15 ml', retailPrice: 249, qty: 0, wholesalePrice: null, wholesaleMinQty: 20 },
-  { key: 'velaClasica', label: 'Vela Clásica', size: '250g', retailPrice: 349, qty: 0, wholesalePrice: null, wholesaleMinQty: 20 },
-  { key: 'velaMistica', label: 'Vela Mística', size: '350g', retailPrice: 499, qty: 0, wholesalePrice: null, wholesaleMinQty: 20 },
+  { key: 'bruma', label: 'Bruma Aromática', size: '225 ml', retailPrice: 299, qty: 0 },
+  { key: 'aceite', label: 'Aceite Aromático', size: '15 ml', retailPrice: 249, qty: 0 },
+  { key: 'velaClasica', label: 'Vela Clásica', size: '250g', retailPrice: 349, qty: 0 },
+  { key: 'velaMistica', label: 'Vela Mística', size: '350g', retailPrice: 499, qty: 0 },
 ]
 
 // Productos disponibles para mayoreo (cargados desde Supabase)
 const products = ref([])
 const loadingProducts = ref(true)
 
-// Cargar productos con mayoreo habilitado desde la BD
+// Cargar productos de catálogo (canal directa) para la calculadora de mayoreo.
+// El descuento se aplica por volumen (tiers), no por columnas de mayoreo.
 async function loadProducts() {
   loadingProducts.value = true
   try {
@@ -178,10 +179,9 @@ async function loadProducts() {
 
     const { data, error } = await supabase
       .from('products')
-      .select('id, sku, name, subtitle, price, wholesale_price, wholesale_min_qty, product_categories(name)')
+      .select('id, sku, name, subtitle, price, product_categories(name)')
       .eq('sales_channel', 'directa')
       .eq('is_active', true)
-      .eq('wholesale_enabled', true)
       .order('sort_order', { ascending: true })
 
     if (error) throw error
@@ -192,8 +192,6 @@ async function loadProducts() {
         label: p.name,
         size: p.subtitle || p.product_categories?.name || '',
         retailPrice: Number(p.price) || 0,
-        wholesalePrice: p.wholesale_price ? Number(p.wholesale_price) : null,
-        wholesaleMinQty: p.wholesale_min_qty || 20,
         qty: 0,
       }))
     } else {
