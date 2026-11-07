@@ -99,37 +99,17 @@
 </template>
 
 <script setup>
-import { defaultBrand, defaultFooter, defaultNavLinks } from '~/utils/siteDefaults'
-
-// 🏷️ Marca configurable desde el admin
-const brand = reactive({ ...defaultBrand })
-
-// 🦶 Contenido del footer (descripción y enlaces), editable desde el admin
-const footer = reactive({ ...defaultFooter })
+// 🏷️ Marca, contenido del footer y enlaces: leídos del store unificado de
+// site_config. Los objetos reactivos no se reasignan (solo se mutan), así que
+// es seguro mantener una referencia directa. `navLinks` sí se reemplaza al cargar.
+const siteConfig = useSiteConfigStore()
+const brand = siteConfig.brand
+const footer = siteConfig.footer
 
 // 🧭 El footer usa los mismos enlaces que el menú superior (sin "Inicio").
-// El fallback vive en utils/siteDefaults.ts y solo aplica si no hay
-// `nav_links` en Supabase.
-const navLinks = ref(defaultNavLinks.filter(link => link.path !== '/').map(link => ({ ...link })))
+const navLinks = computed(() => siteConfig.navLinks.filter(link => link.path !== '/'))
 
-onMounted(async () => {
-  if (!import.meta.client) return
-  try {
-    const supabase = useNuxtApp().$supabase
-    if (!supabase) return
-    const { data, error } = await supabase.from('site_config').select('key, value')
-    const rows = Array.isArray(data) ? data : []
-    const brandRow = rows.find(r => r.key === 'brand')
-    const navRow = rows.find(r => r.key === 'nav_links')
-    const footerRow = rows.find(r => r.key === 'footer')
-    if (brandRow?.value) Object.assign(brand, brandRow.value)
-    if (footerRow?.value) Object.assign(footer, footerRow.value)
-    if (navRow?.value && Array.isArray(navRow.value) && navRow.value.length) {
-      // El footer excluye "Inicio" pero usa el resto de los links configurados
-      navLinks.value = navRow.value.filter(l => l.path !== '/')
-    }
-  } catch (e) {
-    console.warn('Usando valores por defecto de marca en footer')
-  }
+onMounted(() => {
+  siteConfig.fetchConfig()
 })
 </script>

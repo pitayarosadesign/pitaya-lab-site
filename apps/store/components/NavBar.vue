@@ -218,9 +218,8 @@
 </template>
 
 <script setup>
-import { defaultBrand, defaultShippingBar, defaultNavLinks } from '~/utils/siteDefaults'
-
 const cart = useCartStore()
+const siteConfig = useSiteConfigStore()
 const AMAZON_LINK = 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329?'
 
 const mobileMenuOpen = ref(false)
@@ -240,17 +239,12 @@ function onDocClick() {
   clickMenuIndex.value = null
 }
 
-// 🚚 Barra de envíos (configurable desde el admin). Por defecto DESACTIVADA
-// hasta que se cargue el registro `shipping_bar` de Supabase. Si no existe ese
-// registro, la barra NO se muestra.
-const shippingBar = reactive({ ...defaultShippingBar })
-
-// 🏷️ Marca (logo, nombre, eslogan) configurable desde el admin
-const brand = reactive({ ...defaultBrand })
-
-// 🧭 Enlaces del menú (configurables desde el admin). El fallback vive en
-// utils/siteDefaults.ts y solo aplica si no hay `nav_links` en Supabase.
-const navLinks = ref(defaultNavLinks.map(link => ({ ...link })))
+// 🚚 Barra de envíos, marca y menú: leídos del store unificado de site_config.
+// Los objetos reactivos no se reasignan (solo se mutan), así que es seguro
+// mantener una referencia directa. `navLinks` sí se reemplaza al cargar.
+const shippingBar = siteConfig.shippingBar
+const brand = siteConfig.brand
+const navLinks = computed(() => siteConfig.navLinks)
 
 // Indica si un enlace tiene sub-enlaces (submenú) para renderizar el dropdown.
 function hasChildren(link) {
@@ -329,51 +323,8 @@ const shippingBarActive = computed(() => {
   return true
 })
 
-// Cargar configuración de envíos desde Supabase
-async function loadShippingBar() {
-  if (!import.meta.client) return
-  try {
-    const supabase = useNuxtApp().$supabase
-    if (!supabase) return
-    const { data, error } = await supabase
-      .from('site_config')
-      .select('value')
-      .eq('key', 'shipping_bar')
-      .single()
-    if (data?.value) {
-      // El campo `enabled` del registro es la fuente de verdad. Al hacer merge
-      // con el estado actual (enabled:false por defecto) la barra solo se verá
-      // si realmente está activada en el admin.
-      Object.assign(shippingBar, { ...shippingBar, ...data.value })
-    }
-  } catch (e) {
-    console.warn('Usando valores por defecto de la barra de envíos')
-  }
-}
-
-// Cargar marca y enlaces de navegación desde Supabase
-async function loadBrandAndNav() {
-  if (!import.meta.client) return
-  try {
-    const supabase = useNuxtApp().$supabase
-    if (!supabase) return
-    const { data, error } = await supabase.from('site_config').select('key, value')
-
-    const rows = Array.isArray(data) ? data : []
-    const brandRow = rows.find(r => r.key === 'brand')
-    const navRow = rows.find(r => r.key === 'nav_links')
-
-    if (brandRow?.value) Object.assign(brand, brandRow.value)
-    if (navRow?.value && Array.isArray(navRow.value) && navRow.value.length) {
-      navLinks.value = navRow.value
-    }
-  } catch (e) {
-    console.warn('Usando valores por defecto de marca y navegación')
-  }
-}
-
 onMounted(() => {
-  Promise.all([loadShippingBar(), loadBrandAndNav()])
+  siteConfig.fetchConfig()
   window.addEventListener('scroll', onScroll, { passive: true })
   document.addEventListener('click', onDocClick)
 

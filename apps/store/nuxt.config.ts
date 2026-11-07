@@ -98,12 +98,8 @@ export default defineNuxtConfig({
     zeroRuntime: true
   },
 
-  nitro: {
-    prerender: {
-      routes: ['/', '/about', '/philosophy', '/catalog']
-    }
-  },
-
+  // Sin prerender estático: el contenido de site_config (navbar, footer, SEO)
+  // se renderiza on-demand para que los cambios del admin se vean al instante.
   robots: [
     {
       UserAgent: '*',
