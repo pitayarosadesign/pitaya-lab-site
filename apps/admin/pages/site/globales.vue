@@ -33,6 +33,9 @@
     <!-- Entrega estimada (carrito y checkout) -->
     <EditorDeliveryEstimateEditor />
 
+    <!-- Envíos (umbrales de envío gratis y mínimo Punto Post) -->
+    <EditorShippingEditor />
+
     <!-- SEO global (título/descripción/robots por defecto) -->
     <EditorSeoGlobalEditor />
 

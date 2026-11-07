@@ -367,6 +367,24 @@
               </span>
             </div>
 
+            <!-- 🚚 Envío gratis / Punto Post (umbrales desde el panel) -->
+            <div class="text-sm mb-6 px-4 py-3 rounded-xl border bg-green-50/60 border-green-100 text-green-800 space-y-1.5">
+              <p class="flex items-center gap-2">
+                <span class="text-lg leading-none">🚚</span>
+                <span>Envío <strong>gratis a domicilio</strong> desde <strong>${{ formatPrice(freeShippingMin) }}</strong></span>
+              </p>
+              <p class="flex items-center gap-2">
+                <span class="text-lg leading-none">📍</span>
+                <span><strong>Punto Post</strong> disponible desde <strong>${{ formatPrice(pointPostMin) }}</strong></span>
+              </p>
+              <p v-if="cart.hasItems && !freeShippingUnlocked" class="text-[13px] text-green-700">
+                Te faltan <strong>${{ formatPrice(remainingForFreeShipping) }}</strong> para envío gratis a domicilio.
+              </p>
+              <p v-else-if="cart.hasItems && freeShippingUnlocked" class="text-[13px] font-semibold text-green-700">
+                🎉 ¡Tu carrito ya tiene envío gratis a domicilio!
+              </p>
+            </div>
+
             <!-- 🚚 Entrega estimada -->
             <div
               v-if="!loading && product"
@@ -736,6 +754,7 @@ import { badgeLabel, badgeClass } from '~/composables/useBadge'
 const route = useRoute()
 const supabase = useNuxtApp().$supabase
 const cart = useCartStore()
+const { freeShippingMin, pointPostMin, remainingForFreeShipping, freeShippingUnlocked } = useShipping()
 
 // Utilidades compartidas de fragancia (notas, experiencia).
 // Auto-importadas desde composables/useFragrance.ts:

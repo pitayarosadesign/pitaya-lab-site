@@ -9,11 +9,14 @@
  * aplican si Supabase no responde o no tiene el registro esperado.
  */
 
-import { defaultBrand, defaultFooter, defaultNavLinks, defaultShippingBar } from '~/utils/siteDefaults'
+import { defaultBrand, defaultFooter, defaultNavLinks, defaultShipping, defaultShippingBar } from '~/utils/siteDefaults'
 
 export const useSiteConfigStore = defineStore('siteConfig', () => {
   // 🚚 Barra de envíos (configurable: site_config.shipping_bar)
   const shippingBar = reactive({ ...defaultShippingBar })
+
+  // 🚚 Reglas de envío (umbrales y costo): site_config.shipping
+  const shipping = reactive({ ...defaultShipping })
 
   // 🏷️ Marca (logo, nombre, eslogan): site_config.brand
   const brand = reactive({ ...defaultBrand })
@@ -44,6 +47,9 @@ export const useSiteConfigStore = defineStore('siteConfig', () => {
         const sb = byKey('shipping_bar')
         if (sb) Object.assign(shippingBar, sb)
 
+        const sh = byKey('shipping')
+        if (sh) Object.assign(shipping, sh)
+
         const br = byKey('brand')
         if (br) Object.assign(brand, br)
 
@@ -64,5 +70,5 @@ export const useSiteConfigStore = defineStore('siteConfig', () => {
     return pending
   }
 
-  return { shippingBar, brand, footer, navLinks, loaded, fetchConfig }
+  return { shippingBar, shipping, brand, footer, navLinks, loaded, fetchConfig }
 })

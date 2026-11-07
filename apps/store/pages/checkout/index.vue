@@ -131,7 +131,7 @@
               </button>
 
               <p v-if="pointPostBelowMinimum" class="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
-                Punto Post solo está disponible en compras a partir de ${{ formatPrice(POINT_POST_MIN_AMOUNT) }}.
+                Punto Post solo está disponible en compras a partir de ${{ formatPrice(pointPostMin) }}.
               </p>
 
               <p v-if="pointPostUnavailable" class="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
@@ -309,39 +309,19 @@ const form = reactive({
 const selectedMethod = ref('standard')
 const checkoutLoading = ref(false)
 
-// Umbral de envío gratis y costo fijo (site_config > shipping_bar)
-const FREE_SHIPPING_THRESHOLD = ref(799)
-const SHIPPING_FEE = ref(99)
-
-// Punto Post solo se habilita en compras desde este monto
-const POINT_POST_MIN_AMOUNT = 250
+// Reglas de envío (fuente única: site_config.shipping vía useShipping).
+const {
+  pointPostMin,
+  freeShippingRemaining,
+  freeShippingUnlocked,
+  standardShippingCost: standardPrice,
+  pointPostBelowMinimum,
+} = useShipping()
 
 // La cotización de Envía.com solo se usa para enriquecer el estimado de entrega.
 const quote = ref(null)
 const quoteLoading = ref(false)
 const resolvedLocation = ref(null)
-
-async function loadShippingConfig() {
-  try {
-    const supabase = useNuxtApp()?.$supabase
-    if (!supabase) return
-    const { data } = await supabase.from('site_config').select('value').eq('key', 'shipping_bar').single()
-    if (data?.value) {
-      if (typeof data.value.free_shipping_min === 'number') FREE_SHIPPING_THRESHOLD.value = data.value.free_shipping_min
-      if (typeof data.value.shipping_fee === 'number') SHIPPING_FEE.value = data.value.shipping_fee
-    }
-  } catch (e) {
-    // fallback silencioso
-  }
-}
-
-// Costo del Envío Estándar: fijo, gratis a partir del umbral del panel admin.
-const standardPrice = computed(() => {
-  return cart.totalPrice >= FREE_SHIPPING_THRESHOLD.value ? 0 : SHIPPING_FEE.value
-})
-
-// Ticket mínimo para que Punto Post esté disponible
-const pointPostBelowMinimum = computed(() => cart.totalPrice < POINT_POST_MIN_AMOUNT)
 
 // Si el carrito baja del mínimo estando en Punto Post, forzar Envío Estándar
 watch(pointPostBelowMinimum, (below) => {
@@ -390,10 +370,6 @@ const selectedQuote = computed(() => {
 })
 
 const shippingPrice = computed(() => selectedQuote.value?.price || 0)
-
-// Progreso hacia el envío gratis (aplica al método Estándar; Punto Post ya es gratis)
-const freeShippingRemaining = computed(() => Math.max(0, FREE_SHIPPING_THRESHOLD.value - cart.totalPrice))
-const freeShippingUnlocked = computed(() => cart.totalPrice >= FREE_SHIPPING_THRESHOLD.value)
 
 // Teléfono: normaliza a 10 dígitos (acepta prefijo +52 / 52)
 function normalizePhone(phone) {
@@ -524,6 +500,5 @@ function formatDate(dateStr) {
 
 onMounted(() => {
   cart.init()
-  loadShippingConfig()
 })
 </script>

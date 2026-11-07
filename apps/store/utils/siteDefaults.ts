@@ -33,6 +33,15 @@ export const defaultShippingBar = {
   end_at: '',
 }
 
+// Reglas de envío (fuente única de verdad). Configurables en el admin vía
+// site_config.shipping. La cinta promocional usa `free_shipping_min` para el
+// token {monto}; el checkout/carrito/ficha usan estos mismos números.
+export const defaultShipping = {
+  free_shipping_min: 799, // envío estándar gratis a partir de este monto (MXN)
+  shipping_fee: 99,       // costo del envío estándar cuando no se alcanza el mínimo
+  point_post_min: 250,    // ticket mínimo para poder elegir Punto Post
+}
+
 // Enlaces del menú superior (configurables en el admin vía site_config.nav_links).
 export const defaultNavLinks = [
   { path: '/', label: 'Inicio' },

@@ -71,8 +71,36 @@ export default defineEventHandler(async (event) => {
       quantity: item.quantity,
     }))
 
+    // Recalcular el costo de envío en el servidor (no confiar en el cliente).
+    // Los precios de los items vienen en centavos; convertimos a pesos para
+    // comparar contra los umbrales de site_config.shipping.
+    let finalShippingCost = 0
+    try {
+      const subtotalMxn = items.reduce((acc, i) => acc + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0) / 100
+      const { data: shipCfg } = await supabaseAdmin
+        .from('site_config')
+        .select('value')
+        .eq('key', 'shipping')
+        .maybeSingle()
+      const freeMin = typeof shipCfg?.value?.free_shipping_min === 'number' ? shipCfg.value.free_shipping_min : 799
+      const shipFee = typeof shipCfg?.value?.shipping_fee === 'number' ? shipCfg.value.shipping_fee : 99
+      const pointPostMin = typeof shipCfg?.value?.point_post_min === 'number' ? shipCfg.value.point_post_min : 250
+
+      const isPickup = String(shippingMethod) === 'pointPost'
+      if (isPickup && subtotalMxn < pointPostMin) {
+        // Pickup por debajo del mínimo: cobrar envío estándar (la UI ya lo bloquea).
+        finalShippingCost = shipFee
+      } else if (!isPickup && subtotalMxn < freeMin) {
+        finalShippingCost = shipFee
+      }
+    } catch (e) {
+      // Si no podemos leer la config, no agregamos costo (el webhook valida el
+      // total contra Stripe y la orden se crea solo al confirmar el pago).
+      finalShippingCost = 0
+    }
+
     // Agregar costo de envío si aplica
-    if (shippingCost && shippingCost > 0) {
+    if (finalShippingCost > 0) {
       const shipLabel = shippingLabel || 'Envío estándar'
       lineItems.push({
         price_data: {
@@ -81,7 +109,7 @@ export default defineEventHandler(async (event) => {
             name: shipLabel,
             description: `Costo de envío a todo México (${deliveryTotalMin}-${deliveryTotalMax} días hábiles)`,
           },
-          unit_amount: Math.round(shippingCost * 100), // convertir a centavos
+          unit_amount: Math.round(finalShippingCost * 100), // convertir a centavos
         },
         quantity: 1,
       })

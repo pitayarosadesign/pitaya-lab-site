@@ -316,29 +316,12 @@ const showPaymentDetails = ref(false)
 // 💳 Solo Stripe como proveedor de pago
 const paymentProvider = 'stripe'
 
-// Valores por defecto
-const FREE_SHIPPING_THRESHOLD = ref(200)
-const SHIPPING_COST = ref(75)
-
-// Cargar configuración desde Supabase
-async function loadShippingConfig() {
-  if (!import.meta.client) return
-  try {
-    const supabase = useNuxtApp()?.$supabase
-    if (!supabase) return
-    const { data, error } = await supabase
-      .from('site_config')
-      .select('value')
-      .eq('key', 'shipping_bar')
-      .single()
-    if (data?.value) {
-      FREE_SHIPPING_THRESHOLD.value = data.value.free_shipping_min || 200
-      SHIPPING_COST.value = data.value.shipping_fee || 75
-    }
-  } catch (e) {
-    console.warn('Usando valores por defecto de envío')
-  }
-}
+// Reglas de envío (fuente única: site_config.shipping vía useShipping).
+const {
+  remainingForFreeShipping,
+  freeShippingProgress,
+  standardShippingCost: shippingCost,
+} = useShipping()
 
 // Stripe es el único método de pago activo (Mercado Pago fue descontinuado)
 // Este espacio se deja disponible por si en el futuro se rehabilita la carga
@@ -384,17 +367,6 @@ function addSuggestedToCart(product) {
   loadSuggestedProducts()
 }
 
-const remainingForFreeShipping = computed(() => {
-  return Math.max(0, FREE_SHIPPING_THRESHOLD.value - cart.totalPrice)
-})
-
-const freeShippingProgress = computed(() => {
-  return Math.min(100, (cart.totalPrice / FREE_SHIPPING_THRESHOLD.value) * 100)
-})
-
-const shippingCost = computed(() => {
-  return cart.totalPrice >= FREE_SHIPPING_THRESHOLD.value ? 0 : SHIPPING_COST.value
-})
 function formatPrice(price) {
   return Number(price).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
@@ -431,7 +403,6 @@ watch(() => cart.isOpen, (open) => {
 
 onMounted(() => {
   isMounted.value = true
-  loadShippingConfig()
   loadDeliveryConfigFromDB()
   loadSuggestedProducts()
 })
