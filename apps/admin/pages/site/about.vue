@@ -27,6 +27,8 @@
     </div>
 
     <EditorAboutPageEditor v-model="config" />
+
+    <EditorBrandValuesEditor />
   </div>
 </template>
 
@@ -48,6 +50,7 @@ const config = reactive({
     secondary_image_alt: '',
     paragraphs: [],
   },
+  values: { badge: 'Nuestros Pilares', title: '¿Qué nos hace diferentes?' },
 })
 
 async function loadConfig() {
@@ -57,6 +60,7 @@ async function loadConfig() {
     if (data?.value) {
       Object.assign(config.header, data.value.header)
       Object.assign(config.story, data.value.story)
+      if (data.value.values) Object.assign(config.values, data.value.values)
     }
   } catch (e) {
     console.error('Error cargando config de About:', e)

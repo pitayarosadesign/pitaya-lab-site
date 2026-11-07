@@ -57,9 +57,9 @@
     <section class="py-20 bg-white/70">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-14">
-          <span class="text-primary-600 font-semibold text-sm uppercase tracking-wider">Nuestros Pilares</span>
+          <span class="text-primary-600 font-semibold text-sm uppercase tracking-wider">{{ pageContent.values.badge }}</span>
           <h2 class="text-3xl md:text-4xl font-serif font-bold text-earth-900 mt-2 mb-4">
-            ¿Qué nos hace diferentes?
+            {{ pageContent.values.title }}
           </h2>
         </div>
         <!-- Los valores provienen de site_config (clave brand_values) con fallback estático -->
@@ -115,6 +115,7 @@ const pageContent = reactive({
       'Cada producto es elaborado con ingredientes botánicos cuidadosamente seleccionados, libres de químicos agresivos, en envases pensados para ser reutilizados o reciclados.',
     ],
   },
+  values: { badge: 'Nuestros Pilares', title: '¿Qué nos hace diferentes?' },
 })
 
 // Los valores de marca provienen de site_config (clave brand_values), editables
@@ -142,6 +143,7 @@ async function loadConfig() {
       if (about?.value) {
         if (about.value.header) Object.assign(pageContent.header, about.value.header)
         if (about.value.story) Object.assign(pageContent.story, about.value.story)
+        if (about.value.values) Object.assign(pageContent.values, about.value.values)
       }
       const bv = rows.find(r => r.key === 'brand_values')
       if (bv?.value && Array.isArray(bv.value)) brandValues.value = bv.value
