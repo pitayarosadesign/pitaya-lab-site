@@ -157,25 +157,6 @@
               Tu selección: <span class="font-semibold text-earth-700">${{ formatPrice(activePrice) }}</span>
             </p>
 
-            <!-- Mayoreo / cotización B2B -->
-            <div class="mb-6 rounded-2xl border border-primary-100 bg-primary-50/50 p-5">
-              <div class="flex items-center gap-2 mb-2">
-                <h3 class="text-sm font-bold text-primary-800 uppercase tracking-wide">Precio negocio</h3>
-              </div>
-              <p class="text-sm text-earth-600 mb-4">
-                ¿Compras por volumen, para tu negocio o un evento? Cotiza con nosotros.
-              </p>
-              <NuxtLink
-                to="/b2b"
-                class="inline-flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:shadow-lg hover:shadow-primary-200 active:scale-95"
-              >
-                Cotizar mayoreo
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5-5 5m5-5H6" />
-                </svg>
-              </NuxtLink>
-            </div>
-
             <!-- Descripción -->
             <p class="text-earth-600 leading-relaxed mb-6">
               {{ product.description }}
@@ -601,6 +582,25 @@
                   </div>
                 </div>
               </div>
+            </div>
+
+            <!-- Mayoreo / cotización B2B (debajo de la compra para no opacar el carrito) -->
+            <div class="mt-8 rounded-2xl border border-primary-100 bg-primary-50/50 p-5">
+              <div class="flex items-center gap-2 mb-2">
+                <h3 class="text-sm font-bold text-primary-800 uppercase tracking-wide">Precio negocio</h3>
+              </div>
+              <p class="text-sm text-earth-600 mb-4">
+                ¿Compras por volumen, para tu negocio o un evento? Cotiza con nosotros.
+              </p>
+              <NuxtLink
+                to="/b2b"
+                class="inline-flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:shadow-lg hover:shadow-primary-200 active:scale-95"
+              >
+                Cotizar mayoreo
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5-5 5m5-5H6" />
+                </svg>
+              </NuxtLink>
             </div>
 
             <!-- Características -->
