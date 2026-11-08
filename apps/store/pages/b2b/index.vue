@@ -19,36 +19,19 @@
 
     <!-- Fallback: si no hay secciones configuradas, mostrar el contenido estático -->
     <div v-else>
-    <!-- HERO (configurable desde el editor; aquí el fallback estático) -->
-    <HeroSection
-      title="Fragancias que\nconectan\na tu negocio y tus eventos"
-      subtitle="Lleva la alta hotelería a tu tienda, hotel, bodas y eventos corporativos. Precios de mayoreo por volumen, recuerdos personalizados y etiquetado privado."
-      badge="🏢 Mayoreo & Corporativo"
-      cta_text="💍 Cotizar recuerdos para eventos"
-      cta_link="#cotizador-eventos"
-      cta_secondary_text="📦 Mayoreo comercial"
-      cta_secondary_link="#calculadora-mayoreo"
-      media_type="none"
-      bg_color="bg-gradient-to-br from-earth-900 via-primary-900 to-earth-900"
-      overlay_gradient="none"
-      show_badge_dot=false
-      badge_style="bg-white/10 border border-white/20 text-primary-200"
-    />
+    <!-- HERO compacto (fallback; textos configurables vía site_config.b2b_page) -->
+    <B2BHeroCompact v-bind="heroProps" />
 
-    <!-- Secciones del fallback: usan los MISMOS componentes de sección que renderiza
-         el editor del sitio (page_sections). Así el fallback y el contenido gestionado
-         en el panel admin comparten un único origen de verdad configurable. -->
-    <SectionB2BStats :content="{}" :settings="{}" />
-    <SectionB2BAudience
-      :content="{
-        title: '¿Para quién es PITAYA LAB B2B?',
-        subtitle: 'Tres formas de trabajar juntos, según tu tipo de negocio o evento.'
-      }"
-      :settings="{}"
-      @order="onOrderRequested"
-    />
+    <!-- Kit de Muestras B2B (lead magnet de confianza) -->
+    <B2BSampleKitBanner v-bind="kitProps" />
+
+    <!-- Calculadora de mayoreo por acordeones -->
     <SectionB2BCalculator :content="{}" :settings="{}" @order="onOrderRequested" />
+
+    <!-- Recuerdos personalizados para eventos -->
     <SectionB2BRecuerdos :content="{}" :settings="{}" @order="onOrderRequested" />
+
+    <!-- Cierre corporativo (hoteles, spas, etiqueta privada) -->
     <SectionImageText
       :content="{
         title: 'Experiencias sensoriales de alta hotelería',
@@ -87,13 +70,13 @@
 </template>
 
 <script setup lang="ts">
-import { WHATSAPP_URL, DEFAULT_B2B } from '~/composables/useB2B'
+import { WHATSAPP_URL, DEFAULT_B2B, whatsappLinkWithMessage } from '~/composables/useB2B'
 import { useB2BConfig } from '~/composables/useB2BConfig'
 // Importación explícita de las secciones reutilizables (mismas que renderiza el editor
 // del sitio) para garantizar su resolución en build-time y que el fallback muestre los
 // mismos bloques editables desde el panel admin.
-import SectionB2BStats from '~/components/sections/SectionB2BStats.vue'
-import SectionB2BAudience from '~/components/sections/SectionB2BAudience.vue'
+import B2BHeroCompact from '~/components/b2b/B2BHeroCompact.vue'
+import B2BSampleKitBanner from '~/components/b2b/B2BSampleKitBanner.vue'
 import SectionB2BCalculator from '~/components/sections/SectionB2BCalculator.vue'
 import SectionB2BRecuerdos from '~/components/sections/SectionB2BRecuerdos.vue'
 import SectionB2BFaq from '~/components/sections/SectionB2BFaq.vue'
@@ -112,11 +95,68 @@ const whatsappUrl = WHATSAPP_URL()
 // Lead time message
 const leadTimeMessage = ref(DEFAULT_B2B.contacto.lead_time_message)
 
+// Configuración editable de la página B2B (site_config > b2b_page)
+const b2bConfig = reactive({
+  hero: {
+    title: 'Fragancias que conectan a tu negocio y tus eventos',
+    subtitle: 'Lleva la alta hotelería a tu tienda, hotel, bodas y eventos corporativos. Precios de mayoreo por volumen, recuerdos personalizados y etiquetado privado.',
+    badge: '🏢 Mayoreo & Corporativo',
+    badges: [
+      { icon: '📉', text: 'Descuentos automáticos por volumen (-25% a -35%)' },
+      { icon: '🏷️', text: 'Etiquetado privado disponible' },
+      { icon: '🚚', text: 'Envíos seguros a todo México' },
+    ],
+    search: {
+      title: 'Encuentra tu producto y cotiza',
+      placeholder: 'Buscar por aroma, tipo de producto…',
+      categoriesLabel: 'Categorías rápidas',
+    },
+    quickCategories: ['🕯️ Velas de Soya', '🌿 Brumas Aromáticas', '💧 Aceites Aromáticos', '🪵 Difusores', '🧴 Jabones y Cremas'],
+  },
+  sampleKit: {
+    eyebrow: 'Kit de Muestras B2B',
+    title: '¿Aún no conoces nuestros aromas en persona?',
+    description: 'Pide tu Kit de Muestras B2B y evalúa fragancias y envases antes de hacer un pedido fuerte. Ideal para hoteles, boutiques y organizadores de bodas.',
+    buttonText: 'Comprar Kit de Muestras (Reembolsable en tu 1er pedido)',
+    note: 'El costo del kit se reembolsa como crédito en tu primer pedido de mayoreo.',
+    aromas: ['Xcaret', 'Solara', 'Westin Oasis', 'Palo Santo'],
+  },
+})
+
+const heroProps = computed(() => ({
+  title: b2bConfig.hero.title,
+  subtitle: b2bConfig.hero.subtitle,
+  badge: b2bConfig.hero.badge,
+  badges: b2bConfig.hero.badges,
+  search: b2bConfig.hero.search,
+  quickCategories: b2bConfig.hero.quickCategories,
+}))
+
+const kitProps = computed(() => ({
+  ...b2bConfig.sampleKit,
+  buttonLink: whatsappLinkWithMessage('¡Hola PITAYA LAB! Me interesa el Kit de Muestras B2B.'),
+}))
+
+async function loadB2BPageConfig() {
+  const s = useNuxtApp().$supabase
+  if (!s) return
+  try {
+    const { data } = await s.from('site_config').select('value').eq('key', 'b2b_page').single()
+    if (data?.value) {
+      if (data.value.hero) Object.assign(b2bConfig.hero, data.value.hero)
+      if (data.value.sampleKit) Object.assign(b2bConfig.sampleKit, data.value.sampleKit)
+    }
+  } catch (e) {
+    console.warn('Usando configuración por defecto de b2b_page:', e.message)
+  }
+}
+
 onMounted(async () => {
   const cfg = await useB2BConfig()
   if (cfg.contacto?.lead_time_message) {
     leadTimeMessage.value = cfg.contacto.lead_time_message
   }
+  loadB2BPageConfig()
 })
 
 // Cargar secciones dinámicas desde la base de datos

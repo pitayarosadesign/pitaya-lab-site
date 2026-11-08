@@ -1,81 +1,102 @@
 <template>
   <div>
-    <!-- Sección principal de la calculadora -->
+    <!-- Tarjeta principal -->
     <div class="bg-white rounded-3xl border border-earth-100 shadow-lg overflow-hidden">
       <div class="bg-gradient-to-r from-primary-900 to-earth-900 text-white px-6 md:px-10 py-8">
         <h3 class="text-2xl md:text-3xl font-serif font-bold">📦 Calculadora de Mayoreo</h3>
         <p class="text-primary-200 mt-2 text-sm md:text-base max-w-2xl">
-          Selecciona los productos y cantidades. El descuento se aplica automáticamente según el volumen (25% a 35%).
+          Abre una categoría, escribe tus cantidades y el descuento se aplica automáticamente según el volumen (25% a 35%).
         </p>
       </div>
 
-      <!-- Cuerpo -->
       <div class="p-6 md:p-10">
-        <!-- Selección de productos -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <!-- Estado de carga -->
+        <div v-if="loadingProducts" class="py-10 text-center text-earth-400 text-sm">
+          Cargando catálogo de mayoreo…
+        </div>
+
+        <!-- Acordeones por categoría -->
+        <div v-else class="space-y-3">
           <div
-            v-for="prod in products"
-            :key="prod.key"
-            class="border rounded-2xl p-4 transition-all"
-            :class="prod.qty > 0 ? 'border-primary-400 bg-primary-50/40 shadow-sm' : 'border-earth-200 hover:border-earth-300'"
+            v-for="group in groupedProducts"
+            :key="group.category"
+            class="border rounded-2xl overflow-hidden transition-colors"
+            :class="isOpen(group.category) ? 'border-primary-300' : 'border-earth-200'"
           >
-            <div class="flex items-center justify-between mb-3">
-              <span class="font-semibold text-earth-800 text-sm leading-tight">{{ prod.label }}</span>
-              <span class="text-xs text-earth-400">{{ prod.size }}</span>
-            </div>
+            <!-- Encabezado del acordeón -->
+            <button
+              type="button"
+              @click="toggleCategory(group.category)"
+              class="w-full flex items-center justify-between gap-3 px-4 py-4 bg-earth-50/60 hover:bg-earth-50 transition-colors text-left"
+            >
+              <div class="flex items-center gap-3">
+                <span class="text-xl">{{ categoryIcon(group.category) }}</span>
+                <div>
+                  <p class="font-semibold text-earth-800">{{ group.category }}</p>
+                  <p class="text-xs text-earth-400">{{ group.items.length }} {{ group.items.length === 1 ? 'producto' : 'productos' }}</p>
+                </div>
+              </div>
+              <span class="text-earth-400 transition-transform" :class="isOpen(group.category) ? 'rotate-180' : ''">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </span>
+            </button>
 
-            <!-- Precio retail y cantidad -->
-            <div class="flex items-center gap-2 mb-3">
-              <div class="text-2xl font-bold text-earth-900">{{ formatMXN(prod.qty > 0 ? subTotalFor(prod) / Math.max(prod.qty, 1) : prod.retailPrice) }}</div>
-            </div>
-            <div class="text-xs text-earth-400 mb-4">Retail {{ formatMXN(prod.retailPrice) }}</div>
+            <!-- Cuerpo del acordeón -->
+            <div v-if="isOpen(group.category)" class="p-4">
+              <div class="space-y-2">
+                <div
+                  v-for="prod in group.items"
+                  :key="prod.key"
+                  class="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-xl transition-colors"
+                  :class="prod.qty > 0 ? 'bg-primary-50/50 border border-primary-100' : 'bg-white border border-earth-100'"
+                >
+                  <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-earth-800 text-sm leading-tight">{{ prod.label }}</p>
+                    <p class="text-xs text-earth-400">{{ prod.size }}</p>
+                  </div>
 
-            <!-- Control de cantidad -->
-            <div class="flex items-center justify-center gap-2">
-              <button
-                @click="decrement(prod.key)"
-                class="w-9 h-9 rounded-lg border border-earth-200 hover:border-primary-300 text-earth-600 hover:text-primary-700 font-bold transition-all active:scale-95"
-                aria-label="Disminuir"
-              >−</button>
-              <input
-                :value="prod.qty"
-                @input="onQtyInput(prod.key, $event)"
-                type="number"
-                min="0"
-                placeholder="0"
-                class="w-16 text-center font-semibold text-earth-800 text-lg py-1.5 rounded-lg border border-earth-200 focus:border-primary-400 outline-none"
-              />
-              <button
-                @click="increment(prod.key)"
-                class="w-9 h-9 rounded-lg border border-earth-200 hover:border-primary-300 text-earth-600 hover:text-primary-700 font-bold transition-all active:scale-95"
-                aria-label="Aumentar"
-              >+</button>
+                  <div class="flex items-center gap-4 sm:gap-6">
+                    <div class="text-right">
+                      <p class="text-[10px] uppercase tracking-wide text-earth-400">Retail</p>
+                      <p class="text-sm text-earth-500 line-through">{{ formatMXN(prod.retailPrice) }}</p>
+                    </div>
+                    <div class="text-right">
+                      <p class="text-[10px] uppercase tracking-wide text-primary-500 font-semibold">Mayoreo est.</p>
+                      <p class="text-sm font-bold text-earth-900">{{ formatMXN(unitWholesale(prod)) }}</p>
+                    </div>
+
+                    <!-- Input numérico directo -->
+                    <div class="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        @click="decrement(prod.key)"
+                        class="w-8 h-8 rounded-lg border border-earth-200 hover:border-primary-300 text-earth-600 font-bold transition-all active:scale-95"
+                        aria-label="Disminuir"
+                      >−</button>
+                      <input
+                        :value="prod.qty"
+                        @input="onQtyInput(prod.key, $event)"
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        class="w-16 text-center font-semibold text-earth-800 py-1.5 rounded-lg border border-earth-200 focus:border-primary-400 outline-none"
+                      />
+                      <button
+                        type="button"
+                        @click="increment(prod.key)"
+                        class="w-8 h-8 rounded-lg border border-earth-200 hover:border-primary-300 text-earth-600 font-bold transition-all active:scale-95"
+                        aria-label="Aumentar"
+                      >+</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Total piezas y tier aplicado -->
-        <div v-if="totalPieces > 0" class="p-5 rounded-2xl bg-earth-50 border border-earth-100 mb-8">
-          <div class="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p class="text-sm text-earth-500">Total de piezas</p>
-              <p class="text-3xl font-bold text-earth-900">{{ totalPieces }}</p>
-            </div>
-            <div v-if="currentTier" class="text-center">
-              <p class="text-sm text-earth-500 mb-1">Descuento aplicado</p>
-              <p class="text-3xl font-bold text-primary-600">−{{ currentTier.discount_percent }}%</p>
-              <p class="text-xs text-earth-400 mt-1">{{ currentTier.label }} · Mín {{ currentTier.min }} pzas</p>
-            </div>
-            <div v-else class="text-center">
-              <p class="text-sm text-earth-500 mb-1">Descuento</p>
-              <p class="text-3xl font-bold text-earth-400">0%</p>
-              <p class="text-xs text-earth-400 mt-1">Mínimo 20 piezas</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Escala de tiers -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <!-- Escala de niveles -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
           <div
             v-for="tier in tiers"
             :key="tier.label"
@@ -93,15 +114,15 @@
           </div>
         </div>
 
-        <!-- Resumen y acción -->
-        <div v-if="totalPieces > 0" class="border-t border-earth-100 pt-6">
-          <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
-            <div>
-              <div class="flex items-center justify-between gap-8 mb-1">
+        <!-- Resumen inline (visible en desktop) -->
+        <div v-if="totalPieces > 0" class="mt-8 border-t border-earth-100 pt-6">
+          <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="space-y-1">
+              <div class="flex items-center justify-between gap-8">
                 <span class="text-earth-500">Subtotal (retail)</span>
                 <span class="text-earth-700 line-through">{{ formatMXN(retailSubtotal) }}</span>
               </div>
-              <div class="flex items-center justify-between gap-8 mb-1">
+              <div class="flex items-center justify-between gap-8">
                 <span class="text-earth-500">Descuento</span>
                 <span class="text-green-600">−{{ formatMXN(retailSubtotal - wholesaleTotal) }}</span>
               </div>
@@ -112,31 +133,61 @@
               <p class="text-xs text-earth-400 mt-1">Precios por mayoreo, IVA no incluido. Envío se cotiza por separado.</p>
             </div>
           </div>
-
-          <!-- Botones de acción -->
-          <div class="flex flex-col sm:flex-row gap-3">
-            <button
-              @click="solicitarPorWhatsApp"
-              class="flex-1 inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-3.5 px-6 rounded-xl transition-all hover:shadow-lg"
-            >
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-              </svg>
-              Cotizar por WhatsApp
-            </button>
-            <button
-              @click="proceedToCustomOrder"
-              class="flex-1 inline-flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3.5 px-6 rounded-xl transition-all hover:shadow-lg"
-            >
-              🛍️ Agregar a mi pedido
-            </button>
-          </div>
-          <p class="text-xs text-earth-400 text-center mt-4">
-            ¿Tienes dudas? Escríbenos directo por WhatsApp o usa el botón "Cotizar" para recibir una propuesta formal.
-          </p>
         </div>
       </div>
     </div>
+
+    <!-- Barra resumen flotante (sticky) -->
+    <div class="h-0"></div>
+    <Transition
+      enter-from-class="translate-y-full"
+      enter-active-class="transition-transform duration-300"
+      enter-to-class="translate-y-0"
+      leave-active-class="transition-transform duration-300"
+      leave-to-class="translate-y-full"
+    >
+      <div
+        v-if="totalPieces > 0"
+        class="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur border-t border-earth-200 shadow-[0_-8px_30px_rgba(0,0,0,0.08)]"
+      >
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-center gap-3">
+          <div class="flex items-center gap-6 flex-wrap justify-center sm:justify-start">
+            <div>
+              <p class="text-[10px] uppercase tracking-wide text-earth-400">Piezas</p>
+              <p class="text-lg font-bold text-earth-900 leading-none">{{ totalPieces }}</p>
+            </div>
+            <div>
+              <p class="text-[10px] uppercase tracking-wide text-earth-400">Nivel</p>
+              <p class="text-sm font-bold leading-none" :class="currentTier ? 'text-primary-600' : 'text-earth-400'">
+                {{ currentTier ? `${currentTier.label} · −${currentTier.discount_percent}%` : 'Mín 20 pzas' }}
+              </p>
+            </div>
+            <div>
+              <p class="text-[10px] uppercase tracking-wide text-earth-400">Total est.</p>
+              <p class="text-lg font-bold text-earth-900 leading-none">{{ formatMXN(wholesaleTotal) }}</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 flex-1 sm:justify-end w-full sm:w-auto">
+            <button
+              @click="solicitarPorWhatsApp"
+              class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2.5 rounded-xl transition-all text-sm"
+            >
+              Cotizar
+            </button>
+            <button
+              @click="proceedToCustomOrder"
+              class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-all text-sm"
+            >
+              Generar cotización →
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- Espaciador para que la barra sticky no tape contenido -->
+    <div v-if="totalPieces > 0" class="h-20"></div>
   </div>
 </template>
 
@@ -156,18 +207,16 @@ const tiers = [
 
 // Fallback estático si no hay productos de catálogo disponibles
 const FALLBACK_PRODUCTS = [
-  { key: 'bruma', label: 'Bruma Aromática', size: '225 ml', retailPrice: 299, qty: 0 },
-  { key: 'aceite', label: 'Aceite Aromático', size: '15 ml', retailPrice: 249, qty: 0 },
-  { key: 'velaClasica', label: 'Vela Clásica', size: '250g', retailPrice: 349, qty: 0 },
-  { key: 'velaMistica', label: 'Vela Mística', size: '350g', retailPrice: 499, qty: 0 },
+  { key: 'bruma', label: 'Bruma Aromática', size: '225 ml', category: 'Brumas Aromáticas', retailPrice: 299, qty: 0 },
+  { key: 'aceite', label: 'Aceite Aromático', size: '15 ml', category: 'Aceites Aromáticos', retailPrice: 249, qty: 0 },
+  { key: 'velaClasica', label: 'Vela Clásica', size: '250g', category: 'Velas de Soya', retailPrice: 349, qty: 0 },
+  { key: 'velaMistica', label: 'Vela Mística', size: '350g', category: 'Velas de Soya', retailPrice: 499, qty: 0 },
 ]
 
-// Productos disponibles para mayoreo (cargados desde Supabase)
 const products = ref([])
 const loadingProducts = ref(true)
 
 // Cargar productos de catálogo (canal directa) para la calculadora de mayoreo.
-// El descuento se aplica por volumen (tiers), no por columnas de mayoreo.
 async function loadProducts() {
   loadingProducts.value = true
   try {
@@ -191,6 +240,7 @@ async function loadProducts() {
         key: p.id,
         label: p.name,
         size: p.subtitle || p.product_categories?.name || '',
+        category: p.product_categories?.name || 'Otros',
         retailPrice: Number(p.price) || 0,
         qty: 0,
       }))
@@ -223,6 +273,46 @@ onMounted(async () => {
   await Promise.all([loadProducts(), loadConfig()])
 })
 
+// Agrupar productos por categoría (para los acordeones)
+const groupedProducts = computed(() => {
+  const map = new Map()
+  for (const p of products.value) {
+    const cat = p.category || 'Otros'
+    if (!map.has(cat)) map.set(cat, [])
+    map.get(cat).push(p)
+  }
+  return Array.from(map, ([category, items]) => ({ category, items }))
+})
+
+// Estado de acordeones abiertos (la primera categoría inicia abierta)
+const openCategories = ref(new Set())
+function isOpen(cat) {
+  return openCategories.value.has(cat)
+}
+function toggleCategory(cat) {
+  const next = new Set(openCategories.value)
+  if (next.has(cat)) next.delete(cat)
+  else next.add(cat)
+  openCategories.value = next
+}
+// Abrir la primera categoría cuando carguen los productos
+watch(groupedProducts, (groups) => {
+  if (groups.length && openCategories.value.size === 0) {
+    openCategories.value = new Set([groups[0].category])
+  }
+}, { immediate: true })
+
+// Icono por categoría (heurística sencilla por nombre)
+function categoryIcon(name) {
+  const n = (name || '').toLowerCase()
+  if (n.includes('vela')) return '🕯️'
+  if (n.includes('bruma') || n.includes('spray')) return '🌿'
+  if (n.includes('jabon') || n.includes('crema')) return '🧴'
+  if (n.includes('aceite')) return '💧'
+  if (n.includes('difusor') || n.includes('reed')) return '🪵'
+  return '📦'
+}
+
 // Total piezas
 const totalPieces = computed(() => products.value.reduce((sum, p) => sum + p.qty, 0))
 
@@ -244,12 +334,10 @@ const wholesaleTotal = computed(() => {
   return price
 })
 
-// Subtotal unitario para un producto (con el tier de TODO el pedido)
-function subTotalFor(prod) {
-  const total = retailSubtotal.value
-  const { price } = getWholesalePrice(total, totalPieces.value, tiers)
-  const ratio = (prod.retailPrice * prod.qty) / (total || 1)
-  return price * ratio
+// Precio unitario mayoreo estimado para un producto (según el tier del pedido)
+function unitWholesale(prod) {
+  const { price } = getWholesalePrice(prod.retailPrice, totalPieces.value, tiers)
+  return price
 }
 
 // Controles
