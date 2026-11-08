@@ -63,13 +63,12 @@
             <p class="text-xs font-bold uppercase tracking-wider text-earth-500 flex items-center gap-1.5">
               <span class="text-sm">🌸</span> Explora por aroma
             </p>
-            <button
-              type="button"
-              @click="exploreAllAromas"
+            <NuxtLink
+              to="/aromas"
               class="text-xs font-semibold text-primary-600 hover:text-primary-700 transition-colors whitespace-nowrap"
             >
               Ver todos ({{ popularAromas.length }}) →
-            </button>
+            </NuxtLink>
           </div>
           <div class="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1">
             <button
@@ -269,168 +268,19 @@
       </div>
     </section>
 
-    <!-- 🌸 Panel de experiencia olfativa -->
-    <section id="explora-aromas" v-if="catalogConfig.blocks.olfactory.enabled" class="py-10 bg-gradient-to-b from-primary-50/50 to-white scroll-mt-24">
+    <!-- 🌸 Aromas: la guía olfativa vive en su propia página /aromas -->
+    <section class="py-12 bg-gradient-to-b from-primary-50/50 to-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Cuando hay un aroma seleccionado: panel detallado -->
-        <div v-if="selectedAroma" class="bg-white rounded-3xl border border-earth-100 shadow-sm overflow-hidden grid grid-cols-1 md:grid-cols-3 gap-0">
-            <!-- Imagen del aroma -->
-            <div class="md:col-span-1 relative min-h-[220px] bg-earth-100">
-              <img
-                v-if="selectedAroma.image"
-                :src="useOptimizedImage(selectedAroma.image, { width: 600, quality: 80 })"
-                :alt="selectedAroma.name"
-                class="absolute inset-0 w-full h-full object-cover"
-              />
-              <div v-else class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-100 to-amber-100">
-                <span class="text-6xl text-primary-300 font-serif font-bold">{{ selectedAroma.name.charAt(0) }}</span>
-              </div>
-              <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
-              <div class="absolute bottom-4 left-4 right-4">
-                <span v-if="selectedAroma.hotel_reference" class="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-500/90 text-white text-[10px] font-semibold uppercase tracking-wide backdrop-blur mb-2">
-                  ✨ {{ selectedAroma.hotel_reference }}
-                </span>
-                <h2 class="text-2xl font-serif font-bold text-white">{{ selectedAroma.name }}</h2>
-                <p v-if="selectedAroma.subtitle" class="text-sm text-white/90 font-medium">{{ selectedAroma.subtitle }}</p>
-              </div>
-            </div>
-
-            <!-- Descripción y notas -->
-            <div class="md:col-span-2 p-6 md:p-8">
-              <div class="flex items-center justify-between mb-4">
-                <span class="inline-flex items-center px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-semibold">
-                  {{ selectedAroma.categoryLabel }}
-                </span>
-                <button
-                  @click="clearAromaSelection"
-                  class="text-sm text-earth-400 hover:text-earth-600 font-medium transition-colors"
-                >
-                  ✕ Quitar filtro
-                </button>
-              </div>
-
-              <!-- Disponible en varios formatos (cruza con el filtro de tipo) -->
-              <div v-if="selectedAromaTypes.length > 0" class="flex flex-wrap items-center gap-1.5 mb-4">
-                <span class="text-[11px] text-earth-500 font-medium uppercase tracking-wider">Disponible en:</span>
-                <span
-                  v-for="type in selectedAromaTypes"
-                  :key="type"
-                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-earth-50 border border-earth-200 text-[11px] font-semibold text-earth-600"
-                >
-                  {{ categoryIcon(type) }}
-                  {{ type }}
-                </span>
-              </div>
-
-              <p v-if="selectedAroma.experience" class="text-earth-700 leading-relaxed mb-4">
-                {{ selectedAroma.experience }}
-              </p>
-              <p v-if="selectedAroma.description" class="text-earth-500 text-sm leading-relaxed mb-4">
-                {{ selectedAroma.description }}
-              </p>
-
-              <!-- Notas aromáticas -->
-              <div v-if="selectedAroma.notesList.length" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div
-                  v-for="note in selectedAroma.notesList"
-                  :key="note.label"
-                  class="p-3 rounded-xl bg-gradient-to-br from-primary-50 to-amber-50 border border-primary-100"
-                >
-                  <p class="text-[10px] font-bold text-primary-600 uppercase tracking-wider mb-1">{{ note.label }}</p>
-                  <p class="text-xs text-earth-700 font-medium">{{ note.values }}</p>
-                </div>
-              </div>
-
-              <!-- Productos disponibles -->
-              <div class="mt-6">
-                <p class="text-sm font-semibold text-earth-800 mb-3">
-                  Disponible en {{ filteredProducts.length }} {{ filteredProducts.length === 1 ? 'producto' : 'productos' }}:
-                </p>
-                <div class="flex flex-wrap gap-2">
-                  <NuxtLink
-                    v-for="product in filteredProducts"
-                    :key="product.id"
-                    :to="`/product/${product.slug}${selectedAroma?.slug ? '?aroma=' + selectedAroma.slug : ''}`"
-                    class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-earth-50 hover:bg-primary-50 border border-earth-100 hover:border-primary-200 transition-all group"
-                  >
-                    <div class="w-8 h-8 rounded-lg overflow-hidden bg-earth-100 flex-shrink-0">
-                      <img v-if="productDisplayImage(product)" :src="useOptimizedImage(productDisplayImage(product), { width: 200, quality: 80 })" :alt="product.name" class="w-full h-full object-cover" />
-                      <div v-else class="w-full h-full flex items-center justify-center text-earth-300 text-xs">📦</div>
-                    </div>
-                    <div class="text-left">
-                      <p class="text-xs font-semibold text-earth-800 group-hover:text-primary-700">{{ product.name }}</p>
-                      <p class="text-[10px] text-earth-400">${{ formatPrice(product.price) }} MXN</p>
-                    </div>
-                  </NuxtLink>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        <!-- Cuando NO hay filtro: galería de todos los aromas -->
-        <div v-else-if="aromas.length > 0">
-          <div class="text-center mb-8">
-            <span class="text-primary-600 font-semibold text-sm uppercase tracking-wider">Explora por aroma</span>
-            <h2 class="text-3xl font-serif font-bold text-earth-900 mt-2 mb-3">
-              Todos nuestros aromas
-            </h2>
-            <p class="text-earth-500 max-w-2xl mx-auto">
-              Selecciona un aroma para descubrir su experiencia olfativa y en qué productos está disponible.
-            </p>
-          </div>
-
-          <!-- Filtro por familia olfativa -->
-          <div v-if="galleryFamilyOptions.length > 1" class="flex items-center gap-2 overflow-x-auto pb-4 justify-center">
-            <button
-              v-for="f in galleryFamilyOptions"
-              :key="f.key"
-              @click="activeGalleryFamily = f.key"
-              class="px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors border shrink-0"
-              :class="activeGalleryFamily === f.key
-                ? 'bg-primary-600 text-white border-primary-600'
-                : 'bg-white text-earth-600 border-earth-200 hover:border-primary-300'"
-            >
-              {{ f.emoji }} {{ f.label }} <span class="opacity-70 text-xs">({{ f.count }})</span>
-            </button>
-          </div>
-
-          <!-- Grid de aromas -->
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            <button
-              v-for="aroma in filteredGalleryAromas"
-              :key="aroma.id"
-              @click="selectAroma(aroma)"
-              class="group bg-white rounded-2xl border border-earth-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 hover:border-primary-300 transition-all text-left"
-            >
-              <!-- Imagen del aroma -->
-              <div class="aspect-square overflow-hidden bg-earth-100 relative">
-                <img
-                  v-if="aroma.image"
-                  :src="useOptimizedImage(aroma.image, { width: 400, quality: 80 })"
-                  :alt="aroma.name"
-                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  loading="lazy"
-                  decoding="async"
-                />
-                <div v-else class="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-amber-100">
-                  <span class="text-5xl text-primary-300 font-serif font-bold">{{ aroma.name.charAt(0) }}</span>
-                </div>
-                <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              </div>
-
-              <!-- Nombre, colección y notas -->
-              <div class="p-3">
-                <p class="text-sm font-semibold text-earth-800 group-hover:text-primary-600 transition-colors truncate">{{ aroma.name }}</p>
-                <p class="text-[11px] text-earth-400 truncate mb-1">{{ aroma.categoryLabel }}</p>
-                <div v-if="aroma.notesList.length" class="space-y-0.5">
-                  <p v-for="note in aroma.notesList.slice(0, 2)" :key="note.label" class="text-[10px] leading-snug text-earth-500 truncate">
-                    <span class="font-semibold text-primary-600 uppercase">{{ note.label }}:</span>
-                    {{ note.values }}
-                  </p>
-                </div>
-              </div>
-            </button>
-          </div>
+        <div class="max-w-3xl mx-auto text-center bg-white rounded-3xl border border-primary-100 p-8 shadow-sm">
+          <span class="text-3xl">🌸</span>
+          <h2 class="font-serif font-bold text-2xl text-earth-900 mt-3 mb-2">Explora todos nuestros aromas</h2>
+          <p class="text-earth-600 mb-5">Descubre la familia olfativa, las notas y la experiencia de cada fragancia, y en qué productos está disponible.</p>
+          <NuxtLink
+            to="/aromas"
+            class="inline-flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all hover:shadow-lg"
+          >
+            Ver guía de aromas →
+          </NuxtLink>
         </div>
       </div>
     </section>
@@ -1204,12 +1054,9 @@ function selectAromaAndScroll(aroma) {
   })
 }
 
-// "Ver todos" de la franja superior: limpia la selección y baja a la galería completa
+// "Ver todos" de la franja superior: lleva a la guía dedicada de aromas.
 function exploreAllAromas() {
-  clearAromaSelection()
-  nextTick(() => {
-    document.getElementById('explora-aromas')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  })
+  return navigateTo('/aromas')
 }
 
 // Aplica un filtro por aroma desde la URL (?aroma=slug) al llegar al catálogo.

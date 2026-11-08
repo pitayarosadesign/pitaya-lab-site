@@ -32,6 +32,7 @@ const tabs = [
   { key: 'home', label: 'Portada', icon: '🏠', to: '/site' },
   { key: 'globales', label: 'Globales', icon: '🧭', to: '/site/globales' },
   { key: 'catalog', label: 'Catálogo', icon: '🛍️', to: '/site/catalog' },
+  { key: 'aromas', label: 'Aromas', icon: '🌸', to: '/site/aromas' },
   { key: 'product', label: 'Producto', icon: '🏷️', to: '/site/product' },
   { key: 'about', label: 'Sobre Nosotros', icon: '📖', to: '/site/about' },
   { key: 'philosophy', label: 'Filosofía', icon: '🌿', to: '/site/philosophy' },

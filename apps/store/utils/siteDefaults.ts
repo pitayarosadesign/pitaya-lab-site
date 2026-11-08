@@ -55,6 +55,7 @@ export const defaultNavLinks = [
   { path: '/about', label: 'Sobre Nosotros' },
   { path: '/philosophy', label: 'Nuestra Filosofía' },
   { path: '/catalog', label: 'Catálogo' },
+  { path: '/aromas', label: 'Aromas' },
   { path: '/catalog?categoria=recuerdos', label: 'Recuerdos' },
   { path: '/b2b', label: 'Mayoreo & Corporativo' },
 ]
