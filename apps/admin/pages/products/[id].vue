@@ -420,11 +420,12 @@ const variantStockTotal = computed(() => {
 })
 
 // Imágenes disponibles para asignar a las variantes (galería del producto).
-// Incluye las ya guardadas (url) y las recién subidas (preview base64).
+// Solo imágenes YA guardadas (con url real): una imagen recién subida todavía
+// solo tiene `preview` (blob:), que no es persistible y rompería la ficha.
 const galleryImages = computed(() =>
   (form.images || [])
-    .filter(img => img.url || img.preview)
-    .map(img => ({ url: img.url || img.preview, altText: img.alt_text || '' }))
+    .filter(img => img.url)
+    .map(img => ({ url: img.url, altText: img.alt_text || '' }))
 )
 
 async function loadCategories() {
