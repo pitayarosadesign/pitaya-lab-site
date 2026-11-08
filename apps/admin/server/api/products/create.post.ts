@@ -107,6 +107,7 @@ export default defineEventHandler(async (event) => {
           price: c.price,
           stock: c.stock,
           gtin: c.gtin || null,
+          image_url: c.imageUrl || null,
           fragrance_profile_id: profileId1 || profileId2 || null,
           option_type_1: type1,
           option_value_1: c.value1,

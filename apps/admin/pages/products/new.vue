@@ -417,6 +417,19 @@
             </div>
             <div class="divide-y divide-gray-100">
               <div v-for="(combo, ci) in generatedCombinations" :key="ci" class="px-4 py-3 flex items-center gap-3">
+                <button
+                  type="button"
+                  @click="openComboImagePicker(combo.label)"
+                  :title="combo.imageUrl ? 'Cambiar imagen de la variante' : 'Elegir imagen de la galería'"
+                  class="relative w-12 h-12 rounded-lg border border-gray-200 bg-gray-50 overflow-hidden flex-shrink-0 hover:border-primary-400 transition-colors"
+                >
+                  <img v-if="combo.imageUrl" :src="combo.imageUrl" alt="" class="w-full h-full object-cover" />
+                  <span v-else class="w-full h-full flex items-center justify-center text-gray-300">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                  </span>
+                </button>
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-medium text-gray-800">{{ combo.label }}</p>
                   <p class="text-[10px] text-gray-400 font-mono">{{ combo.sku }}</p>
@@ -655,6 +668,7 @@ const generatedCombinations = computed(() => {
         sku: `${baseSku}-${skuSuffix}`,
         price: '',
         stock: '',
+        imageUrl: '',
       })
       return
     }
@@ -675,6 +689,30 @@ const variantStockTotal = computed(() => {
 
 function slugify(str) {
   return String(str || '').toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim()
+}
+
+// ===== Selector de imagen por combinación (desde la galería del producto) =====
+const comboImageFor = ref(null)
+
+// Galería de imágenes ya subidas en el formulario (previews base64).
+const galleryImages = computed(() =>
+  (form.images || []).filter(img => img.preview).map(img => ({ url: img.preview, altText: img.name || '' }))
+)
+
+function openComboImagePicker(label) {
+  comboImageFor.value = label
+}
+
+function pickComboImage(url) {
+  const combo = generatedCombinations.value.find(c => c.label === comboImageFor.value)
+  if (combo) combo.imageUrl = url
+  comboImageFor.value = null
+}
+
+function clearComboImage(label) {
+  const combo = generatedCombinations.value.find(c => c.label === label)
+  if (combo) combo.imageUrl = ''
+  comboImageFor.value = null
 }
 
 // Toggle de aroma en una dimensión
@@ -774,6 +812,7 @@ function buildVariantOptionsPayload() {
       sku: c.sku,
       price: c.price ? parseFloat(c.price) : null,
       stock: c.stock !== '' ? parseInt(c.stock) || 0 : 0,
+      imageUrl: c.imageUrl || null,
     })),
   }
 }

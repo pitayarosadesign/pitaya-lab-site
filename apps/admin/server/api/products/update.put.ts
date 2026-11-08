@@ -371,7 +371,9 @@ async function syncVariantOptions(supabaseAdmin, productId, variantOptions, base
       option_value_2: c.value2 ?? null,
       price: (c.price === null || c.price === undefined || c.price === '') ? null : parseFloat(c.price),
       stock: (c.stock === undefined || c.stock === null || c.stock === '') ? 0 : (parseInt(c.stock) || 0),
-      image_url: prev?.image_url || null,
+      // Imagen por combinación: el valor enviado por el editor manda; si un
+      // cliente antiguo no lo envía (undefined), se preserva el previo.
+      image_url: c.imageUrl !== undefined ? (c.imageUrl || null) : (prev?.image_url || null),
       // GTIN por combinación: el valor enviado por el editor manda; si un
       // cliente antiguo no lo envía (undefined), se preserva el previo.
       gtin: c.gtin !== undefined ? c.gtin : (prev?.gtin || null),

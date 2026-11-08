@@ -153,6 +153,24 @@
               <p class="text-sm font-medium text-gray-800">{{ combo.label }}</p>
               <p class="text-[10px] text-gray-400 font-mono">{{ combo.sku }}</p>
             </div>
+            <button
+              type="button"
+              @click="openImagePicker(combo.label)"
+              :title="comboMeta[combo.label]?.imageUrl ? 'Cambiar imagen de la variante' : 'Elegir imagen de la galería'"
+              class="relative w-12 h-12 rounded-lg border border-gray-200 bg-gray-50 overflow-hidden flex-shrink-0 hover:border-primary-400 transition-colors"
+            >
+              <img
+                v-if="comboMeta[combo.label]?.imageUrl"
+                :src="comboMeta[combo.label].imageUrl"
+                alt=""
+                class="w-full h-full object-cover"
+              />
+              <span v-else class="w-full h-full flex items-center justify-center text-gray-300">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+              </span>
+            </button>
             <div class="flex items-center gap-2">
               <input
                 :value="comboMeta[combo.label]?.gtin ?? ''"
@@ -189,6 +207,45 @@
     <p v-if="!hasVariants" class="text-xs text-gray-400">
       Sin variantes, el producto se vende tal cual con su precio y stock generales.
     </p>
+
+    <!-- Modal: elegir imagen de la galería para una combinación -->
+    <div v-if="imagePickerFor" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black/40" @click="imagePickerFor = null"></div>
+      <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div>
+            <h3 class="text-base font-semibold text-gray-900">Imagen de la variante</h3>
+            <p class="text-xs text-gray-400">
+              Elige una imagen de la galería del producto para <span class="font-medium text-gray-600">{{ imagePickerFor }}</span>
+            </p>
+          </div>
+          <button type="button" @click="imagePickerFor = null" class="text-gray-400 hover:text-gray-600 text-xl leading-none" aria-label="Cerrar">✕</button>
+        </div>
+
+        <div class="p-5 overflow-y-auto">
+          <div v-if="galleryImages.length === 0" class="text-sm text-gray-400 text-center py-8">
+            Aún no hay imágenes en la galería del producto. Sube imágenes arriba para poder asignarlas a las variantes.
+          </div>
+          <div v-else class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+            <button
+              v-for="img in galleryImages"
+              :key="img.url"
+              type="button"
+              @click="pickImage(img.url)"
+              class="relative aspect-square rounded-lg overflow-hidden border-2 transition-all"
+              :class="comboMeta[imagePickerFor]?.imageUrl === img.url ? 'border-primary-500' : 'border-transparent hover:border-primary-300'"
+            >
+              <img :src="img.url" :alt="img.altText || ''" class="w-full h-full object-cover" />
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between px-5 py-4 border-t border-gray-100 bg-gray-50">
+          <button type="button" @click="clearComboImage(imagePickerFor)" class="text-sm text-red-500 hover:text-red-700 font-medium">Quitar imagen</button>
+          <button type="button" @click="imagePickerFor = null" class="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700">Listo</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -229,6 +286,8 @@ const props = defineProps({
   baseSku: { type: String, default: '' },
   /** Cargando perfiles aromáticos */
   loadingProfiles: { type: Boolean, default: false },
+  /** Imágenes de la galería del producto para asignar por variante */
+  galleryImages: { type: Array, default: () => [] },
 })
 
 const emit = defineEmits([
@@ -264,6 +323,25 @@ function setComboField(label, field, value) {
     ...comboMeta.value,
     [label]: { ...(comboMeta.value[label] || {}), [field]: value },
   }
+}
+
+// ===== Selector de imagen por combinación (desde la galería del producto) =====
+const imagePickerFor = ref(null)
+
+function openImagePicker(label) {
+  imagePickerFor.value = label
+}
+
+function pickImage(url) {
+  if (imagePickerFor.value) {
+    setComboField(imagePickerFor.value, 'imageUrl', url)
+  }
+  imagePickerFor.value = null
+}
+
+function clearComboImage(label) {
+  setComboField(label, 'imageUrl', null)
+  imagePickerFor.value = null
 }
 
 function addDimension() {
@@ -400,6 +478,7 @@ function buildPayload() {
         price,
         stock,
         gtin: gtin || null,
+        imageUrl: meta.imageUrl || null,
       }
     }),
   }

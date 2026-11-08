@@ -302,6 +302,7 @@
           :allow-aroma="!isEventChannel"
           :base-sku="form.sku"
           :loading-profiles="loadingProfiles"
+          :gallery-images="galleryImages"
         />
       </div>
 
@@ -418,6 +419,14 @@ const variantStockTotal = computed(() => {
   return Object.values(variantComboMeta.value).reduce((sum, m) => sum + (parseInt(m?.stock) || 0), 0)
 })
 
+// Imágenes disponibles para asignar a las variantes (galería del producto).
+// Incluye las ya guardadas (url) y las recién subidas (preview base64).
+const galleryImages = computed(() =>
+  (form.images || [])
+    .filter(img => img.url || img.preview)
+    .map(img => ({ url: img.url || img.preview, altText: img.alt_text || '' }))
+)
+
 async function loadCategories() {
   try {
     const data = await $fetch('/api/categories/list')
@@ -519,7 +528,7 @@ async function loadProduct() {
 
       const meta = {}
       for (const c of combos) {
-        if (c?.label) meta[c.label] = { price: c.price ?? '', stock: c.stock ?? '', gtin: c.gtin ?? '' }
+        if (c?.label) meta[c.label] = { price: c.price ?? '', stock: c.stock ?? '', gtin: c.gtin ?? '', imageUrl: c.imageUrl ?? '' }
       }
       variantComboMeta.value = meta
     } else if (!isEventChannel.value && data.variants && data.variants.length > 0) {
@@ -542,7 +551,7 @@ async function loadProduct() {
         const meta = {}
         for (const v of data.variants) {
           if (v.fragrance_profile_id && v.name) {
-            meta[v.name] = { price: v.price ?? '', stock: v.stock ?? '', gtin: v.gtin ?? '' }
+            meta[v.name] = { price: v.price ?? '', stock: v.stock ?? '', gtin: v.gtin ?? '', imageUrl: v.image_url ?? '' }
           }
         }
         variantComboMeta.value = meta

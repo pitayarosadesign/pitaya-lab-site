@@ -141,20 +141,20 @@
               {{ product.subtitle }}
             </p>
 
-            <!-- Precio (usando la variante seleccionada si tiene precio propio) -->
-            <div class="flex items-baseline gap-3 mb-6">
-              <span class="text-3xl font-bold text-earth-900">${{ formatPrice(activePrice) }}</span>
+            <!-- Precio: si hay rango de precios entre variantes, se muestra "desde" el menor -->
+            <div class="flex items-baseline gap-3 mb-6 flex-wrap">
+              <span class="text-3xl font-bold text-earth-900">
+                <template v-if="hasVariantPriceRange">Desde ${{ formatPrice(minVariantPrice) }}</template>
+                <template v-else>${{ formatPrice(activePrice) }}</template>
+              </span>
               <span v-if="activeCompareAtPrice" class="text-lg text-earth-400 line-through">${{ formatPrice(activeCompareAtPrice) }}</span>
               <span v-if="activeDiscountPercent > 0" class="bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-full">
                 -{{ activeDiscountPercent }}%
               </span>
-              <span v-if="selectedVariant?.name" class="text-xs text-earth-400 mt-1">
-                ※ {{ selectedVariant.name }}
-              </span>
             </div>
-            <!-- Precio base del producto (referencia "desde") -->
-            <p v-if="showFromPrice" class="text-sm text-earth-400 -mt-4 mb-6">
-              Precio base del producto: <span class="font-semibold text-earth-600">${{ formatPrice(product.price) }}</span>
+            <!-- Precio exacto de la selección cuando difiere del "desde" -->
+            <p v-if="hasVariantPriceRange && selectedVariant?.price != null && Number(selectedVariant.price) !== minVariantPrice" class="text-sm text-earth-500 -mt-4 mb-6">
+              Tu selección: <span class="font-semibold text-earth-700">${{ formatPrice(activePrice) }}</span>
             </p>
 
             <!-- Mayoreo / cotización B2B -->
@@ -970,12 +970,15 @@ const flexibleDimensions = computed(() => {
 const selectedDim1 = ref(null)
 const selectedDim2 = ref(null)
 
-// Encontrar la variante que coincide con los valores seleccionados de las dimensiones
+// Encontrar la variante que coincide con los valores seleccionados de las
+// dimensiones. Con 2 dimensiones, se exige que AMBAS estén seleccionadas; si
+// falta una, no se devuelve variante (evita mostrar precio/stock revueltos).
 function findFlexibleVariant() {
   const variants = product.value?.variants || []
+  const hasDim2 = flexibleDimensions.value.length > 1
   return variants.find(v => {
-    const match1 = !selectedDim1.value || v.optionValue1 === selectedDim1.value
-    const match2 = !selectedDim2.value || v.optionValue2 === selectedDim2.value
+    const match1 = v.optionValue1 === selectedDim1.value
+    const match2 = hasDim2 ? (v.optionValue2 === selectedDim2.value) : true
     return match1 && match2
   }) || null
 }
@@ -988,14 +991,24 @@ function selectDim1(value) {
     selectedDim2.value = null
   }
   const v = findFlexibleVariant()
-  if (v) selectVariant(v)
+  if (v) {
+    selectVariant(v)
+  } else {
+    selectedVariant.value = null
+    showingVariantImage.value = false
+  }
 }
 
 // Al seleccionar un valor de la dimensión 2
 function selectDim2(value) {
   selectedDim2.value = value
   const v = findFlexibleVariant()
-  if (v) selectVariant(v)
+  if (v) {
+    selectVariant(v)
+  } else {
+    selectedVariant.value = null
+    showingVariantImage.value = false
+  }
 }
 
 // Inicializar selección flexible desde una variante
@@ -1057,25 +1070,40 @@ const activeCompareAtPrice = computed(() => {
   return product.value?.compareAtPrice || null
 })
 
-// Mostrar el precio base del producto como referencia "desde" cuando la
-// variante seleccionada tiene un precio propio distinto al del producto.
-const showFromPrice = computed(() => {
-  if (!product.value) return false
-  // Solo si hay variantes y la seleccionada tiene precio propio
-  if (!selectedVariant.value || selectedVariant.value.price == null) return false
-  // Mostrar solo si el precio de la variante difiere del precio del producto
-  return Number(selectedVariant.value.price) !== Number(product.value.price)
+// Precios propios de las variantes (solo valores numéricos válidos)
+const variantPrices = computed(() =>
+  (product.value?.variants || [])
+    .map(v => Number(v.price))
+    .filter(p => Number.isFinite(p) && p >= 0)
+)
+
+// Precio mínimo entre las variantes (base para el "desde")
+const minVariantPrice = computed(() => {
+  const prices = variantPrices.value
+  return prices.length ? Math.min(...prices) : (product.value?.price || 0)
 })
 
-// SKU activo (el de la variante si existe)
+// ¿Existe un rango de precios entre variantes? (justifica mostrar "desde")
+const hasVariantPriceRange = computed(() => {
+  const prices = variantPrices.value
+  if (prices.length < 2) return false
+  return Math.min(...prices) !== Math.max(...prices)
+})
+
+// SKU activo: cuando el producto tiene variantes, el SKU es SOLO por variante
+// (el SKU general del producto no se muestra como SKU del producto).
 const activeSku = computed(() => {
-  if (selectedVariant.value?.sku) return selectedVariant.value.sku
+  if ((product.value?.variants?.length || 0) > 0) {
+    return selectedVariant.value?.sku || ''
+  }
   return product.value?.sku || ''
 })
 
-// GTIN activo (el de la variante si existe)
+// GTIN activo: misma regla que el SKU (solo por variante si hay variantes).
 const activeGtin = computed(() => {
-  if (selectedVariant.value?.gtin) return selectedVariant.value.gtin
+  if ((product.value?.variants?.length || 0) > 0) {
+    return selectedVariant.value?.gtin || ''
+  }
   return product.value?.gtin || ''
 })
 
@@ -1206,8 +1234,12 @@ const productDeliveryDeadlineText = computed(() =>
 
 // ¿Se puede comprar? Siempre se puede agregar al carrito.
 // Si no hay stock, se trata como pedido sobre pedido (preparación en taller).
+// Con 2 dimensiones, se requiere que ambas estén seleccionadas (variante válida).
 const isPurchasable = computed(() => {
-  return !!product.value
+  if (!product.value) return false
+  const dims = flexibleDimensions.value
+  if (dims.length > 1 && (!selectedDim1.value || !selectedDim2.value)) return false
+  return true
 })
 
 // 🏷️ Badges de confianza
@@ -1432,9 +1464,9 @@ const productSchema = computed(() => {
     '@type': 'Product',
     name: `${product.value.name}${product.value.subtitle ? ' – ' + product.value.subtitle : ''}`,
     description: product.value.description || product.value.name,
-    sku: product.value.sku || undefined,
-    gtin: product.value.gtin || undefined,
-    mpn: product.value.sku || undefined,
+    sku: (product.value.variants?.length > 0) ? undefined : (product.value.sku || undefined),
+    gtin: (product.value.variants?.length > 0) ? undefined : (product.value.gtin || undefined),
+    mpn: (product.value.variants?.length > 0) ? undefined : (product.value.sku || undefined),
     brand: {
       '@type': 'Brand',
       name: product.value.brand || 'PITAYA LAB',
@@ -1444,7 +1476,7 @@ const productSchema = computed(() => {
       '@type': 'Offer',
       url: `https://www.pitayalab.com.mx/product/${route.params.slug}`,
       priceCurrency: 'MXN',
-      price: product.value.price || 0,
+      price: hasVariantPriceRange.value ? minVariantPrice.value : (product.value.price || 0),
       availability: product.value.stock > 0
         ? 'https://schema.org/InStock'
         : (product.value.allowBackorder ? 'https://schema.org/PreOrder' : 'https://schema.org/OutOfStock'),

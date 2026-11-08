@@ -61,6 +61,7 @@ export default defineEventHandler(async (event) => {
             id: v.id,
             name: v.name,
             sku: v.sku,
+            gtin: v.gtin || null,
             description: v.description,
             imageUrl: v.image_url,
             colorHex: v.color_hex,

@@ -93,6 +93,7 @@ function buildVariantOptions(variants) {
       price: v.price,
       stock: v.stock,
       gtin: v.gtin || null,
+      imageUrl: v.image_url || null,
     })),
   }
 }
