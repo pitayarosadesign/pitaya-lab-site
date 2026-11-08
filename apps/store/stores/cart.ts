@@ -5,6 +5,8 @@
  * Persistencia en localStorage
  */
 
+import { trackFbEvent } from '~/composables/useFbPixel'
+
 export interface CartItem {
   id: string
   slug: string
@@ -136,6 +138,15 @@ export const useCartStore = defineStore('cart', {
 
       saveCart(this.items)
       this.isOpen = true
+
+      // 📊 Facebook Pixel - AddToCart
+      trackFbEvent('AddToCart', {
+        content_ids: [item.id],
+        content_name: item.name,
+        content_type: 'product',
+        value: Math.round(item.price * item.quantity * 100) / 100,
+        currency: 'MXN',
+      })
     },
 
     removeItem(itemId: string, variantId?: string) {

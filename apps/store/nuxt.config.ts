@@ -43,6 +43,7 @@ export default defineNuxtConfig({
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL || '',
       supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY || '',
       stripePublishableKey: process.env.NUXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '',
+      fbPixelId: process.env.NUXT_PUBLIC_FB_PIXEL_ID || '1031196445800113',
     },
     // 🔒 Variables privadas (solo servidor)
     supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY || '',

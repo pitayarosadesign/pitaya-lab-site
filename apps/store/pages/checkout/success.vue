@@ -138,6 +138,13 @@ const personalizationWhatsappLink = computed(() => {
 })
 
 onMounted(async () => {
+  // 📊 Facebook Pixel - Purchase (se lee el total antes de limpiar el carrito)
+  cart.init()
+  trackFbEvent('Purchase', {
+    value: Math.round(cart.totalPrice * 100) / 100,
+    currency: 'MXN',
+  })
+
   // Limpiar carrito
   cart.clearCart()
 

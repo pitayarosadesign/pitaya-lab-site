@@ -734,6 +734,19 @@ const loading = ref(true)
 const error = ref(false)
 const selectedVariant = ref(null)
 
+// 📊 Facebook Pixel - ViewContent (se dispara cuando carga el producto)
+watch(product, (p) => {
+  if (p?.id) {
+    trackFbEvent('ViewContent', {
+      content_ids: [p.id],
+      content_name: p.name,
+      content_type: 'product',
+      value: Number(p.price) || undefined,
+      currency: 'MXN',
+    })
+  }
+}, { immediate: true })
+
 // Distintivo del producto (badge manual o "Best Seller" si es destacado).
 const productBadge = computed(() => badgeLabel(product.value?.badge, product.value?.isFeatured))
 const productBadgeClass = computed(() => badgeClass(productBadge.value))

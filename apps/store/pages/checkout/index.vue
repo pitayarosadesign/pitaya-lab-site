@@ -500,5 +500,13 @@ function formatDate(dateStr) {
 
 onMounted(() => {
   cart.init()
+
+  // 📊 Facebook Pixel - InitiateCheckout
+  trackFbEvent('InitiateCheckout', {
+    content_ids: cart.items.map(i => i.id),
+    num_items: cart.totalItems,
+    value: Math.round(cart.totalPrice * 100) / 100,
+    currency: 'MXN',
+  })
 })
 </script>
