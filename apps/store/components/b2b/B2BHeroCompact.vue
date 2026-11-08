@@ -50,6 +50,7 @@
           <form @submit.prevent="jumpToCalculator" class="relative mb-4">
             <input
               v-model="query"
+              @input="onSearchInput"
               type="text"
               :placeholder="search.placeholder"
               class="w-full px-4 py-3 pr-12 rounded-xl border border-earth-200 focus:border-primary-400 outline-none transition-all text-sm"
@@ -66,7 +67,7 @@
               v-for="c in quickCategories"
               :key="c"
               type="button"
-              @click="jumpToCalculator"
+              @click="pickCategory(c)"
               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-earth-50 border border-earth-200 hover:border-primary-300 hover:bg-primary-50 text-xs font-medium text-earth-700 transition-colors"
             >
               {{ c }}
@@ -92,15 +93,31 @@ const props = defineProps({
   secondaryCta: { type: Object, default: () => ({ text: '💍 Recuerdos para eventos', link: '#cotizador-eventos' }) },
   search: { type: Object, default: () => ({
     title: 'Encuentra tu producto y cotiza',
-    placeholder: 'Buscar por aroma, tipo de producto…',
+    placeholder: 'Buscar por producto o categoría…',
     categoriesLabel: 'Categorías rápidas',
   }) },
   quickCategories: { type: Array, default: () => ['🕯️ Velas de Soya', '🌿 Brumas Aromáticas', '💧 Aceites Aromáticos', '🪵 Difusores', '🧴 Jabones y Cremas'] },
 })
 
-const query = ref('')
+const query = useB2BSearch().query
 
 function jumpToCalculator() {
   document.getElementById('calculadora-mayoreo')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+// Escribir en el buscador baja a la calculadora (filtro en vivo).
+// Solo se hace scroll al pasar de vacío a texto, para no "saltar" en cada tecla.
+let lastQuery = ''
+function onSearchInput() {
+  if (lastQuery === '' && query.value !== '') {
+    jumpToCalculator()
+  }
+  lastQuery = query.value
+}
+
+// Los chips son atajos por keyword: filtran la calculadora en vivo.
+function pickCategory(label) {
+  query.value = label.replace(/^[^a-zA-ZñÑáéíóúüÁÉÍÓÚÜ]+\s*/, '')
+  jumpToCalculator()
 }
 </script>

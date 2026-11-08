@@ -17,6 +17,32 @@
 
         <!-- Acordeones por categoría -->
         <div v-else class="space-y-3">
+          <!-- Buscador interno + indicador de resultados -->
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div class="relative flex-1 max-w-md">
+              <input
+                v-model="query"
+                type="text"
+                placeholder="Filtrar por producto o categoría…"
+                class="w-full px-4 py-2.5 pr-16 rounded-xl border border-earth-200 focus:border-primary-400 outline-none transition-all text-sm"
+              />
+              <button
+                v-if="query"
+                type="button"
+                @click="query = ''"
+                class="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-semibold text-primary-600 hover:text-primary-700"
+              >Limpiar</button>
+            </div>
+            <p v-if="query" class="text-xs text-earth-400">
+              {{ filteredProducts.length }} {{ filteredProducts.length === 1 ? 'resultado' : 'resultados' }} para "{{ query }}"
+            </p>
+          </div>
+
+          <!-- Sin resultados -->
+          <div v-if="groupedProducts.length === 0" class="py-8 text-center text-earth-400 text-sm">
+            No encontramos productos para "{{ query }}". Prueba con otra palabra.
+          </div>
+
           <div
             v-for="group in groupedProducts"
             :key="group.category"
@@ -194,6 +220,8 @@
 <script setup lang="ts">
 import { getWholesalePrice, formatMXN, WHATSAPP_URL } from '~/composables/useB2B'
 
+const { query } = useB2BSearch()
+
 const emit = defineEmits<{
   (e: 'order', payload: any): void
 }>()
@@ -273,10 +301,21 @@ onMounted(async () => {
   await Promise.all([loadProducts(), loadConfig()])
 })
 
+// Filtro predictivo por búsqueda (nombre, subtítulo o categoría)
+const filteredProducts = computed(() => {
+  const q = query.value.trim().toLowerCase()
+  if (!q) return products.value
+  return products.value.filter(p =>
+    (p.label || '').toLowerCase().includes(q) ||
+    (p.size || '').toLowerCase().includes(q) ||
+    (p.category || '').toLowerCase().includes(q)
+  )
+})
+
 // Agrupar productos por categoría (para los acordeones)
 const groupedProducts = computed(() => {
   const map = new Map()
-  for (const p of products.value) {
+  for (const p of filteredProducts.value) {
     const cat = p.category || 'Otros'
     if (!map.has(cat)) map.set(cat, [])
     map.get(cat).push(p)
@@ -295,9 +334,13 @@ function toggleCategory(cat) {
   else next.add(cat)
   openCategories.value = next
 }
-// Abrir la primera categoría cuando carguen los productos
-watch(groupedProducts, (groups) => {
-  if (groups.length && openCategories.value.size === 0) {
+// Al buscar, abrir todas las categorías con resultados; sin búsqueda, dejar
+// abierta la primera.
+watch([groupedProducts, query], ([groups, q]) => {
+  const active = (q || '').trim().toLowerCase()
+  if (active) {
+    openCategories.value = new Set(groups.map(g => g.category))
+  } else if (groups.length && openCategories.value.size === 0) {
     openCategories.value = new Set([groups[0].category])
   }
 }, { immediate: true })

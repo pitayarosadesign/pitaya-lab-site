@@ -108,7 +108,7 @@ const b2bConfig = reactive({
     ],
     search: {
       title: 'Encuentra tu producto y cotiza',
-      placeholder: 'Buscar por aroma, tipo de producto…',
+      placeholder: 'Buscar por producto o categoría…',
       categoriesLabel: 'Categorías rápidas',
     },
     quickCategories: ['🕯️ Velas de Soya', '🌿 Brumas Aromáticas', '💧 Aceites Aromáticos', '🪵 Difusores', '🧴 Jabones y Cremas'],
