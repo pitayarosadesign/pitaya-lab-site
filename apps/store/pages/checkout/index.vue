@@ -502,11 +502,18 @@ onMounted(() => {
   cart.init()
 
   // 📊 Facebook Pixel - InitiateCheckout (content_ids = id del catálogo de Meta)
-  trackFbEvent('InitiateCheckout', {
-    content_ids: cart.items.map(i => i.sku || i.id),
-    num_items: cart.totalItems,
-    value: Math.round(cart.totalPrice * 100) / 100,
-    currency: 'MXN',
-  })
+  trackFbEvent(
+    'InitiateCheckout',
+    {
+      content_ids: cart.items.map(i => i.sku || i.id),
+      num_items: cart.totalItems,
+      value: Math.round(cart.totalPrice * 100) / 100,
+      currency: 'MXN',
+    },
+    {
+      email: form.email || undefined,
+      phone: form.phone || undefined,
+    }
+  )
 })
 </script>

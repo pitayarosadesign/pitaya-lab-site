@@ -138,14 +138,10 @@ const personalizationWhatsappLink = computed(() => {
 })
 
 onMounted(async () => {
-  // 📊 Facebook Pixel - Purchase (se lee el total antes de limpiar el carrito)
+  // Leer el carrito antes de limpiarlo (para el evento Purchase)
   cart.init()
-  trackFbEvent('Purchase', {
-    content_ids: cart.items.map(i => i.sku || i.id),
-    content_type: 'product',
-    value: Math.round(cart.totalPrice * 100) / 100,
-    currency: 'MXN',
-  })
+  const purchaseValue = Math.round(cart.totalPrice * 100) / 100
+  const purchaseContentIds = cart.items.map(i => i.sku || i.id)
 
   // Limpiar carrito
   cart.clearCart()
@@ -178,6 +174,9 @@ onMounted(async () => {
     orderNumber.value = orderFromUrl
   }
 
+  let purchaseEmail = ''
+  let purchasePhone = ''
+
   if (sessionId) {
     try {
       const { data } = await $fetch(`/api/checkout/session?session_id=${sessionId}`)
@@ -186,6 +185,10 @@ onMounted(async () => {
       }
       if (data?.customerEmail) {
         customerEmail.value = data.customerEmail
+        purchaseEmail = data.customerEmail
+      }
+      if (data?.shippingAddress?.phone) {
+        purchasePhone = data.shippingAddress.phone
       }
       if (data?.shippingMethod) {
         shippingMethod.value = data.shippingMethod
@@ -200,6 +203,21 @@ onMounted(async () => {
       console.warn('No se pudo obtener el número de orden')
     }
   }
+
+  // 📊 Facebook Pixel - Purchase (con em/ph para mejor coincidencia)
+  trackFbEvent(
+    'Purchase',
+    {
+      content_ids: purchaseContentIds,
+      content_type: 'product',
+      value: purchaseValue,
+      currency: 'MXN',
+    },
+    {
+      email: purchaseEmail || undefined,
+      phone: purchasePhone || undefined,
+    }
+  )
 
   // ⭐ Google Customer Reviews - Cargar widget de encuesta
   loadGoogleCustomerReviews()

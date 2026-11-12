@@ -38,6 +38,8 @@ export default defineEventHandler(async (event) => {
         action_source: 'website',
         event_source_url: body.event_source_url || headers.referer || '',
         user_data: {
+          ...(Array.isArray(userData.em) ? { em: userData.em } : {}),
+          ...(Array.isArray(userData.ph) ? { ph: userData.ph } : {}),
           ...(userData.fbp ? { fbp: userData.fbp } : {}),
           ...(userData.fbc ? { fbc: userData.fbc } : {}),
           ...(ip ? { client_ip_address: ip } : {}),
