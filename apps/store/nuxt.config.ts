@@ -6,6 +6,9 @@ import { resolve } from 'path'
 // Cargar variables del .env raíz para workspaces
 config({ path: resolve(__dirname, '../../.env') })
 
+// 📊 Meta/Facebook Pixel ID (configurable vía NUXT_PUBLIC_FB_PIXEL_ID)
+const fbPixelId = process.env.NUXT_PUBLIC_FB_PIXEL_ID || '1031196445800113'
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-06-01',
   
@@ -27,7 +30,19 @@ export default defineNuxtConfig({
       link: [
         { rel: 'icon', type: 'image/png', href: '/favicon.png' },
         { rel: 'apple-touch-icon', href: '/favicon.png' }
-      ]
+      ],
+      // 📊 Meta Pixel (código base en el <head> de todas las páginas)
+      script: [
+        {
+          id: 'facebook-pixel',
+          innerHTML: `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${fbPixelId}');fbq('track','PageView');`,
+        },
+      ],
+      noscript: [
+        {
+          innerHTML: `<img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${fbPixelId}&ev=PageView&noscript=1"/>`,
+        },
+      ],
     },
     pageTransition: { name: 'page', mode: 'out-in' }
   },

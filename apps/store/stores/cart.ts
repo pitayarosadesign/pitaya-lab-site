@@ -10,6 +10,8 @@ import { trackFbEvent } from '~/composables/useFbPixel'
 export interface CartItem {
   id: string
   slug: string
+  /** SKU del producto (id del catálogo de Meta cuando existe) */
+  sku?: string | null
   name: string
   subtitle?: string
   price: number
@@ -139,9 +141,9 @@ export const useCartStore = defineStore('cart', {
       saveCart(this.items)
       this.isOpen = true
 
-      // 📊 Facebook Pixel - AddToCart
+      // 📊 Facebook Pixel - AddToCart (content_ids = id del catálogo de Meta)
       trackFbEvent('AddToCart', {
-        content_ids: [item.id],
+        content_ids: [item.sku || item.id],
         content_name: item.name,
         content_type: 'product',
         value: Math.round(item.price * item.quantity * 100) / 100,

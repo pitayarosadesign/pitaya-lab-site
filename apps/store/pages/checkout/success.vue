@@ -141,6 +141,8 @@ onMounted(async () => {
   // 📊 Facebook Pixel - Purchase (se lee el total antes de limpiar el carrito)
   cart.init()
   trackFbEvent('Purchase', {
+    content_ids: cart.items.map(i => i.sku || i.id),
+    content_type: 'product',
     value: Math.round(cart.totalPrice * 100) / 100,
     currency: 'MXN',
   })

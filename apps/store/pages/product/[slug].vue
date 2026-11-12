@@ -738,7 +738,7 @@ const selectedVariant = ref(null)
 watch(product, (p) => {
   if (p?.id) {
     trackFbEvent('ViewContent', {
-      content_ids: [p.id],
+      content_ids: [p.sku || p.id],
       content_name: p.name,
       content_type: 'product',
       value: Number(p.price) || undefined,
@@ -1335,6 +1335,7 @@ function addToCart() {
   const cartItem = {
     id: product.value.id,
     slug: product.value.slug,
+    sku: product.value.sku || null,
     name: product.value.name,
     subtitle: product.value.subtitle,
     // Precio: el de la variante seleccionada si existe, si no el del producto

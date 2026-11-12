@@ -501,9 +501,9 @@ function formatDate(dateStr) {
 onMounted(() => {
   cart.init()
 
-  // 📊 Facebook Pixel - InitiateCheckout
+  // 📊 Facebook Pixel - InitiateCheckout (content_ids = id del catálogo de Meta)
   trackFbEvent('InitiateCheckout', {
-    content_ids: cart.items.map(i => i.id),
+    content_ids: cart.items.map(i => i.sku || i.id),
     num_items: cart.totalItems,
     value: Math.round(cart.totalPrice * 100) / 100,
     currency: 'MXN',
