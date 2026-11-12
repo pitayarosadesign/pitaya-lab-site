@@ -68,6 +68,8 @@ export default defineNuxtConfig({
     skydropxApiSecretKey: process.env.SKYDROPX_API_SECRET_KEY || '',
     enviaApiKey: process.env.ENVIA_API_KEY || '',
     resendApiKey: process.env.RESEND_API_KEY || '',
+    // 📊 Meta Conversions API (token de acceso; secreto, solo servidor)
+    metaCapiToken: process.env.META_CAPI_ACCESS_TOKEN || process.env.FACEBOOK_PIXEL_ID || '',
   },
 
   modules: [
