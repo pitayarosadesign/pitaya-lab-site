@@ -185,6 +185,7 @@ usePageSeo('/resena', {
 })
 
 const supabase = useNuxtApp().$supabase
+const route = useRoute()
 
 // Contenido editorial de la página, editable desde el panel admin vía site_config.
 const pageContent = reactive({
@@ -229,6 +230,20 @@ const form = reactive({
   rating: 5,
   message: '',
 })
+
+// Prellena el producto si llega en la URL (?producto=Bruma Solara), para que
+// los links de reseña por producto compartidos por WhatsApp abran el formulario
+// con el nombre ya escrito. Se limpia para evitar HTML/scripts.
+const productoParam = Array.isArray(route.query.producto)
+  ? route.query.producto[0]
+  : route.query.producto
+if (productoParam) {
+  form.product = String(productoParam)
+    .replace(/<[^>]*>/g, '') // quita etiquetas HTML completas
+    .replace(/[<>]/g, '')    // quita < y > sueltos
+    .trim()
+    .slice(0, 120)
+}
 
 const photoInput = ref(null)
 const photoPreview = ref('')

@@ -59,8 +59,8 @@ ue <template>
               <tr v-for="(item, i) in orderItems" :key="i" class="border-b border-gray-50">
                 <td class="py-3 text-sm text-gray-900">{{ item.name }}</td>
                 <td class="py-3 text-sm text-center text-gray-600">{{ item.quantity }}</td>
-                <td class="py-3 text-sm text-right text-gray-600">${{ formatPrice(item.price) }}</td>
-                <td class="py-3 text-sm text-right font-semibold text-gray-900">${{ formatPrice(item.price * item.quantity) }}</td>
+                <td class="py-3 text-sm text-right text-gray-600">${{ formatPrice((item.price || 0) / 100) }}</td>
+                <td class="py-3 text-sm text-right font-semibold text-gray-900">${{ formatPrice(((item.price || 0) / 100) * item.quantity) }}</td>
               </tr>
             </tbody>
             <tfoot>
@@ -89,6 +89,14 @@ ue <template>
           <p class="text-sm font-medium text-gray-900">{{ order.customer_name || '—' }}</p>
           <p class="text-sm text-gray-500">{{ order.customer_email }}</p>
           <p v-if="order.customer_phone" class="text-sm text-gray-500">{{ order.customer_phone }}</p>
+          <button
+            v-if="customerPhoneDigits"
+            type="button"
+            @click="openWhatsappReview"
+            class="mt-3 w-full bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-2 rounded-lg transition-colors"
+          >
+            💬 Enviar reseña por WhatsApp
+          </button>
         </div>
 
         <!-- 📝 Nota del cliente (aplica a CUALQUIER orden: retail y B2B) -->
@@ -322,6 +330,44 @@ const isB2B = computed(() =>
   order.value?.order_type === 'wholesale' || order.value?.order_type === 'event'
 )
 
+const storeUrlForLinks = useRuntimeConfig().public.storeUrl || 'https://www.pitayalab.com.mx'
+
+// Normaliza el teléfono del cliente a formato internacional para wa.me
+const customerPhoneDigits = computed(() => {
+  const raw = order.value?.customer_phone || ''
+  let digits = String(raw).replace(/\D/g, '')
+  if (!digits) return ''
+  if (digits.startsWith('52') && digits.length >= 12) return digits
+  if (digits.length === 10) digits = '52' + digits
+  return digits
+})
+
+// Enlaces de reseña por producto (usando los nombres de los items del pedido)
+const whatsappReviewLinks = computed(() => {
+  const base = storeUrlForLinks.replace(/\/+$/, '')
+  const names = orderItems.value
+    .map(i => (i?.name || '').trim())
+    .filter(Boolean)
+    .filter((n, i, arr) => arr.indexOf(n) === i)
+  return names.map(n => `${base}/resena?producto=${encodeURIComponent(n)}`)
+})
+
+function openWhatsappReview() {
+  const phone = customerPhoneDigits.value
+  if (!phone) {
+    alert('Este pedido no tiene teléfono de cliente registrado.')
+    return
+  }
+  const firstName = (order.value?.customer_name || '').trim().split(' ')[0]
+  const base = storeUrlForLinks.replace(/\/+$/, '')
+  const links = whatsappReviewLinks.value.length > 0
+    ? whatsappReviewLinks.value
+    : [`${base}/resena`]
+  const saludo = firstName ? `Hola ${firstName}, ` : 'Hola, '
+  const message = `${saludo}soy de PITAYA LAB. Espero que estés disfrutando tu pedido ${order.value?.order_number || ''}. Me ayudarías muchísimo dejando tu reseña:\n${links.join('\n')}`
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank')
+}
+
 onMounted(async () => {
   try {
     const res = await $fetch(`/api/orders/${route.params.id}`)
@@ -418,6 +464,7 @@ async function sendDeliveredNotification() {
         orderNumber: order.value.order_number,
         customerEmail: order.value.customer_email,
         customerName: order.value.customer_name,
+        items: orderItems.value.map(i => ({ name: i?.name || '' })),
       },
     })
 

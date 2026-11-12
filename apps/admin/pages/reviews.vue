@@ -22,6 +22,58 @@
       </div>
     </div>
 
+    <!-- Generador de enlace de reseña -->
+    <div class="bg-white rounded-2xl border border-gray-200 p-5 mb-6">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="text-lg">🔗</span>
+        <h2 class="text-sm font-semibold text-gray-900">Compartir enlace de reseña</h2>
+      </div>
+      <p class="text-xs text-gray-500 mb-4">
+        Genera el enlace para que tus clientes dejen su reseña desde WhatsApp o cualquier medio. Si escribes el producto, el formulario se abrirá con ese producto ya prellenado. Si agregas el teléfono del cliente, el botón de WhatsApp abrirá el chat directo con ese número.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-3">
+        <input
+          v-model="genProduct"
+          type="text"
+          placeholder="Producto (opcional). Ej: Bruma Solara"
+          class="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none"
+        />
+        <input
+          v-model="genPhone"
+          type="tel"
+          placeholder="Teléfono del cliente (opcional)"
+          class="w-full sm:w-56 px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none"
+        />
+        <div class="flex gap-2">
+          <button
+            @click="copyReviewLink(genProduct, 'gen')"
+            class="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            {{ copiedId === 'gen' ? '¡Copiado!' : 'Copiar enlace' }}
+          </button>
+          <button
+            @click="openWhatsappReview(genProduct)"
+            class="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            Enviar por WhatsApp
+          </button>
+        </div>
+      </div>
+      <div class="mt-3 flex items-center gap-2">
+        <input
+          :value="generatedReviewLink"
+          readonly
+          class="flex-1 px-3 py-2 rounded-lg bg-gray-50 border border-gray-100 text-xs text-gray-500 font-mono"
+        />
+        <button
+          @click="copyReviewLink(genProduct, 'gen')"
+          class="shrink-0 text-xs text-primary-600 hover:text-primary-700 font-medium"
+        >
+          Copiar
+        </button>
+      </div>
+    </div>
+
     <!-- Loader -->
     <div v-if="loading" class="text-center py-16">
       <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto"></div>
@@ -101,6 +153,12 @@
             >
               🗑️ Eliminar
             </button>
+            <button
+              @click="copyReviewLink(review.product, review.id)"
+              class="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-600 text-sm font-medium py-2 rounded-lg transition-colors"
+            >
+              {{ copiedId === review.id ? '¡Copiado!' : '🔗 Copiar link' }}
+            </button>
           </div>
         </div>
       </div>
@@ -113,6 +171,58 @@ const loading = ref(true)
 const reviews = ref([])
 const activeTab = ref('pending')
 const changingId = ref(null)
+
+const config = useRuntimeConfig()
+const storeUrl = config.public.storeUrl || 'https://www.pitayalab.com.mx'
+const whatsappNumber = config.public.whatsappNumber || '523333856064'
+
+const genProduct = ref('')
+const genPhone = ref('')
+const copiedId = ref(null)
+
+// Construye el enlace de reseña (genérico o con producto prellenado)
+function reviewLinkFor(product) {
+  const p = (product || '').trim()
+  const base = storeUrl.replace(/\/$/, '')
+  return p ? `${base}/resena?producto=${encodeURIComponent(p)}` : `${base}/resena`
+}
+
+const generatedReviewLink = computed(() => reviewLinkFor(genProduct.value))
+
+async function copyReviewLink(product, id) {
+  const link = reviewLinkFor(product)
+  try {
+    await navigator.clipboard.writeText(link)
+  } catch (e) {
+    // Fallback para navegadores/contextos sin API de portapapeles
+    const ta = document.createElement('textarea')
+    ta.value = link
+    document.body.appendChild(ta)
+    ta.select()
+    document.execCommand('copy')
+    document.body.removeChild(ta)
+  }
+  copiedId.value = id
+  setTimeout(() => {
+    if (copiedId.value === id) copiedId.value = null
+  }, 2000)
+}
+
+// Normaliza el teléfono a formato internacional para wa.me
+function normalizePhone(raw) {
+  let digits = String(raw || '').replace(/\D/g, '')
+  if (!digits) return ''
+  if (digits.startsWith('52') && digits.length >= 12) return digits
+  if (digits.length === 10) digits = '52' + digits
+  return digits
+}
+
+function openWhatsappReview(product) {
+  const link = reviewLinkFor(product)
+  const message = `Hola, me ayudaría muchísimo que dejaras tu reseña de tu compra PITAYA LAB: ${link}`
+  const to = normalizePhone(genPhone.value) || whatsappNumber
+  window.open(`https://wa.me/${to}?text=${encodeURIComponent(message)}`, '_blank')
+}
 
 const tabs = [
   { value: 'pending', label: '⏳ Pendientes' },

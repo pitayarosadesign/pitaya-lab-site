@@ -17,13 +17,54 @@ export default defineEventHandler(async (event) => {
   const customerEmail = (body && body.customerEmail) || ''
   const customerName = (body && body.customerName) || 'Cliente'
   const orderNumber = (body && body.orderNumber) || ''
+  const items = Array.isArray(body && body.items) ? body.items : []
 
   if (!customerEmail) {
     return { error: 'Faltan datos: customerEmail es requerido', sent: false }
   }
 
-  // Link de la página de reseña
-  const reviewUrl = 'https://www.pitayalab.com.mx/resena'
+  // Links de reseña: uno por producto comprado (fallback: enlace genérico)
+  const reviewBase = 'https://www.pitayalab.com.mx/resena'
+  const productNames = items
+    .map((it: any) => (it && it.name ? String(it.name).trim() : ''))
+    .filter(Boolean)
+    .filter((name: string, i: number, arr: string[]) => arr.indexOf(name) === i)
+
+  const escapeHtml = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+  const buttonStyle = 'display:inline-block;background:#166534;color:#ffffff;text-decoration:none;font-family:Arial,sans-serif;font-weight:bold;font-size:14px;padding:13px 32px;border-radius:999px;'
+
+  let reviewCtaHtml = ''
+  if (productNames.length > 0) {
+    const buttons = productNames.map((name: string) => `
+                <tr><td align="center" style="padding:6px 0;">
+                  <a href="${reviewBase}?producto=${encodeURIComponent(name)}" target="_blank" rel="noopener" style="${buttonStyle}">
+                    📝 Reseñar: ${escapeHtml(name)}
+                  </a>
+                </td></tr>`).join('')
+    reviewCtaHtml = `
+              <div style="font-family:Arial,sans-serif;font-size:15px;color:#584236;line-height:1.7;margin:28px 0 6px;">
+                Además, tu opinión vale mucho para nosotros. 💚<br/>
+                ¿Nos cuentas cómo te fue con cada producto?
+              </div>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 0;">
+                ${buttons}
+              </table>`
+  } else {
+    reviewCtaHtml = `
+              <div style="font-family:Arial,sans-serif;font-size:15px;color:#584236;line-height:1.7;margin:28px 0 6px;">
+                Además, tu opinión vale mucho para nosotros. 💚<br/>
+                ¿Nos cuentas cómo te fue con tu compra?
+              </div>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 0;">
+                <tr><td align="center">
+                  <a href="${reviewBase}" target="_blank" rel="noopener" style="${buttonStyle}">
+                    📝 Deja tu reseña
+                  </a>
+                </td></tr>
+              </table>`
+  }
 
   // Leer config de correos de site_config para el remitente personalizado
   let fromName = 'PITAYA LAB'
@@ -72,19 +113,7 @@ export default defineEventHandler(async (event) => {
                 </td></tr>
               </table>
 
-              <div style="font-family:Arial,sans-serif;font-size:15px;color:#584236;line-height:1.7;margin:28px 0 6px;">
-                Además, tu opinión vale mucho para nosotros. 💚<br/>
-                ¿Nos cuentas cómo te fue con tu compra?
-              </div>
-
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 0;">
-                <tr><td align="center">
-                  <a href="${reviewUrl}" target="_blank" rel="noopener"
-                     style="display:inline-block;background:#166534;color:#ffffff;text-decoration:none;font-family:Arial,sans-serif;font-weight:bold;font-size:14px;padding:13px 32px;border-radius:999px;">
-                    📝 Deja tu reseña
-                  </a>
-                </td></tr>
-              </table>
+              ${reviewCtaHtml}
 
               <div style="font-family:Arial,sans-serif;font-size:13px;color:#815f46;line-height:1.7;margin-top:20px;">
                 ¿Todo llegó en perfectas condiciones? Si tienes alguna duda o inquietud,
