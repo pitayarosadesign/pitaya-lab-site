@@ -37,6 +37,22 @@
           <option value="wholesale">Mayoreo B2B</option>
           <option value="event">Recuerdos/Evento</option>
         </select>
+        <select
+          v-model="filterChannel"
+          class="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400"
+        >
+          <option value="">Todos los canales</option>
+          <option value="tienda_online">Tienda en línea</option>
+          <option value="whatsapp">WhatsApp</option>
+          <option value="facebook">Facebook</option>
+          <option value="otro">Otro</option>
+        </select>
+        <NuxtLink
+          to="/orders/nueva"
+          class="inline-flex items-center gap-1 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+        >
+          + Nueva venta
+        </NuxtLink>
       </div>
     </div>
 
@@ -54,6 +70,7 @@
             <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Pedido</th>
             <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Cliente</th>
             <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tipo</th>
+            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Canal</th>
             <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha</th>
             <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
             <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
@@ -86,6 +103,14 @@
               <p v-if="order.event_date" class="text-[11px] text-gray-400 mt-1">
                 📅 {{ formatDate(order.event_date).split(',')[0] }}
               </p>
+            </td>
+            <td class="px-6 py-4">
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                :class="channelBadge(order.sales_channel)"
+              >
+                {{ channelLabel(order.sales_channel) }}
+              </span>
             </td>
             <td class="px-6 py-4 text-sm text-gray-600">
               {{ formatDate(order.created_at) }}
@@ -137,12 +162,14 @@ const orders = ref([])
 const filterStatus = ref('')
 const filterPayment = ref('')
 const filterType = ref('')
+const filterChannel = ref('')
 
 const filteredOrders = computed(() => {
   return orders.value.filter(o => {
     if (filterStatus.value && o.status !== filterStatus.value) return false
     if (filterPayment.value && o.payment_status !== filterPayment.value) return false
     if (filterType.value && (o.order_type || 'retail') !== filterType.value) return false
+    if (filterChannel.value && (o.sales_channel || 'tienda_online') !== filterChannel.value) return false
     return true
   })
 })
@@ -221,5 +248,20 @@ function orderTypeBadge(type) {
 function orderTypeEmoji(type) {
   const icons = { retail: '🛍️', wholesale: '📦', event: '💍' }
   return icons[type] || '🛍️'
+}
+
+function channelLabel(channel) {
+  const labels = { tienda_online: 'Tienda en línea', whatsapp: 'WhatsApp', facebook: 'Facebook', otro: 'Otro' }
+  return labels[channel] || channel || 'Tienda en línea'
+}
+
+function channelBadge(channel) {
+  const colors = {
+    tienda_online: 'bg-blue-50 text-blue-700 border border-blue-200',
+    whatsapp: 'bg-green-50 text-green-700 border border-green-200',
+    facebook: 'bg-indigo-50 text-indigo-700 border border-indigo-200',
+    otro: 'bg-gray-50 text-gray-600 border border-gray-200',
+  }
+  return colors[channel] || colors.otro
 }
 </script>
