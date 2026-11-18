@@ -67,6 +67,9 @@ export default defineNuxtConfig({
     skydropxApiKey: process.env.SKYDROPX_API_KEY || '',
     skydropxApiSecretKey: process.env.SKYDROPX_API_SECRET_KEY || '',
     enviaApiKey: process.env.ENVIA_API_KEY || '',
+    enviaFulfillmentToken: process.env.ENVIA_FULFILLMENT_TOKEN || '',
+    enviaFulfillmentApiBase: process.env.ENVIA_FULFILLMENT_API_BASE || 'https://apifulfillment.envia.com',
+    enviaFulfillmentCompanyId: process.env.ENVIA_FULFILLMENT_COMPANY_ID || '',
     resendApiKey: process.env.RESEND_API_KEY || '',
     // 📊 Meta Conversions API (token de acceso; secreto, solo servidor)
     metaCapiToken: process.env.META_CAPI_ACCESS_TOKEN || process.env.FACEBOOK_PIXEL_ID || '',
@@ -102,6 +105,8 @@ export default defineNuxtConfig({
     '/api/checkout/webhook/': { redirect: false, seo: { redirectToCanonical: false } },
     '/api/shipping/envia-webhook': { redirect: false, seo: { redirectToCanonical: false } },
     '/api/shipping/envia-webhook/': { redirect: false, seo: { redirectToCanonical: false } },
+    '/api/shipping/envia-fulfillment-webhook': { redirect: false, seo: { redirectToCanonical: false } },
+    '/api/shipping/envia-fulfillment-webhook/': { redirect: false, seo: { redirectToCanonical: false } },
     // Alias para feeds
     '/sitemap.xml': { redirect: '/api/seo/sitemap.xml' },
     '/merchant-feed.xml': { redirect: '/api/merchant/feed.xml' },
