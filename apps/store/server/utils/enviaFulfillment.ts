@@ -67,3 +67,12 @@ export async function getEnviaFulfillmentCompanyId(): Promise<string> {
   cachedCompanyId = String(id)
   return cachedCompanyId
 }
+
+export async function createEnviaFulfillmentOrder(payload: Record<string, any>): Promise<any> {
+  const companyId = await getEnviaFulfillmentCompanyId()
+  // La API recibe un arreglo de órdenes; mandamos una sola.
+  return enviaFulfillmentFetch(`/company/${companyId}/client/order/create`, {
+    method: 'POST',
+    body: [payload],
+  })
+}
