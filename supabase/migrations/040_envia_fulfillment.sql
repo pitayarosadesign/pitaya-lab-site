@@ -4,6 +4,9 @@
 -- ============================================
 
 -- 1) Mapeo SKU local -> variantId de Envía Fulfillment
+ALTER TABLE public.products
+  ADD COLUMN IF NOT EXISTS envia_variant_id BIGINT;
+
 ALTER TABLE public.product_variants
   ADD COLUMN IF NOT EXISTS envia_variant_id BIGINT;
 

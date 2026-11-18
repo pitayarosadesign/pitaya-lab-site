@@ -6,6 +6,7 @@
 const ENVIA_FULFILLMENT_PROD = 'https://apifulfillment.envia.com'
 
 let cachedCompanyId: string | null = null
+let cachedWarehouseId: string | null = null
 
 function enviaFulfillmentBase(): string {
   const config = useRuntimeConfig()
@@ -75,4 +76,30 @@ export async function createEnviaFulfillmentOrder(payload: Record<string, any>):
     method: 'POST',
     body: [payload],
   })
+}
+
+export async function getEnviaFulfillmentWarehouseId(): Promise<string> {
+  const config = useRuntimeConfig()
+  if (config.enviaFulfillmentWarehouseId) return String(config.enviaFulfillmentWarehouseId)
+  if (cachedWarehouseId) return cachedWarehouseId
+
+  const me = await enviaFulfillmentFetch<any>('/auth/me')
+  const warehouses =
+    me?.companies?.[0]?.warehouses || me?.warehouses || me?.data?.warehouses || []
+  const id = warehouses[0]?.id ?? null
+  if (!id) {
+    throw createError({ statusCode: 500, message: 'No se pudo obtener warehouseId.' })
+  }
+  cachedWarehouseId = String(id)
+  return cachedWarehouseId
+}
+
+export async function listEnviaFulfillmentInventory(): Promise<any[]> {
+  const companyId = await getEnviaFulfillmentCompanyId()
+  const warehouseId = await getEnviaFulfillmentWarehouseId()
+  const res = await enviaFulfillmentFetch<any>(
+    `/company/${companyId}/warehouse/inventory?warehouseId=${warehouseId}`
+  )
+  if (Array.isArray(res)) return res
+  return res?.data || res?.items || res?.inventory || []
 }
