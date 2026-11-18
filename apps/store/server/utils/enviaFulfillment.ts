@@ -94,12 +94,16 @@ export async function getEnviaFulfillmentWarehouseId(): Promise<string> {
   return cachedWarehouseId
 }
 
-export async function listEnviaFulfillmentInventory(): Promise<any[]> {
+export async function fetchEnviaFulfillmentInventoryRaw(): Promise<any> {
   const companyId = await getEnviaFulfillmentCompanyId()
   const warehouseId = await getEnviaFulfillmentWarehouseId()
-  const res = await enviaFulfillmentFetch<any>(
+  return enviaFulfillmentFetch<any>(
     `/company/${companyId}/warehouse/inventory?warehouseId=${warehouseId}`
   )
+}
+
+export async function listEnviaFulfillmentInventory(): Promise<any[]> {
+  const res = await fetchEnviaFulfillmentInventoryRaw()
   if (Array.isArray(res)) return res
   return res?.data || res?.items || res?.inventory || []
 }

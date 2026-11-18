@@ -17,7 +17,8 @@ export default defineEventHandler(async () => {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 
-  const inventory = await listEnviaFulfillmentInventory()
+  const raw = await fetchEnviaFulfillmentInventoryRaw()
+  const inventory = Array.isArray(raw) ? raw : (raw?.data || raw?.items || raw?.inventory || [])
 
   let matched = 0
   const unmatched: string[] = []
@@ -60,5 +61,5 @@ export default defineEventHandler(async () => {
     unmatched.push(String(sku))
   }
 
-  return { ok: true, total: inventory.length, matched, unmatched }
+  return { ok: true, total: inventory.length, matched, unmatched, rawSample: JSON.stringify(raw).slice(0, 600) }
 })
