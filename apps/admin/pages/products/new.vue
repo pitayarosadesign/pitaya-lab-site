@@ -432,7 +432,13 @@
                 </button>
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-medium text-gray-800">{{ combo.label }}</p>
-                  <p class="text-[10px] text-gray-400 font-mono">{{ combo.sku }}</p>
+                  <input
+                    v-model="combo.sku"
+                    type="text"
+                    placeholder="SKU"
+                    title="SKU de la variante"
+                    class="mt-0.5 w-44 px-2 py-1 rounded-md border border-gray-200 focus:border-primary-400 outline-none transition-all text-xs font-mono"
+                  />
                 </div>
                 <div class="flex items-center gap-2">
                   <input

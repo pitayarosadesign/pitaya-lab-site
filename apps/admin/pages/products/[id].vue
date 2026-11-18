@@ -529,7 +529,7 @@ async function loadProduct() {
 
       const meta = {}
       for (const c of combos) {
-        if (c?.label) meta[c.label] = { price: c.price ?? '', stock: c.stock ?? '', gtin: c.gtin ?? '', imageUrl: c.imageUrl ?? '' }
+        if (c?.label) meta[c.label] = { sku: c.sku ?? '', price: c.price ?? '', stock: c.stock ?? '', gtin: c.gtin ?? '', imageUrl: c.imageUrl ?? '' }
       }
       variantComboMeta.value = meta
     } else if (!isEventChannel.value && data.variants && data.variants.length > 0) {
@@ -552,7 +552,7 @@ async function loadProduct() {
         const meta = {}
         for (const v of data.variants) {
           if (v.fragrance_profile_id && v.name) {
-            meta[v.name] = { price: v.price ?? '', stock: v.stock ?? '', gtin: v.gtin ?? '', imageUrl: v.image_url ?? '' }
+            meta[v.name] = { sku: v.sku ?? '', price: v.price ?? '', stock: v.stock ?? '', gtin: v.gtin ?? '', imageUrl: v.image_url ?? '' }
           }
         }
         variantComboMeta.value = meta

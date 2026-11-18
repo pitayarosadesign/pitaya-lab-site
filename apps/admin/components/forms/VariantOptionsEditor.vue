@@ -151,7 +151,14 @@
           <div v-for="combo in combos" :key="combo.label" class="px-4 py-3 flex items-center gap-3">
             <div class="flex-1 min-w-0">
               <p class="text-sm font-medium text-gray-800">{{ combo.label }}</p>
-              <p class="text-[10px] text-gray-400 font-mono">{{ combo.sku }}</p>
+              <input
+                :value="comboMeta[combo.label]?.sku ?? ''"
+                @input="setComboField(combo.label, 'sku', $event.target.value)"
+                type="text"
+                :placeholder="combo.sku"
+                title="SKU de la variante (vacío = usar el generado)"
+                class="mt-0.5 w-44 px-2 py-1 rounded-md border border-gray-200 focus:border-primary-400 outline-none transition-all text-xs font-mono"
+              />
             </div>
             <button
               type="button"
@@ -468,13 +475,14 @@ function buildPayload() {
       const price = (meta.price === '' || meta.price == null) ? null : parseFloat(meta.price)
       const stock = (meta.stock === '' || meta.stock == null) ? 0 : (parseInt(meta.stock) || 0)
       const gtin = String(meta.gtin ?? '').trim()
+      const sku = String(meta.sku ?? '').trim() || c.sku
       return {
         // Para la dimensión "Aroma" se envía el NOMBRE del perfil (legible en
         // la tienda y para resolver fragrance_profile_id por nombre en el API).
         value1: dims[0]?.type === 'Aroma' ? scentNameById(c.values[0]) : (c.values[0] ?? null),
         value2: dims[1]?.type === 'Aroma' ? scentNameById(c.values[1]) : (c.values[1] ?? null),
         label: c.label,
-        sku: c.sku,
+        sku,
         price,
         stock,
         gtin: gtin || null,
