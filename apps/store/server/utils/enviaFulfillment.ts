@@ -49,7 +49,9 @@ async function enviaFulfillmentFetch<T = any>(
 
 export async function listEnviaFulfillmentCompanies(): Promise<any[]> {
   const me = await enviaFulfillmentFetch<any>('/auth/me')
-  return me?.companies || me?.data?.companies || []
+  if (Array.isArray(me)) return me
+  const companies = me?.companies || me?.data?.companies || me?.user?.companies || []
+  return Array.isArray(companies) ? companies : []
 }
 
 export async function getEnviaFulfillmentCompanyId(): Promise<string> {
