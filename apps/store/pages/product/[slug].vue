@@ -315,6 +315,16 @@
                 <span class="w-2 h-2 rounded-full bg-green-500"></span>
                 {{ productConfig.in_stock_label }} ({{ currentStock }} disponibles)
               </span>
+              <!-- Sobre pedido anticipado (solo recuerdos) -->
+              <span v-else-if="isRecuerdo" class="flex items-center gap-1.5 text-amber-600">
+                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                {{ productConfig.backorder_message }}
+              </span>
+              <!-- Agotado (productos normales) -->
+              <span v-else class="flex items-center gap-1.5 text-red-600">
+                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                Agotado
+              </span>
               <span v-if="product.freeShipping" class="flex items-center gap-1.5 text-primary-600">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
@@ -343,7 +353,7 @@
 
             <!-- 🚚 Entrega estimada -->
             <div
-              v-if="!loading && product"
+              v-if="!loading && product && !isSoldOut"
               class="text-sm mb-6 px-4 py-3 rounded-xl border bg-primary-50/60 border-primary-100 text-primary-800"
             >
               <p class="flex items-center gap-2 font-semibold text-earth-900">
@@ -1228,8 +1238,11 @@ function resetPersonalization() {
 }
 
 // ===== 🚚 Entrega estimada (página de producto) =====
-// ¿Producto bajo pedido (sin stock)? Con stock disponible se envía directo.
-const isMadeToOrder = computed(() => currentStock.value <= 0)
+// Solo los recuerdos se elaboran "sobre pedido anticipado"; el resto, sin
+// stock, queda agotado y no se puede comprar.
+const isRecuerdo = computed(() => product.value?.categorySlug === 'recuerdos')
+const isSoldOut = computed(() => currentStock.value <= 0 && !isRecuerdo.value)
+const isMadeToOrder = computed(() => currentStock.value <= 0 && isRecuerdo.value)
 
 // Reloj local para recalcular la fecha en cliente (evita desajustes de zona
 // horaria en SSR y actualiza al pasar el corte de las 13:00).
@@ -1245,11 +1258,11 @@ const productDeliveryDeadlineText = computed(() =>
   productDelivery.value ? formatDeliveryDeadline(productDelivery.value) : ''
 )
 
-// ¿Se puede comprar? Siempre se puede agregar al carrito.
-// Si no hay stock, se trata como pedido sobre pedido (preparación en taller).
+// ¿Se puede comprar? Solo si hay stock o es recuerdo (sobre pedido anticipado).
 // Con 2 dimensiones, se requiere que ambas estén seleccionadas (variante válida).
 const isPurchasable = computed(() => {
   if (!product.value) return false
+  if (isSoldOut.value) return false
   const dims = flexibleDimensions.value
   if (dims.length > 1 && (!selectedDim1.value || !selectedDim2.value)) return false
   return true
@@ -1277,6 +1290,7 @@ const isBestseller = computed(() => {
 // Texto del botón según estado
 const buttonLabel = computed(() => {
   if (!product.value) return 'Agregar al carrito'
+  if (isSoldOut.value) return 'Agotado'
   if (currentStock.value > 0) return 'Agregar al carrito'
   return productConfig.backorder_button_label || 'Agregar al carrito (sobre pedido)'
 })
