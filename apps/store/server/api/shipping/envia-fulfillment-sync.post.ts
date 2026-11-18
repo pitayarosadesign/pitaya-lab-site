@@ -18,7 +18,7 @@ export default defineEventHandler(async () => {
   })
 
   const raw = await fetchEnviaFulfillmentInventoryRaw()
-  const inventory = Array.isArray(raw) ? raw : (raw?.data || raw?.items || raw?.inventory || [])
+  const inventory = Array.isArray(raw) ? raw : (raw?.products || raw?.data || raw?.items || raw?.inventory || [])
 
   let matched = 0
   const unmatched: string[] = []

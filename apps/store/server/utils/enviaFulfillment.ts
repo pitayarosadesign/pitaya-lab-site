@@ -105,5 +105,5 @@ export async function fetchEnviaFulfillmentInventoryRaw(): Promise<any> {
 export async function listEnviaFulfillmentInventory(): Promise<any[]> {
   const res = await fetchEnviaFulfillmentInventoryRaw()
   if (Array.isArray(res)) return res
-  return res?.data || res?.items || res?.inventory || []
+  return res?.products || res?.data || res?.items || res?.inventory || []
 }
