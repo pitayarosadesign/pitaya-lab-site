@@ -70,6 +70,8 @@ export default defineNuxtConfig({
     enviaFulfillmentToken: process.env.ENVIA_FULFILLMENT_TOKEN || '',
     enviaFulfillmentApiBase: process.env.ENVIA_FULFILLMENT_API_BASE || 'https://apifulfillment.envia.com',
     enviaFulfillmentCompanyId: process.env.ENVIA_FULFILLMENT_COMPANY_ID || '',
+    enviaFulfillmentWarehouseId: process.env.ENVIA_FULFILLMENT_WAREHOUSE_ID || '',
+    enviaFulfillmentShopId: process.env.ENVIA_FULFILLMENT_SHOP_ID || '',
     resendApiKey: process.env.RESEND_API_KEY || '',
     // 📊 Meta Conversions API (token de acceso; secreto, solo servidor)
     metaCapiToken: process.env.META_CAPI_ACCESS_TOKEN || process.env.FACEBOOK_PIXEL_ID || '',
