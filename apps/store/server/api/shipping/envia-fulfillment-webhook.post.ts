@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Registramos el payload crudo para aprender el contrato exacto de Envía.
-  console.log('[envia-fulfillment-webhook] payload:', JSON.stringify(body))
+  console.log('[envia-fulfillment-webhook:onOrderUpdate] payload:', JSON.stringify(body))
 
   // Siempre respondemos 200 para que Envía considere el evento entregado.
   return { received: true }
