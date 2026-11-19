@@ -133,6 +133,9 @@ export default defineEventHandler(async (event) => {
       metadata: {
         source: 'pitayalab-store',
         items_json: JSON.stringify(items.map(i => ({
+          id: i.id || null,
+          variantId: i.variant?.id || null,
+          sku: i.sku || i.variant?.sku || null,
           name: i.name,
           quantity: i.quantity,
           price: i.price,

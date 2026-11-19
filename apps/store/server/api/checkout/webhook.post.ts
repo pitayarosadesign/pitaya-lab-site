@@ -3,6 +3,7 @@ import Stripe from 'stripe'
 import { Resend } from 'resend'
 import { createSkydropxAddressTemplate } from '../../utils/skydropx'
 import { validatePostalCode } from '../../utils/postalCode'
+import { createEnviaFulfillmentOrder, getEnviaFulfillmentWarehouseId } from '../../utils/enviaFulfillment'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -420,6 +421,163 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // ===== Envía Fulfillment =====
+  // Códigos de estado de México (nombre normalizado → código) para la dirección.
+  const MX_STATE_CODES: Record<string, string> = {
+    aguascalientes: 'AG',
+    'baja california': 'BC',
+    'baja california sur': 'BCS',
+    campeche: 'CAM',
+    chiapas: 'CHP',
+    chihuahua: 'CHH',
+    'ciudad de mexico': 'CDMX',
+    coahuila: 'COA',
+    colima: 'COL',
+    durango: 'DUR',
+    guanajuato: 'GUA',
+    guerrero: 'GRO',
+    hidalgo: 'HID',
+    jalisco: 'JAL',
+    mexico: 'MEX',
+    michoacan: 'MIC',
+    morelos: 'MOR',
+    nayarit: 'NAY',
+    'nuevo leon': 'NL',
+    oaxaca: 'OAX',
+    puebla: 'PUE',
+    queretaro: 'QRO',
+    'quintana roo': 'QR',
+    'san luis potosi': 'SLP',
+    sinaloa: 'SIN',
+    sonora: 'SON',
+    tabasco: 'TAB',
+    tamaulipas: 'TAM',
+    tlaxcala: 'TLA',
+    veracruz: 'VER',
+    yucatan: 'YUC',
+    zacatecas: 'ZAC',
+  }
+
+  function stateNameToCode(name: string): string {
+    const norm = (name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    return MX_STATE_CODES[norm] || name || ''
+  }
+
+  function buildEnviaShippingAddress(session: Stripe.Checkout.Session, cpValidation: any) {
+    const shipping = session.shipping_details || {}
+    const addr = shipping.address || {}
+    const meta = session.metadata || {}
+    let custom: any = {}
+    try {
+      custom = JSON.parse(meta.shipping_address || '{}') || {}
+    } catch {
+      // ignorar JSON inválido
+    }
+
+    const name = (shipping.name || session.customer_details?.name || 'Cliente').trim()
+    const parts = name.split(' ')
+    const firstName = parts[0] || 'Cliente'
+    const lastName = parts.slice(1).join(' ')
+    const line1 = (addr.line1 || custom.address1 || custom.street1 || custom.street || '').trim()
+    const line2 = (addr.line2 || custom.address2 || '').trim()
+    const stateName = cpValidation?.state || meta.shipping_state || addr.state || ''
+
+    return {
+      firstName,
+      lastName,
+      address1: [line1, line2].filter(Boolean).join(' ') || 'Dirección pendiente',
+      district: meta.shipping_neighborhood || custom.neighborhood || '',
+      city: addr.city || meta.shipping_city || custom.city || '',
+      state: { code: stateNameToCode(stateName), name: stateName },
+      country: { code: 'MX', name: 'Mexico' },
+      postalCode: (addr.postal_code || meta.shipping_cp || '').toString(),
+      phone: (shipping.phone || custom.phone || getCustomerPhone(session) || '').toString(),
+      references: (meta.order_note || '').slice(0, 100),
+    }
+  }
+
+  // Crea la orden en Envía Fulfillment solo para los productos con `envia_variant_id`.
+  // Los recuerdos (hechos a mano) no tienen variantId y se excluyen.
+  async function createEnviaFulfillmentForOrder(
+    orderId: string,
+    orderNumber: string,
+    items: any[],
+    session: Stripe.Checkout.Session,
+    cpValidation: any,
+  ) {
+    try {
+      const productIds = [...new Set((items || []).filter(i => i.id && !i.variantId).map(i => i.id))]
+      const variantIds = [...new Set((items || []).filter(i => i.variantId).map(i => i.variantId))]
+
+      const variantMap = new Map<string, number | null>()
+      if (productIds.length) {
+        const { data } = await supabaseAdmin.from('products').select('id, envia_variant_id').in('id', productIds)
+        for (const p of data || []) variantMap.set(p.id, p.envia_variant_id)
+      }
+      if (variantIds.length) {
+        const { data } = await supabaseAdmin.from('product_variants').select('id, envia_variant_id').in('id', variantIds)
+        for (const v of data || []) variantMap.set(v.id, v.envia_variant_id)
+      }
+
+      const products: any[] = []
+      for (const item of items || []) {
+        const key = item.variantId || item.id
+        const enviaVariantId = variantMap.get(key)
+        if (!enviaVariantId) continue
+        products.push({
+          variantId: enviaVariantId,
+          quantity: Number(item.quantity) || 1,
+          price: Number(((Number(item.price) || 0) / 100).toFixed(2)),
+          discount: 0,
+        })
+      }
+
+      if (products.length === 0) {
+        console.log(`ℹ️ Orden ${orderNumber}: sin productos de fulfillment, no se envía a Envía`)
+        return null
+      }
+
+      const payload: any = {
+        warehouseId: Number(await getEnviaFulfillmentWarehouseId()),
+        orderIdentifier: orderNumber,
+        ecommerceStatus: 'paid',
+        total: Number(products.reduce((s, p) => s + p.price * p.quantity, 0).toFixed(2)),
+        currency: 'MXN',
+        email: session.customer_details?.email || session.customer_email || '',
+        products,
+        shippingAddress: buildEnviaShippingAddress(session, cpValidation),
+      }
+      const shopId = config.enviaFulfillmentShopId
+      if (shopId) payload.shopId = Number(shopId)
+
+      const res = await createEnviaFulfillmentOrder(payload)
+      const created = Array.isArray(res) ? res[0] : res
+      const enviaOrderId = created?.orderId || created?.id || created?.identifier || null
+
+      const note = enviaOrderId
+        ? `Envía Fulfillment: orden ${enviaOrderId} creada`
+        : `Envía Fulfillment: orden creada (${JSON.stringify(res).slice(0, 120)})`
+
+      const { data: current } = await supabaseAdmin.from('orders').select('admin_notes').eq('id', orderId).single()
+      const merged = current?.admin_notes ? `${current.admin_notes}\n${note}` : note
+      await supabaseAdmin.from('orders').update({ admin_notes: merged }).eq('id', orderId)
+
+      console.log(`✅ Orden ${orderNumber} enviada a Envía Fulfillment (id ${enviaOrderId || 'n/d'})`)
+      return enviaOrderId
+    } catch (e: any) {
+      console.error(`❌ Error creando orden en Envía Fulfillment (${orderNumber}):`, e?.message || e)
+      const note = `Envía Fulfillment ERROR: ${(e?.message || e || '').toString().slice(0, 200)}`
+      try {
+        const { data: current } = await supabaseAdmin.from('orders').select('admin_notes').eq('id', orderId).single()
+        const merged = current?.admin_notes ? `${current.admin_notes}\n${note}` : note
+        await supabaseAdmin.from('orders').update({ admin_notes: merged }).eq('id', orderId)
+      } catch {
+        // ignorar si no se pudo anotar el error
+      }
+      return null
+    }
+  }
+
   try {
     const signature = event.node.req.headers['stripe-signature']
 
@@ -505,6 +663,11 @@ export default defineEventHandler(async (event) => {
           }
 
           console.log(`✅ Orden ${order.order_number} pagada con éxito`)
+
+          // 📍 Crear orden en Envía Fulfillment (idempotente: solo si no se creó antes)
+          if (!order.admin_notes?.includes('Envía Fulfillment') && cpValidation.valid) {
+            await createEnviaFulfillmentForOrder(order.id, order.order_number, order.items || [], session, cpValidation)
+          }
 
           // 📍 Guardar dirección en Skydropx solo si el CP es válido (evita duplicados en reintentos)
           if (!order.admin_notes?.includes('Skydropx')) {
@@ -617,6 +780,11 @@ export default defineEventHandler(async (event) => {
           if (insertError) {
             console.error('Error creando orden:', insertError.message)
             throw createError({ statusCode: 500, message: `Error creando orden: ${insertError.message}` })
+          }
+
+          // 📍 Crear orden en Envía Fulfillment (solo productos con variantId)
+          if (newOrder?.id && cpValidation.valid) {
+            await createEnviaFulfillmentForOrder(newOrder.id, orderNumber, items, session, cpValidation)
           }
 
           // 📍 Guardar dirección en Skydropx solo si el CP es válido
