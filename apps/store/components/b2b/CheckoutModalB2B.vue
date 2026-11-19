@@ -10,7 +10,7 @@
         <div class="flex items-center justify-between mb-6">
           <div>
             <h3 class="text-2xl font-serif font-bold text-earth-900">🛍️ Completa tu pedido B2B</h3>
-            <p class="text-sm text-earth-400 mt-1">Revisa tu resumen y procede al pago seguro con Stripe</p>
+            <p class="text-sm text-earth-400 mt-1">Revisa tu resumen y solicita tu cotización (sin pago en línea)</p>
           </div>
           <button
             @click="close"
@@ -109,11 +109,11 @@
               <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
               </svg>
-              {{ processing ? 'Procesando...' : 'Pagar con Stripe' }}
+              {{ processing ? 'Enviando...' : 'Solicitar cotización' }}
             </button>
           </div>
           <p class="text-xs text-earth-400 text-center">
-            🔒 Pago seguro procesado por Stripe. Recibirás tu número de pedido y la programación de entrega por correo.
+            📩 Sin pago en línea. Te enviaremos tu cotización por WhatsApp o correo para que la confirmes después.
           </p>
         </form>
       </div>
@@ -197,7 +197,7 @@ async function proceedToCheckout() {
   try {
     const priceData = buildPriceData()
 
-    // Redirigir a checkout del store pasando los datos
+    // Construir la solicitud de cotización (sin pago)
     const payload = {
       items: [{
         name: priceData.name,
@@ -218,19 +218,18 @@ async function proceedToCheckout() {
       b2bDiscountPercent: props.order.discountPercent || 0,
       leadTimeDays: props.order.leadTimeDays || (props.order.type === 'event' ? 15 : null),
       notes: contact.notes || null,
-      successUrl: props.successUrl || `${window.location.origin}/b2b/gracias`,
-      cancelUrl: props.cancelUrl || `${window.location.origin}/b2b`,
+      total: props.order.type === 'event' ? props.order.total : props.order.wholesaleTotal,
     }
 
-    const res = await $fetch('/api/checkout/b2b/create', {
+    const res = await $fetch('/api/checkout/b2b/quote', {
       method: 'POST',
       body: payload,
     })
 
-    if (res?.url) {
+    if (res?.ok) {
       emit('complete', { orderNumber: res.orderNumber })
-      // Redirigir a Stripe
-      window.location.href = res.url
+      const type = props.order.type === 'event' ? 'event' : 'quote'
+      window.location.href = `${window.location.origin}/b2b/gracias?order=${encodeURIComponent(res.orderNumber)}&type=${encodeURIComponent(type)}`
     } else if (res?.error) {
       error.value = res.error
     }

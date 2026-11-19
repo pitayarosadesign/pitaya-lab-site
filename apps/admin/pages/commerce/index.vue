@@ -125,6 +125,7 @@
             <button @click="toggleActive(store)" class="text-xs font-medium" :class="store.is_active ? 'text-yellow-600 hover:text-yellow-700' : 'text-green-600 hover:text-green-700'">
               {{ store.is_active ? 'Desactivar' : 'Activar' }}
             </button>
+            <button @click="deleteStore(store)" class="text-xs text-red-500 hover:text-red-700 font-medium">Eliminar</button>
           </div>
         </div>
       </div>
@@ -254,6 +255,19 @@ async function toggleActive(store) {
       body: { ...store, is_active: newStatus, id: store.id },
     })
     store.is_active = newStatus
+  } catch (e) {
+    alert('Error: ' + (e.data?.message || e.message))
+  }
+}
+
+async function deleteStore(store) {
+  if (!confirm(`¿Eliminar "${store.name}"? Se borrará su ubicación y ventas asociadas.`)) return
+  try {
+    await $fetch('/api/commerce', {
+      method: 'DELETE',
+      body: { id: store.id },
+    })
+    await loadStores()
   } catch (e) {
     alert('Error: ' + (e.data?.message || e.message))
   }

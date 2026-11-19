@@ -9,7 +9,7 @@
       </div>
 
       <h1 class="text-3xl md:text-4xl font-serif font-bold text-earth-900 mb-4">
-        ¡Gracias por tu pedido B2B! 🎉
+        {{ isQuote ? '¡Solicitud de cotización recibida! 🎉' : '¡Gracias por tu pedido B2B! 🎉' }}
       </h1>
 
       <!-- Número de pedido -->
@@ -27,9 +27,11 @@
         </p>
       </div>
       <div v-else class="p-6 rounded-2xl bg-earth-50 border border-earth-100 mb-6">
-        <h2 class="font-semibold text-earth-800 mb-2">📦 Sobre tu pedido de mayoreo</h2>
+        <h2 class="font-semibold text-earth-800 mb-2">{{ isQuote ? '📩 Sobre tu cotización de mayoreo' : '📦 Sobre tu pedido de mayoreo' }}</h2>
         <p class="text-sm text-earth-600 leading-relaxed">
-          Te contactaremos por correo para coordinar la <strong>elaboración del envío y confirmar la programación de entrega</strong>.
+          {{ isQuote
+            ? 'Te contactaremos por WhatsApp o correo con tu cotización y los tiempos de entrega. Aún no se ha realizado ningún cargo.'
+            : 'Te contactaremos por correo para coordinar la elaboración del envío y confirmar la programación de entrega.' }}
         </p>
       </div>
 
@@ -70,8 +72,9 @@ import { WHATSAPP_URL } from '~/composables/useB2B'
 const route = useRoute()
 
 const orderNumber = ref(route.query.order || '')
-// Detectar tipo de pedido (event | wholesale) desde el query
+// Detectar tipo de pedido (event | wholesale | quote) desde el query
 const isEvent = ref(route.query.type === 'event' || route.query.type === 'recuerdos')
+const isQuote = ref(route.query.type === 'quote')
 
 // Obtener session y detectar si es pedido de evento
 onMounted(async () => {

@@ -3,7 +3,7 @@
     <div class="flex items-center justify-between mb-6">
       <div>
         <h1 class="text-2xl font-bold text-gray-900">📦 Inventario</h1>
-        <p class="text-sm text-gray-500 mt-1">Stock total y por ubicación</p>
+        <p class="text-sm text-gray-500 mt-1">Stock online (Envía) y ubicaciones físicas</p>
       </div>
       <div class="flex items-center gap-3">
         <NuxtLink to="/inventory/movements"
@@ -84,7 +84,7 @@
               <th class="px-4 py-3 text-left font-medium text-gray-500">Producto</th>
               <th class="px-4 py-3 text-center font-medium text-gray-500">SKU</th>
               <th class="px-4 py-3 text-right font-medium text-gray-500">Precio</th>
-              <th class="px-4 py-3 text-center font-medium text-gray-500">Stock Total</th>
+              <th class="px-4 py-3 text-center font-medium text-gray-500">Stock Online (Envía)</th>
               <th class="px-4 py-3 text-left font-medium text-gray-500">Ubicación</th>
               <th class="px-4 py-3 text-right font-medium text-gray-500">Acción</th>
             </tr>
