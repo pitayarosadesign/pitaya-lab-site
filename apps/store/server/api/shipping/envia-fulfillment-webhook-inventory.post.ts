@@ -3,10 +3,61 @@
  * ------------------------------------------------------
  * Webhook de Envía Fulfillment: onInventoryModification (cambios de stock en el almacén).
  *
- * STUB inicial: registra el payload crudo para inspeccionar el contrato exacto
- * antes de mapear a `products.stock` / `product_variants.stock`.
+ * Estrategia defensiva: el contrato exacto del payload aún no se confirma, así que:
+ *   - Normaliza el body a una lista de items (soporta objeto o array, con envolturas).
+ *   - Extrae sku / variantId y la cantidad disponible de varias formas posibles.
+ *   - Empareja contra product_variants y products por sku (exacto/normalizado) o envia_variant_id.
+ *   - Actualiza `stock` en la fila correspondiente.
+ *   - SIEMPRE loguea el payload crudo para verificar/afinar el contrato.
  */
+import { createClient } from '@supabase/supabase-js'
+
+function normalizeSku(sku: string): string {
+  return (sku || '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+}
+
+// Normaliza el body a una lista de items (soporta distintas envolturas).
+function toList(body: any): any[] {
+  if (Array.isArray(body)) return body
+  if (!body || typeof body !== 'object') return []
+  for (const key of ['products', 'items', 'data', 'inventory', 'variants', 'changes']) {
+    const v = body[key]
+    if (Array.isArray(v)) return v
+    if (v && typeof v === 'object') return [v]
+  }
+  return [body]
+}
+
+// Extrae la cantidad disponible de las distintas formas posibles del payload.
+function extractAvailable(item: any): number | null {
+  if (!item || typeof item !== 'object') return null
+  if (Array.isArray(item.warehouses) && item.warehouses.length) {
+    return item.warehouses.reduce(
+      (sum: number, w: any) => sum + (Number(w?.available) || 0),
+      0,
+    )
+  }
+  for (const key of ['available', 'availableQuantity', 'stock', 'quantity', 'newQuantity', 'currentQuantity']) {
+    const v = item[key]
+    if (v !== undefined && v !== null && v !== '' && !Number.isNaN(Number(v))) {
+      return Number(v)
+    }
+  }
+  return null
+}
+
+function extractSku(item: any): string | null {
+  const v = item?.sku || item?.variant?.sku || item?.product?.sku || item?.data?.sku
+  return v ? String(v) : null
+}
+
+function extractVariantId(item: any): string | null {
+  const v = item?.variantId || item?.variant_id || item?.variant?.variantId || item?.product?.variantId || item?.data?.variantId
+  return v != null ? String(v) : null
+}
+
 export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig()
   let body: any = null
   try {
     body = await readBody(event)
@@ -16,5 +67,74 @@ export default defineEventHandler(async (event) => {
 
   console.log('[envia-fulfillment-webhook:onInventoryModification] payload:', JSON.stringify(body))
 
-  return { received: true }
+  if (!body || typeof body !== 'object') {
+    return { received: true, reason: 'empty_body' }
+  }
+
+  const supabase = createClient(config.public.supabaseUrl, config.supabaseServiceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+
+  const [{ data: variants }, { data: products }] = await Promise.all([
+    supabase.from('product_variants').select('id, sku, envia_variant_id'),
+    supabase.from('products').select('id, sku, envia_variant_id'),
+  ])
+
+  const bySku = new Map<string, { table: string; id: string }>()
+  const byNormSku = new Map<string, { table: string; id: string }>()
+  const byEnvVariant = new Map<string, { table: string; id: string }>()
+
+  for (const v of variants || []) {
+    if (v.sku) {
+      bySku.set(String(v.sku), { table: 'product_variants', id: v.id })
+      const n = normalizeSku(v.sku)
+      if (!byNormSku.has(n)) byNormSku.set(n, { table: 'product_variants', id: v.id })
+    }
+    if (v.envia_variant_id != null) {
+      byEnvVariant.set(String(v.envia_variant_id), { table: 'product_variants', id: v.id })
+    }
+  }
+  for (const p of products || []) {
+    if (p.sku) {
+      if (!bySku.has(String(p.sku))) bySku.set(String(p.sku), { table: 'products', id: p.id })
+      const n = normalizeSku(p.sku)
+      if (!byNormSku.has(n)) byNormSku.set(n, { table: 'products', id: p.id })
+    }
+    if (p.envia_variant_id != null) {
+      if (!byEnvVariant.has(String(p.envia_variant_id))) {
+        byEnvVariant.set(String(p.envia_variant_id), { table: 'products', id: p.id })
+      }
+    }
+  }
+
+  let updated = 0
+  for (const item of toList(body)) {
+    const sku = extractSku(item)
+    const variantId = extractVariantId(item)
+    const available = extractAvailable(item)
+
+    if (available === null) {
+      console.log('[inventory] sin cantidad disponible, ignorado:', JSON.stringify(item))
+      continue
+    }
+
+    const target =
+      (sku && (bySku.get(sku) || byNormSku.get(normalizeSku(sku)))) ||
+      (variantId && byEnvVariant.get(variantId))
+
+    if (!target) {
+      console.log(`[inventory] sku=${sku || 'n/d'} variantId=${variantId || 'n/d'} no encontrado en catálogo local`)
+      continue
+    }
+
+    if (target.table === 'product_variants') {
+      await supabase.from('product_variants').update({ stock: available }).eq('id', target.id)
+    } else {
+      await supabase.from('products').update({ stock: available }).eq('id', target.id)
+    }
+    console.log(`[inventory] sku=${sku || 'n/d'} → stock=${available}`)
+    updated++
+  }
+
+  return { received: true, updated }
 })
