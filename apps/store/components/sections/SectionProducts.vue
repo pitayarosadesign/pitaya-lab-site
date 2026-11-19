@@ -28,6 +28,8 @@
           :prep-days-max="product.prepDaysMax"
           :min-order-quantity="product.minOrderQuantity"
           :requires-personalization="!!product.personalization?.enabled"
+          :stock="product.stock"
+          :category-slug="product.categorySlug"
         />
       </div>
 
@@ -131,6 +133,8 @@ async function loadProducts() {
         image: primaryImg?.url || null,
         amazonLink: p.amazon_link || 'https://www.amazon.com.mx/stores/PitayaLab/page/9A7C33BA-7EBF-41E8-9F0F-FEE7FE78A329',
         category: p.product_categories?.name || '',
+        categorySlug: p.product_categories?.slug || '',
+        stock: p.stock,
         badge: p.badge || null,
         isFeatured: p.is_featured,
       }

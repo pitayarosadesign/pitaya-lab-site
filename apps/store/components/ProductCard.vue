@@ -92,13 +92,23 @@
         </p>
         <meta itemprop="price" :content="String(price)" />
         <meta itemprop="priceCurrency" content="MXN" />
-        <meta itemprop="availability" content="https://schema.org/InStock" />
+        <meta itemprop="availability" :content="isSoldOut ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock'" />
       </div>
 
       <!-- Botones de acción -->
       <div class="mt-auto space-y-2">
+        <!-- Agotado -->
+        <button
+          v-if="isSoldOut"
+          type="button"
+          disabled
+          class="w-full inline-flex items-center justify-center gap-2 bg-earth-200 text-earth-500 px-4 py-3 rounded-xl text-sm font-semibold cursor-not-allowed"
+        >
+          Agotado
+        </button>
+
         <!-- Cantidad + Agregar al carrito -->
-        <div class="flex items-stretch gap-2">
+        <div v-else class="flex items-stretch gap-2">
           <div class="flex items-center border border-earth-200 rounded-xl bg-white shrink-0">
             <button
               type="button"
@@ -222,6 +232,16 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  // Stock disponible (null = no se valida stock, comportamiento previo)
+  stock: {
+    type: Number,
+    default: null
+  },
+  // Slug de categoría para detectar recuerdos (hechos a mano, siempre disponibles)
+  categorySlug: {
+    type: String,
+    default: ''
+  },
   // Query opcional a añadir al enlace de detalle (ej. preselección de aroma)
   linkQuery: {
     type: Object,
@@ -232,6 +252,9 @@ const props = defineProps({
 const showToast = ref(false)
 const minQty = computed(() => Math.max(1, Number(props.minOrderQuantity) || 1))
 const qty = ref(minQty.value)
+
+// Agotado: sin stock y no es recuerdo (los recuerdos se hacen bajo pedido).
+const isSoldOut = computed(() => props.stock != null && Number(props.stock) <= 0 && props.categorySlug !== 'recuerdos')
 
 function decrement() {
   qty.value = Math.max(minQty.value, qty.value - 1)
@@ -266,6 +289,9 @@ const displayBadge = computed(() => badgeLabel(props.badge, props.isFeatured))
 const badgeStyle = computed(() => badgeClass(displayBadge.value))
 
 function addToCart() {
+  // Agotado: no permitir agregar.
+  if (isSoldOut.value) return
+
   // Productos que requieren personalización: ir al detalle para personalizar.
   if (props.requiresPersonalization) {
     navigateTo(productLink.value)

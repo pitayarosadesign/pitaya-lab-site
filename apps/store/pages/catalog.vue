@@ -261,6 +261,8 @@
               :prep-days-max="product.prepDaysMax"
               :min-order-quantity="product.minOrderQuantity"
               :requires-personalization="!!product.personalization?.enabled"
+              :stock="product.stock"
+              :category-slug="product.categorySlug"
               :link-query="activeFragrance ? { aroma: selectedAroma?.slug || selectedAroma?.name } : null"
             />
           </div>
