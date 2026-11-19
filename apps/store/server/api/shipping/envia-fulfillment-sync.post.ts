@@ -75,6 +75,19 @@ export default defineEventHandler(async () => {
     if (target.table === 'product_variants') {
       await supabase.from('product_variants').update(update).eq('id', target.id)
     } else {
+      // Reflejar el stock de Envía en la ubicación "Central" del admin.
+      // El trigger update_product_total_stock recalcula products.stock al cambiar
+      // inventory_by_location; lo re-afirmamos abajo para que la tienda siga
+      // usando el stock vendible de Envía (sin contar showrooms).
+      await supabase.from('inventory_by_location').upsert(
+        {
+          product_id: target.id,
+          location_id: 'almacen_central',
+          stock: available,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'product_id,location_id' },
+      )
       await supabase.from('products').update(update).eq('id', target.id)
     }
 

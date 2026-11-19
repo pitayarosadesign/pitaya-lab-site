@@ -130,6 +130,16 @@ export default defineEventHandler(async (event) => {
     if (target.table === 'product_variants') {
       await supabase.from('product_variants').update({ stock: available }).eq('id', target.id)
     } else {
+      // Reflejar también en la ubicación "Central" del admin (inventory_by_location).
+      await supabase.from('inventory_by_location').upsert(
+        {
+          product_id: target.id,
+          location_id: 'almacen_central',
+          stock: available,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'product_id,location_id' },
+      )
       await supabase.from('products').update({ stock: available }).eq('id', target.id)
     }
     console.log(`[inventory] sku=${sku || 'n/d'} → stock=${available}`)
