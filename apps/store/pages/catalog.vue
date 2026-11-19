@@ -168,6 +168,14 @@
             ⭐ <span class="font-semibold truncate max-w-[140px]">{{ shortName(activeHotelLabel || '') }}</span>
             <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
+          <button
+            v-if="onlyAvailable"
+            @click="onlyAvailable = false"
+            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-50 border border-green-100 text-green-700 text-[11px] font-medium hover:bg-green-100 transition-colors"
+          >
+            ✅ Solo disponibles
+            <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
         </div>
       </div>
     </section>
@@ -527,6 +535,24 @@
                 </button>
               </div>
             </section>
+
+            <!-- ✅ Sección: Disponibilidad -->
+            <section class="border-b border-earth-100">
+              <div class="py-2.5 flex items-center justify-between">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-earth-500 flex items-center gap-1.5">✅ Disponibilidad</h3>
+                <button
+                  type="button"
+                  role="switch"
+                  :aria-checked="onlyAvailable"
+                  @click="onlyAvailable = !onlyAvailable"
+                  class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+                  :class="onlyAvailable ? 'bg-green-600' : 'bg-earth-200'"
+                >
+                  <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform" :class="onlyAvailable ? 'translate-x-6' : 'translate-x-1'"></span>
+                </button>
+              </div>
+              <p class="text-[11px] text-earth-400 pb-2">Muestra solo productos con stock disponible (los recuerdos cuentan como disponibles por ser sobre pedido).</p>
+            </section>
           </div>
 
           <!-- ⚡ Footer: total resultados + acciones -->
@@ -632,6 +658,7 @@ const activeFragrance = ref(null)
 // 🎨 Facetas transversales (colección olfativa / inspiración de hotel)
 const activeFamily = ref('all') // slug de colección
 const activeHotel = ref('all')  // hotel_reference (normalizado)
+const onlyAvailable = ref(false) // solo productos disponibles (stock > 0 o recuerdos)
 const searchQuery = ref('')
 const showSuggestions = ref(false)
 
@@ -645,6 +672,7 @@ const activeFilterCount = computed(() => {
   if (activeFragrance.value) n++
   if (activeFamily.value !== 'all') n++
   if (activeHotel.value !== 'all') n++
+  if (onlyAvailable.value) n++
   if (searchQuery.value.trim()) n++
   return n
 })
@@ -903,6 +931,10 @@ function applyActiveFilters(list, exclude = {}) {
     result = result.filter(p => productAttrKeys(p).hotels.includes(activeHotel.value.toLowerCase()))
   }
 
+  if (!exclude.availability && onlyAvailable.value) {
+    result = result.filter(p => (p.stock || 0) > 0 || p.categorySlug === 'recuerdos')
+  }
+
   return result
 }
 
@@ -1021,6 +1053,7 @@ function resetFilters() {
   activeFragrance.value = null
   activeFamily.value = 'all'
   activeHotel.value = 'all'
+  onlyAvailable.value = false
   searchQuery.value = ''
   showSuggestions.value = false
 }
