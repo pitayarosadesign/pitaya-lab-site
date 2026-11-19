@@ -71,6 +71,7 @@ export default defineEventHandler(async () => {
   let matched = 0
   let fuzzyMatched = 0
   const unmatched: { sku: string; name: string }[] = []
+  const synced: { sku: string; variantId: any; available: number; table: string }[] = []
 
   for (const item of inventory) {
     const sku = item?.sku
@@ -117,7 +118,8 @@ export default defineEventHandler(async () => {
 
     if (isExact) matched++
     else fuzzyMatched++
+    synced.push({ sku: String(sku), variantId, available, table: target.table })
   }
 
-  return { ok: true, total: inventory.length, matched, fuzzyMatched, unmatched }
+  return { ok: true, total: inventory.length, matched, fuzzyMatched, synced, unmatched }
 })
