@@ -15,6 +15,26 @@ function normalizeSku(sku: string): string {
   return (sku || '').toUpperCase().replace(/[^A-Z0-9]/g, '')
 }
 
+// Recalcula el stock del producto padre como la suma de sus variantes y lo
+// refleja en la ubicación "Central" del admin (inventory_by_location).
+async function syncParentStock(supabase: any, productId: string) {
+  const { data: rows } = await supabase
+    .from('product_variants')
+    .select('stock')
+    .eq('product_id', productId)
+  const total = (rows || []).reduce((sum: number, v: any) => sum + (Number(v.stock) || 0), 0)
+  await supabase.from('inventory_by_location').upsert(
+    {
+      product_id: productId,
+      location_id: 'almacen_central',
+      stock: total,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'product_id,location_id' },
+  )
+  await supabase.from('products').update({ stock: total }).eq('id', productId)
+}
+
 export default defineEventHandler(async () => {
   const config = useRuntimeConfig()
   const supabase = createClient(config.public.supabaseUrl, config.supabaseServiceKey, {
@@ -28,18 +48,18 @@ export default defineEventHandler(async () => {
 
   // Cargar SKUs locales una sola vez
   const [{ data: variants }, { data: products }] = await Promise.all([
-    supabase.from('product_variants').select('id, sku'),
+    supabase.from('product_variants').select('id, sku, product_id'),
     supabase.from('products').select('id, sku'),
   ])
 
-  const exact = new Map<string, { table: string; id: string }>()
-  const norm = new Map<string, { table: string; id: string }>()
+  const exact = new Map<string, { table: string; id: string; productId?: string }>()
+  const norm = new Map<string, { table: string; id: string; productId?: string }>()
 
   for (const v of variants || []) {
     if (!v.sku) continue
-    exact.set(String(v.sku), { table: 'product_variants', id: v.id })
+    exact.set(String(v.sku), { table: 'product_variants', id: v.id, productId: v.product_id })
     const n = normalizeSku(v.sku)
-    if (!norm.has(n)) norm.set(n, { table: 'product_variants', id: v.id })
+    if (!norm.has(n)) norm.set(n, { table: 'product_variants', id: v.id, productId: v.product_id })
   }
   for (const p of products || []) {
     if (!p.sku) continue
@@ -74,6 +94,10 @@ export default defineEventHandler(async () => {
     const update: Record<string, any> = { envia_variant_id: variantId, stock: available }
     if (target.table === 'product_variants') {
       await supabase.from('product_variants').update(update).eq('id', target.id)
+      // Recalcular stock del producto padre y reflejarlo en el admin (Central).
+      if (target.productId) {
+        await syncParentStock(supabase, target.productId)
+      }
     } else {
       // Reflejar el stock de Envía en la ubicación "Central" del admin.
       // El trigger update_product_total_stock recalcula products.stock al cambiar

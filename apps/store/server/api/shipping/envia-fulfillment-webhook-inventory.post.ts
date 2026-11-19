@@ -16,6 +16,26 @@ function normalizeSku(sku: string): string {
   return (sku || '').toUpperCase().replace(/[^A-Z0-9]/g, '')
 }
 
+// Recalcula el stock del producto padre como la suma de sus variantes y lo
+// refleja en la ubicación "Central" del admin (inventory_by_location).
+async function syncParentStock(supabase: any, productId: string) {
+  const { data: rows } = await supabase
+    .from('product_variants')
+    .select('stock')
+    .eq('product_id', productId)
+  const total = (rows || []).reduce((sum: number, v: any) => sum + (Number(v.stock) || 0), 0)
+  await supabase.from('inventory_by_location').upsert(
+    {
+      product_id: productId,
+      location_id: 'almacen_central',
+      stock: total,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'product_id,location_id' },
+  )
+  await supabase.from('products').update({ stock: total }).eq('id', productId)
+}
+
 // Normaliza el body a una lista de items (soporta distintas envolturas).
 function toList(body: any): any[] {
   if (Array.isArray(body)) return body
@@ -76,22 +96,22 @@ export default defineEventHandler(async (event) => {
   })
 
   const [{ data: variants }, { data: products }] = await Promise.all([
-    supabase.from('product_variants').select('id, sku, envia_variant_id'),
+    supabase.from('product_variants').select('id, sku, envia_variant_id, product_id'),
     supabase.from('products').select('id, sku, envia_variant_id'),
   ])
 
-  const bySku = new Map<string, { table: string; id: string }>()
-  const byNormSku = new Map<string, { table: string; id: string }>()
-  const byEnvVariant = new Map<string, { table: string; id: string }>()
+  const bySku = new Map<string, { table: string; id: string; productId?: string }>()
+  const byNormSku = new Map<string, { table: string; id: string; productId?: string }>()
+  const byEnvVariant = new Map<string, { table: string; id: string; productId?: string }>()
 
   for (const v of variants || []) {
     if (v.sku) {
-      bySku.set(String(v.sku), { table: 'product_variants', id: v.id })
+      bySku.set(String(v.sku), { table: 'product_variants', id: v.id, productId: v.product_id })
       const n = normalizeSku(v.sku)
-      if (!byNormSku.has(n)) byNormSku.set(n, { table: 'product_variants', id: v.id })
+      if (!byNormSku.has(n)) byNormSku.set(n, { table: 'product_variants', id: v.id, productId: v.product_id })
     }
     if (v.envia_variant_id != null) {
-      byEnvVariant.set(String(v.envia_variant_id), { table: 'product_variants', id: v.id })
+      byEnvVariant.set(String(v.envia_variant_id), { table: 'product_variants', id: v.id, productId: v.product_id })
     }
   }
   for (const p of products || []) {
@@ -129,6 +149,10 @@ export default defineEventHandler(async (event) => {
 
     if (target.table === 'product_variants') {
       await supabase.from('product_variants').update({ stock: available }).eq('id', target.id)
+      // Recalcular stock del producto padre y reflejarlo en el admin (Central).
+      if (target.productId) {
+        await syncParentStock(supabase, target.productId)
+      }
     } else {
       // Reflejar también en la ubicación "Central" del admin (inventory_by_location).
       await supabase.from('inventory_by_location').upsert(
