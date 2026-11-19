@@ -50,7 +50,7 @@ export default defineEventHandler(async () => {
 
   let matched = 0
   let fuzzyMatched = 0
-  const unmatched: string[] = []
+  const unmatched: { sku: string; name: string }[] = []
 
   for (const item of inventory) {
     const sku = item?.sku
@@ -61,7 +61,7 @@ export default defineEventHandler(async () => {
     const target = isExact ? exact.get(String(sku))! : norm.get(normalizeSku(sku))
 
     if (!target) {
-      unmatched.push(String(sku))
+      unmatched.push({ sku: String(sku), name: item?.name || '' })
       continue
     }
 
