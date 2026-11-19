@@ -190,6 +190,8 @@ export const useCartStore = defineStore('cart', {
     // Obtener items agrupados para el checkout
     getCheckoutItems() {
       return this.items.map(item => ({
+        id: item.id,
+        variantId: item.variant?.id || null,
         price: Math.round(item.price * 100), // Stripe usa centavos
         quantity: item.quantity,
         name: `${item.name}${item.variant ? ' - ' + item.variant.name : ''}`,
