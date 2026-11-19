@@ -4,7 +4,7 @@
  * Sincroniza el mapeo SKU -> variantId de Envía Fulfillment:
  *  1. Consulta el inventario del almacén (GET /company/{id}/warehouse/inventory).
  *  2. Empareja por SKU contra product_variants y products (exacto y normalizado).
- *  3. Guarda envia_variant_id en la fila correspondiente.
+ *  3. Guarda envia_variant_id y copia el stock disponible en la fila correspondiente.
  *
  * Normalización: mayúsculas y sin caracteres no alfanuméricos (guiones, espacios),
  * para tolerar diferencias de formato como "BR-WEST250" vs "BR-WEST-250".
@@ -65,10 +65,17 @@ export default defineEventHandler(async () => {
       continue
     }
 
+    // Stock disponible en el almacén (suma de `available` de los warehouses)
+    const available = (item?.warehouses || []).reduce(
+      (sum: number, w: any) => sum + (Number(w?.available) || 0),
+      0,
+    )
+
+    const update: Record<string, any> = { envia_variant_id: variantId, stock: available }
     if (target.table === 'product_variants') {
-      await supabase.from('product_variants').update({ envia_variant_id: variantId }).eq('id', target.id)
+      await supabase.from('product_variants').update(update).eq('id', target.id)
     } else {
-      await supabase.from('products').update({ envia_variant_id: variantId }).eq('id', target.id)
+      await supabase.from('products').update(update).eq('id', target.id)
     }
 
     if (isExact) matched++
