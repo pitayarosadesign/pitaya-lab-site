@@ -149,6 +149,12 @@ export default defineEventHandler(async (event) => {
         shipping_method: (shippingLabel || shippingMethod || '').slice(0, 100),
         shipping_address: JSON.stringify(shippingAddress || {}).slice(0, 500),
         pickup_branch: ((shippingAddress && shippingAddress.pickupBranch) || '').slice(0, 200),
+        // Claves que espera el webhook para validar el CP y armar la dirección
+        // de Envía Fulfillment (el JSON `shipping_address` no se parsea ahí).
+        shipping_cp: (shippingAddress?.postalCode || '').slice(0, 10),
+        shipping_state: (shippingAddress?.state || '').slice(0, 60),
+        shipping_city: (shippingAddress?.city || '').slice(0, 60),
+        shipping_neighborhood: (shippingAddress?.district || '').slice(0, 60),
       },
     }
 

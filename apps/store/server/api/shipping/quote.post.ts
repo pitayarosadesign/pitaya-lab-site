@@ -10,6 +10,8 @@
  * Envía.com, de modo que el checkout solo pida el CP.
  */
 
+import { validatePostalCode } from '../../utils/postalCode'
+
 const ENVIA_SHIPPING_API = 'https://api.envia.com'
 const ENVIA_GEOCODES_API = 'https://geocodes.envia.com'
 
@@ -66,6 +68,7 @@ async function resolveZipcode(zipcode: string, token: string) {
   return {
     city: entry.locality || entry.regions?.region_2 || entry.state?.name || '',
     state: stateCode,
+    stateName: entry.state?.name || '',
     country: entry.country?.code || 'MX',
   }
 }
@@ -146,6 +149,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'No se pudo validar el código postal' })
   }
 
+  // Estado canónico desde SEPOMEX (la misma fuente que usa el webhook al
+  // confirmar el pago). Así el cliente muestra y reenvía el nombre exacto que
+  // el validador espera, evitando desajustes de formato ("JA" vs "Jalisco").
+  const sepomexState = validatePostalCode(postalCode).state
+
   const destination = {
     name: body?.name || 'Cliente',
     phone: body?.phone || '0000000000',
@@ -195,7 +203,7 @@ export default defineEventHandler(async (event) => {
 
   return {
     postalCode,
-    destination: { city: destination.city, state: destination.state, country: 'MX' },
+    destination: { city: destination.city, state: sepomexState || resolved?.stateName || destination.state, country: 'MX' },
     methods: {
       standard: { ...METHODS.standard, ...standard },
       pointPost: { ...METHODS.pointPost, ...pointPost },

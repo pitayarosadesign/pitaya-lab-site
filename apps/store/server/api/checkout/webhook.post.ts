@@ -370,11 +370,14 @@ export default defineEventHandler(async (event) => {
 
     const result: any = { checked_at: new Date().toISOString(), cp, selected_state: selectedState }
     const v = validatePostalCode(cp)
+    // Normaliza acentos/mayúsculas para comparar estados de fuentes distintas
+    // (p. ej. "Ciudad de México" de SEPOMEX vs "Ciudad de Mexico" de Envía).
+    const normState = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase()
 
     result.status = v.status
     result.exists = v.exists
     result.state = v.state || null
-    result.state_mismatch = !!(v.exists && selectedState && v.state && selectedState !== v.state)
+    result.state_mismatch = !!(v.exists && selectedState && v.state && normState(selectedState) !== normState(v.state))
     result.valid = v.exists && !result.state_mismatch
     result.invalid = !v.exists
     return result
@@ -434,6 +437,7 @@ export default defineEventHandler(async (event) => {
     coahuila: 'COA',
     colima: 'COL',
     durango: 'DUR',
+    'estado de mexico': 'MEX',
     guanajuato: 'GUA',
     guerrero: 'GRO',
     hidalgo: 'HID',
