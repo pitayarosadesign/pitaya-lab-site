@@ -532,7 +532,7 @@
 
               <!-- Agregar al carrito -->
               <button
-                @click="addToCart"
+                @click="onPrimaryAction"
                 class="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-4 px-6 rounded-2xl text-lg transition-all hover:shadow-xl hover:shadow-primary-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                 :disabled="!isPurchasable"
               >
@@ -542,8 +542,8 @@
                 {{ buttonLabel }}
               </button>
 
-              <!-- 🔒 Confianza de pago -->
-              <div class="bg-earth-50/70 rounded-2xl p-4 border border-earth-100">
+              <!-- 🔒 Confianza de pago (solo compra directa; recuerdos se cotizan) -->
+              <div v-if="!isRecuerdo" class="bg-earth-50/70 rounded-2xl p-4 border border-earth-100">
                 <!-- Pago seguro -->
                 <div class="flex items-center gap-3 mb-3">
                   <div class="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
@@ -1290,10 +1290,19 @@ const isBestseller = computed(() => {
 // Texto del botón según estado
 const buttonLabel = computed(() => {
   if (!product.value) return 'Agregar al carrito'
+  if (isRecuerdo.value) return 'Solicitar cotización'
   if (isSoldOut.value) return 'Agotado'
   if (currentStock.value > 0) return 'Agregar al carrito'
   return productConfig.backorder_button_label || 'Agregar al carrito (sobre pedido)'
 })
+
+// Acción principal: los recuerdos van a cotización (B2B), el resto al carrito.
+function onPrimaryAction() {
+  if (isRecuerdo.value) {
+    return navigateTo('/b2b')
+  }
+  addToCart()
+}
 
 // Productos relacionados (misma categoría)
 const relatedProducts = ref([])

@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // channel determina qué canal se consulta:
-    //   sin canal          -> menudeo + eventos/recuerdos (catálogo público)
+    //   sin canal          -> solo menudeo/directa (tienda y catálogo público)
     //   'directa'          -> producto público de menudeo
     //   'evento'           -> recuerdos para el cotizador /b2b
     //   'mayoreo'          -> reservado a futuro
@@ -26,12 +26,12 @@ export default defineEventHandler(async (event) => {
       .select('*, product_categories(name, slug, prep_days_min, prep_days_max), product_images(url, alt_text, sort_order, is_primary), product_variants(id, name, image_url, fragrance_profile_id, fragrance_profiles(id, name, emoji, subtitle, slug, image_url, experience, notes, description))')
       .eq('is_active', true)
 
-    // Sin canal explícito, el catálogo público muestra menudeo + eventos/recuerdos.
-    // Con `channel` explícito (evento/mayoreo/directa) se filtra solo ese canal.
+    // Sin canal explícito, la tienda pública muestra solo menudeo (directa).
+    // Los recuerdos (evento) viven en /b2b y se consultan con ?channel=evento.
     if (channelValue) {
       query = query.eq('sales_channel', channelValue)
     } else {
-      query = query.in('sales_channel', ['directa', 'evento'])
+      query = query.eq('sales_channel', 'directa')
     }
 
     query = query.order('sort_order', { ascending: true, nullsFirst: false })

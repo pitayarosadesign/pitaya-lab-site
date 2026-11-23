@@ -650,7 +650,9 @@ const { data: categoriesData } = await useAsyncData('catalog-categories', async 
 })
 const categories = computed(() => [
   { id: 'all', label: 'Todos' },
-  ...(categoriesData.value || []).map(c => ({ id: c.slug, label: c.name })),
+  ...(categoriesData.value || [])
+    .filter(c => c.slug !== 'recuerdos')
+    .map(c => ({ id: c.slug, label: c.name })),
 ])
 
 const activeCategory = ref('all')

@@ -248,7 +248,7 @@
             </div>
             <div class="flex flex-col sm:flex-row gap-3">
               <a :href="whatsappResumen" target="_blank" class="inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-5 rounded-xl transition-all hover:shadow-lg active:scale-95">💬 Cotizar por WhatsApp</a>
-              <button type="button" :disabled="!cantidadValida" @click="abrirCheckoutEvento" class="inline-flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-6 rounded-xl transition-all hover:shadow-lg active:scale-95">🛍️ Pagar y apartar · {{ formatMXN(subtotal) }}</button>
+              <button type="button" :disabled="!cantidadValida" @click="abrirCheckoutEvento" class="inline-flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-6 rounded-xl transition-all hover:shadow-lg active:scale-95">📩 Solicitar cotización · {{ formatMXN(subtotal) }}</button>
             </div>
           </div>
         </section>
