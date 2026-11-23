@@ -49,6 +49,9 @@ export default defineEventHandler(async (event) => {
       .from('products')
       .select('id, name, sku, subtitle, description, price')
       .eq('is_active', true)
+      // Solo venta directa (D2C). Evento/recuerdos y mayoreo se cotizan a mano
+      // y nunca pasan por el fulfillment de Envía, así que no se registran.
+      .eq('sales_channel', 'directa')
       .order('name'),
     supabaseAdmin
       .from('product_variants')
