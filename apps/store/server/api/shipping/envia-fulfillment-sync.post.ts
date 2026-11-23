@@ -100,20 +100,34 @@ export default defineEventHandler(async () => {
         await syncParentStock(supabase, target.productId)
       }
     } else {
-      // Reflejar el stock de Envía en la ubicación "Central" del admin.
-      // El trigger update_product_total_stock recalcula products.stock al cambiar
-      // inventory_by_location; lo re-afirmamos abajo para que la tienda siga
-      // usando el stock vendible de Envía (sin contar showrooms).
-      await supabase.from('inventory_by_location').upsert(
-        {
-          product_id: target.id,
-          location_id: 'almacen_central',
-          stock: available,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'product_id,location_id' },
-      )
-      await supabase.from('products').update(update).eq('id', target.id)
+      // SKU a nivel producto. Si el producto tiene una variante "espejo" con el
+      // mismo SKU (o una sola variante), la unidad vendible es la variante:
+      // guardamos ahí el envia_variant_id y el stock para que el webhook de
+      // Envía la encuentre a la primera.
+      const { data: pvRows } = await supabase
+        .from('product_variants')
+        .select('id, sku')
+        .eq('product_id', target.id)
+
+      const mirror = (pvRows || []).find((v: any) => v.sku && String(v.sku) === String(sku))
+        || ((pvRows || []).length === 1 ? pvRows![0] : null)
+
+      if (mirror) {
+        await supabase.from('product_variants').update(update).eq('id', mirror.id)
+        await syncParentStock(supabase, target.id)
+      } else {
+        // Sin variante asociada: el producto es la unidad vendible directa.
+        await supabase.from('inventory_by_location').upsert(
+          {
+            product_id: target.id,
+            location_id: 'almacen_central',
+            stock: available,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'product_id,location_id' },
+        )
+        await supabase.from('products').update(update).eq('id', target.id)
+      }
     }
 
     if (isExact) matched++
