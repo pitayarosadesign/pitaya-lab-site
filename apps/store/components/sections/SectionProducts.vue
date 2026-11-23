@@ -145,7 +145,11 @@ async function loadProducts() {
       list = ids.map(id => byId.get(id)).filter(Boolean)
     }
 
-    products.value = list
+    // Disponible primero, agotado al final (sort estable: conserva el orden
+    // curado/sort_order dentro de cada grupo).
+    products.value = list.slice().sort((a, b) =>
+      (Number(b.stock) > 0 ? 1 : 0) - (Number(a.stock) > 0 ? 1 : 0)
+    )
   } catch (e) {
     console.warn('Error cargando productos:', e.message)
     products.value = []

@@ -940,8 +940,17 @@ function applyActiveFilters(list, exclude = {}) {
   return result
 }
 
-// Productos filtrados (por categoría, fragancia, colección e inspiración)
-const filteredProducts = computed(() => applyActiveFilters(products.value))
+// Disponible (stock > 0 o recuerdo bajo pedido) = 1, agotado = 0.
+function availability(p) {
+  return Number(p.stock) > 0 || p.categorySlug === 'recuerdos' ? 1 : 0
+}
+
+// Productos filtrados (por categoría, fragancia, colección e inspiración).
+// Orden: disponibles primero, agotados al final (sort estable: conserva el
+// sort_order dentro de cada grupo).
+const filteredProducts = computed(() =>
+  applyActiveFilters(products.value).slice().sort((a, b) => availability(b) - availability(a))
+)
 
 // Número de productos por categoría, respetando el resto de filtros activos
 // (conteos cruzados: cada formato muestra cuántos productos hay con el aroma/faceta elegida).
