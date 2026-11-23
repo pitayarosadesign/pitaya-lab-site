@@ -233,11 +233,15 @@
                     :key="variant.id"
                     @click="selectVariant(variant)"
                     class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all border-2"
-                    :class="selectedVariant?.id === variant.id
-                      ? 'border-primary-500 bg-primary-50 text-primary-700'
-                      : 'border-earth-200 bg-white text-earth-600 hover:border-earth-300'"
+                    :class="[
+                      selectedVariant?.id === variant.id
+                        ? 'border-primary-500 bg-primary-50 text-primary-700'
+                        : 'border-earth-200 bg-white text-earth-600 hover:border-earth-300',
+                      variantStock(variant) <= 0 ? 'opacity-60 border-dashed text-earth-400' : ''
+                    ]"
                   >
                     {{ variant.name }}
+                    <span v-if="variantStock(variant) <= 0" class="font-semibold text-red-500">(Agotado)</span>
                   </button>
                 </div>
               </template>
@@ -1139,6 +1143,12 @@ const activeDiscountPercent = computed(() => {
   return Math.round((diff / base) * 100)
 })
 
+// Stock de una variante concreta (0 si no hay dato). Se usa para marcar
+// visualmente las variantes agotadas en el selector sin bloquear su selección.
+function variantStock(variant) {
+  return Number(variant?.stock) || 0
+}
+
 // Stock actual: el de la variante seleccionada si existe, si no el general
 const currentStock = computed(() => {
   if (!product.value) return 0
@@ -1414,7 +1424,7 @@ async function loadProduct() {
     if (data?.product) {
       product.value = data.product
       // Seleccionar la variante del aroma indicado en la URL (?aroma=...)
-      // si viene desde el catálogo; si no, la primera variante por defecto.
+      // si viene desde el catálogo; si no, la primera variante con stock.
       if (data.product.variants?.length > 0) {
         const requestedAroma = route.query.aroma
         let initial = data.product.variants[0]
@@ -1432,6 +1442,11 @@ async function loadProduct() {
             return false
           })
           if (match) initial = match
+        } else {
+          // Por defecto, aterrizar en una variante con stock disponible.
+          // Si todas están agotadas, se conserva la primera (mostrará "Agotado").
+          const inStock = data.product.variants.find(v => Number(v.stock) > 0)
+          if (inStock) initial = inStock
         }
 
         selectedVariant.value = initial
