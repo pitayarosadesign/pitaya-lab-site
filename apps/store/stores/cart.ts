@@ -33,6 +33,8 @@ export interface CartItem {
   heightCm?: number
   /** Cantidad mínima de compra del producto (default 1) */
   minOrderQuantity?: number
+  /** Stock disponible para este SKU/variante (null/undefined = sin límite) */
+  stock?: number | null
   /** Datos de personalización capturados en la PDP */
   personalization?: any
 }
@@ -114,6 +116,12 @@ export const useCartStore = defineStore('cart', {
 
     // Precio unitario efectivo del ítem
     unitPrice: () => (item: CartItem) => item.price,
+
+    // Unidades ya en carrito para un SKU/variante concreto
+    quantityInCart: (state) => (itemId: string, variantId?: string | null) =>
+      state.items
+        .filter(i => i.id === itemId && (i.variant?.id ?? null) === (variantId ?? null))
+        .reduce((sum, i) => sum + i.quantity, 0),
   },
 
   actions: {
@@ -132,10 +140,16 @@ export const useCartStore = defineStore('cart', {
         i => i.id === item.id && i.variant?.id === item.variant?.id
       )
 
+      const stock = item.stock != null ? Number(item.stock) : null
+      const maxQty = stock != null && stock > 0 ? stock : Infinity
+
       if (existing) {
-        existing.quantity += item.quantity
+        existing.quantity = Math.min(existing.quantity + item.quantity, maxQty)
+        if (stock != null) existing.stock = stock
       } else {
-        this.items.push({ ...item })
+        const pushed = { ...item }
+        pushed.quantity = Math.min(pushed.quantity, maxQty)
+        this.items.push(pushed)
       }
 
       saveCart(this.items)
@@ -163,7 +177,10 @@ export const useCartStore = defineStore('cart', {
         i => i.id === itemId && i.variant?.id === variantId
       )
       if (item) {
-        item.quantity = Math.max(item.minOrderQuantity || 1, quantity)
+        const min = item.minOrderQuantity || 1
+        const stock = item.stock != null ? Number(item.stock) : null
+        const max = stock != null && stock > 0 ? stock : Infinity
+        item.quantity = Math.min(Math.max(min, quantity), max)
         saveCart(this.items)
       }
     },
@@ -192,6 +209,8 @@ export const useCartStore = defineStore('cart', {
       return this.items.map(item => ({
         id: item.id,
         variantId: item.variant?.id || null,
+        stock: item.stock ?? null,
+        backorder: !!item.backorder,
         price: Math.round(item.price * 100), // Stripe usa centavos
         quantity: item.quantity,
         name: `${item.name}${item.variant ? ' - ' + item.variant.name : ''}`,

@@ -30,6 +30,45 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, message: 'El carrito está vacío' })
     }
 
+    // Validar stock real en Supabase antes de crear la sesión de Stripe.
+    // Los ítems bajo pedido (recuerdos, backorder) no tienen límite de stock.
+    const stockItems = items.filter((i: any) => !i.backorder)
+    if (stockItems.length > 0) {
+      const productIds = [...new Set(stockItems.filter((i: any) => !i.variantId).map((i: any) => i.id))]
+      const variantIds = [...new Set(stockItems.filter((i: any) => i.variantId).map((i: any) => i.variantId))]
+
+      const stockMap = new Map<string, { name?: string; stock: number }>()
+
+      if (productIds.length) {
+        const { data: prodRows } = await supabaseAdmin
+          .from('products')
+          .select('id, name, stock')
+          .in('id', productIds)
+        for (const p of prodRows || []) stockMap.set(`p:${p.id}`, p)
+      }
+      if (variantIds.length) {
+        const { data: varRows } = await supabaseAdmin
+          .from('product_variants')
+          .select('id, name, stock')
+          .in('id', variantIds)
+        for (const v of varRows || []) stockMap.set(`v:${v.id}`, v)
+      }
+
+      for (const item of stockItems) {
+        const row: any = item.variantId
+          ? stockMap.get(`v:${item.variantId}`)
+          : stockMap.get(`p:${item.id}`)
+        const available = row ? (Number(row.stock) || 0) : 0
+        if (Number(item.quantity) > available) {
+          const name = row?.name || item.name
+          throw createError({
+            statusCode: 400,
+            message: `Stock insuficiente para "${name}": solo quedan ${available} disponibles.`,
+          })
+        }
+      }
+    }
+
     // Rango de días hábiles de entrega para la descripción del envío en Stripe.
     // Se lee de site_config (clave delivery_estimates, la misma que usa el carrito)
     // para que el texto del checkout sea consistente con la tienda.

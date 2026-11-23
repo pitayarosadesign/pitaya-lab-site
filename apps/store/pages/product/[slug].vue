@@ -510,7 +510,8 @@
                     <button
                       type="button"
                       @click="incrementQty"
-                      class="w-10 h-11 flex items-center justify-center rounded-lg border border-earth-200 text-earth-500 hover:text-earth-700 transition-colors"
+                      :disabled="!canIncrementQty"
+                      class="w-10 h-11 flex items-center justify-center rounded-lg border border-earth-200 text-earth-500 hover:text-earth-700 disabled:opacity-30 transition-colors"
                       aria-label="Aumentar cantidad"
                     >+</button>
                   </div>
@@ -1254,6 +1255,19 @@ const isRecuerdo = computed(() => product.value?.categorySlug === 'recuerdos')
 const isSoldOut = computed(() => currentStock.value <= 0 && !isRecuerdo.value)
 const isMadeToOrder = computed(() => currentStock.value <= 0 && isRecuerdo.value)
 
+// Stock vendible (null para recuerdos = sin límite) y lo ya agregado en el carrito.
+const availableStock = computed(() =>
+  isRecuerdo.value ? null : (Number(currentStock.value) || 0)
+)
+const inCartQty = computed(() => {
+  const cartStore = useCartStore()
+  const variantId = selectedVariant.value?.id ?? null
+  return cartStore.quantityInCart(product.value?.id || '', variantId)
+})
+const remainingStock = computed(() =>
+  availableStock.value == null ? null : Math.max(0, availableStock.value - inCartQty.value)
+)
+
 // Reloj local para recalcular la fecha en cliente (evita desajustes de zona
 // horaria en SSR y actualiza al pasar el corte de las 13:00).
 const nowTick = ref(new Date())
@@ -1275,6 +1289,8 @@ const isPurchasable = computed(() => {
   if (isSoldOut.value) return false
   const dims = flexibleDimensions.value
   if (dims.length > 1 && (!selectedDim1.value || !selectedDim2.value)) return false
+  // Límite de stock: no comprar más de lo disponible (descontando el carrito).
+  if (remainingStock.value != null && quantity.value > remainingStock.value) return false
   return true
 })
 
@@ -1326,13 +1342,16 @@ function formatPrice(price) {
 const quantity = ref(1)
 const quantityError = ref('')
 
+// ¿Se puede subir el contador + sin superar el stock disponible?
+const canIncrementQty = computed(() =>
+  remainingStock.value == null ? true : quantity.value < remainingStock.value
+)
+
 function clampQuantity() {
   const n = Math.floor(Number(quantity.value))
-  if (!Number.isFinite(n) || n < minOrderQuantity.value) {
-    quantity.value = minOrderQuantity.value
-  } else {
-    quantity.value = n
-  }
+  let val = !Number.isFinite(n) || n < minOrderQuantity.value ? minOrderQuantity.value : n
+  if (remainingStock.value != null && val > remainingStock.value) val = remainingStock.value
+  quantity.value = val
 }
 
 function decrementQty() {
@@ -1340,6 +1359,7 @@ function decrementQty() {
 }
 
 function incrementQty() {
+  if (!canIncrementQty.value) return
   quantity.value = quantity.value + 1
 }
 
@@ -1391,6 +1411,7 @@ function addToCart() {
     widthCm: product.value.widthCm ?? null,
     heightCm: product.value.heightCm ?? null,
     minOrderQuantity: minOrderQuantity.value,
+    stock: availableStock.value,
     personalization: personalizationConfig.value?.enabled
       ? {
           fields: { ...personalizationForm.fields },

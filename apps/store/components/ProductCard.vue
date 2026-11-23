@@ -121,13 +121,15 @@
             <button
               type="button"
               @click="increment"
-              class="w-8 h-11 flex items-center justify-center text-earth-500 hover:text-earth-700 transition-colors"
+              :disabled="!canIncrement"
+              class="w-8 h-11 flex items-center justify-center text-earth-500 hover:text-earth-700 disabled:opacity-30 transition-colors"
               aria-label="Aumentar cantidad"
             >+</button>
           </div>
           <button
             @click="addToCart"
-            class="flex-1 inline-flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 rounded-xl text-sm font-semibold transition-all hover:shadow-lg hover:shadow-primary-200 active:scale-95"
+            :disabled="!canAdd"
+            class="flex-1 inline-flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 rounded-xl text-sm font-semibold transition-all hover:shadow-lg hover:shadow-primary-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/>
@@ -256,11 +258,34 @@ const qty = ref(minQty.value)
 // Agotado: sin stock y no es recuerdo (los recuerdos se hacen bajo pedido).
 const isSoldOut = computed(() => props.stock != null && Number(props.stock) <= 0 && props.categorySlug !== 'recuerdos')
 
+// Stock vendible (null para recuerdos = sin límite, se hacen bajo pedido).
+const availableStock = computed(() =>
+  props.categorySlug === 'recuerdos' ? null : (props.stock != null ? Number(props.stock) : null)
+)
+
+// Unidades ya agregadas de este mismo producto (la tarjeta agrega sin variante).
+const cartKey = computed(() => String(props.productId || props.productSlug || props.productName))
+const inCartQty = computed(() => cart.quantityInCart(cartKey.value, null))
+
+// Stock restante considerando lo que ya está en el carrito.
+const remainingStock = computed(() =>
+  availableStock.value == null ? null : Math.max(0, availableStock.value - inCartQty.value)
+)
+
+const canIncrement = computed(() =>
+  remainingStock.value == null ? true : qty.value < remainingStock.value
+)
+
+const canAdd = computed(() =>
+  remainingStock.value == null ? true : remainingStock.value >= minQty.value
+)
+
 function decrement() {
   qty.value = Math.max(minQty.value, qty.value - 1)
 }
 
 function increment() {
+  if (!canIncrement.value) return
   qty.value = qty.value + 1
 }
 
@@ -289,8 +314,8 @@ const displayBadge = computed(() => badgeLabel(props.badge, props.isFeatured))
 const badgeStyle = computed(() => badgeClass(displayBadge.value))
 
 function addToCart() {
-  // Agotado: no permitir agregar.
-  if (isSoldOut.value) return
+  // Agotado o sin stock restante: no permitir agregar.
+  if (isSoldOut.value || !canAdd.value) return
 
   // Productos que requieren personalización: ir al detalle para personalizar.
   if (props.requiresPersonalization) {
@@ -308,6 +333,7 @@ function addToCart() {
     variant: null,
     quantity: qty.value,
     minOrderQuantity: minQty.value,
+    stock: availableStock.value,
     prepDaysMin: props.prepDaysMin,
     prepDaysMax: props.prepDaysMax,
   })

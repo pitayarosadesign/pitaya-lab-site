@@ -117,7 +117,8 @@
                 <span class="text-sm font-medium text-earth-800 w-6 text-center">{{ item.quantity }}</span>
                 <button
                   @click="cart.updateQuantity(item.id, item.quantity + 1, item.variant?.id)"
-                  class="w-7 h-7 rounded-full bg-white border border-earth-200 flex items-center justify-center text-earth-500 hover:text-earth-700 hover:border-earth-300 transition-all"
+                  :disabled="!canIncrementItem(item)"
+                  class="w-7 h-7 rounded-full bg-white border border-earth-200 flex items-center justify-center text-earth-500 hover:text-earth-700 hover:border-earth-300 transition-all disabled:opacity-30"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -348,6 +349,11 @@ async function loadSuggestedProducts() {
 }
 
 function addSuggestedToCart(product) {
+  const isRecuerdo = product.categorySlug === 'recuerdos'
+  const stock = product.stock != null ? Number(product.stock) : null
+  // No permitir agregar un producto normal agotado desde las sugerencias.
+  if (!isRecuerdo && stock != null && stock <= 0) return
+
   cart.addItem({
     id: String(product.id),
     slug: product.slug || '',
@@ -357,6 +363,8 @@ function addSuggestedToCart(product) {
     image: product.image || null,
     variant: null,
     quantity: 1,
+    stock: isRecuerdo ? null : stock,
+    backorder: isRecuerdo,
     weightKg: product.weightKg ?? null,
     lengthCm: product.lengthCm ?? null,
     widthCm: product.widthCm ?? null,
@@ -364,6 +372,13 @@ function addSuggestedToCart(product) {
   })
   // Refrescar sugerencias para quitar el que se acaba de agregar
   loadSuggestedProducts()
+}
+
+// ¿Se puede subir el + de este ítem sin superar su stock?
+function canIncrementItem(item) {
+  const stock = item.stock != null ? Number(item.stock) : null
+  if (stock == null || stock <= 0) return true
+  return item.quantity < stock
 }
 
 function formatPrice(price) {
