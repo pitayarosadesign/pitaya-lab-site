@@ -77,13 +77,14 @@ export default defineEventHandler(async (event) => {
 
     // Solo enviamos variantes cuyo SKU difiere del SKU del producto (las
     // variantes "espejo" con el mismo SKU se manejan con `variants: []`).
+    const productPrice = Number(p.price) || 0
     const distinct = vs.filter(
       (v: any) => v.sku && String(v.sku).trim() !== String(p.sku || '').trim()
     )
     const variantsPayload = distinct.length
       ? distinct.map((v: any) => ({
           name: v.name || p.name,
-          price: Number(v.price) || 0,
+          price: Number(v.price) || productPrice,
           sku: String(v.sku).trim(),
         }))
       : []
@@ -95,13 +96,18 @@ export default defineEventHandler(async (event) => {
       name: p.name,
       sku,
       variantCount: variantsPayload.length,
-      payload: {
-        name: p.name,
-        description: p.subtitle || p.description || '',
-        price: Number(p.price) || 0,
-        sku,
-        variants: variantsPayload,
-      },
+      // Envía espera el body como ARRAY de productos y exige `units`
+      // (sin `units` responde 500; sin array responde 400).
+      payload: [
+        {
+          name: p.name,
+          description: p.subtitle || p.description || '',
+          price: productPrice,
+          sku,
+          variants: variantsPayload,
+          units: { height: 'cm', length: 'cm', width: 'cm', weight: 'kg' },
+        },
+      ],
     })
   }
 

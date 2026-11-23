@@ -420,7 +420,10 @@ async function registerMissingEnvia() {
 
     // 2) Registro real.
     const result = await $fetch('/api/inventory/envia-register-missing', { method: 'POST', body: { dryRun: false } })
-    alert(`Registro completo: ${result.created} creado(s), ${result.failed} con error.`)
+    let msg = `Registro completo: ${result.created} creado(s), ${result.failed} con error.`
+    const firstErr = (result.results || []).find(r => !r.ok)
+    if (firstErr) msg += `\n\nEjemplo: ${firstErr.sku} → ${firstErr.error}`
+    alert(msg)
   } catch (e) {
     alert('Error al registrar en Envía: ' + (e?.data?.message || e?.message || e))
   } finally {
