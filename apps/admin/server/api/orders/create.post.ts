@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { maybeCreateEnviaFulfillmentOrder } from '../../utils/manualOrderFulfillment'
 
 // 🧾 Punto de venta manual: crea una orden por una venta hecha fuera de la
 // tienda en línea (WhatsApp, Facebook, otro). Alimenta las tablas `orders` y
@@ -7,6 +8,8 @@ import { createClient } from '@supabase/supabase-js'
 const CHANNELS = ['tienda_online', 'whatsapp', 'facebook', 'otro']
 const ORDER_STATUSES = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled']
 const PAYMENT_STATUSES = ['paid', 'pending', 'failed']
+const WAREHOUSES = ['almacen_central', 'almacen_local']
+const PAYMENT_METHODS = ['clip', 'spei', 'cash', 'stripe']
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -50,6 +53,15 @@ export default defineEventHandler(async (event) => {
 
   const paymentStatus = PAYMENT_STATUSES.includes(body.paymentStatus) ? body.paymentStatus : 'paid'
   const orderStatus = ORDER_STATUSES.includes(body.status) ? body.status : 'confirmed'
+  const warehouseId = WAREHOUSES.includes(body.warehouseId) ? body.warehouseId : 'almacen_central'
+  const paymentMethod = PAYMENT_METHODS.includes(body.paymentMethod) ? body.paymentMethod : null
+  const paymentReference = String(body.paymentReference || '').trim() || null
+
+  // CP obligatorio cuando hay envío (para la guía). 5 dígitos.
+  const postalCode = String(body.postalCode || '').replace(/\D/g, '').slice(0, 5)
+  if (shippingCost > 0 && !/^\d{5}$/.test(postalCode)) {
+    throw createError({ statusCode: 400, message: 'El código postal es obligatorio cuando hay costo de envío.' })
+  }
 
   // Email sintético cuando no hay correo, para que el upsert de clientes
   // siga funcionando y se deduplique por teléfono.
@@ -57,6 +69,17 @@ export default defineEventHandler(async (event) => {
   const email = customerEmail || (phoneDigits
     ? `whatsapp+${phoneDigits}@manual.pitayalab.mx`
     : `manual+${Date.now()}@manual.pitayalab.mx`)
+
+  const shippingAddress = {
+    name: customerName,
+    phone: customerPhone,
+    email,
+    postalCode,
+    street: String(body.street || '').trim(),
+    district: String(body.district || '').trim(),
+    city: String(body.city || '').trim(),
+    state: String(body.state || '').trim(),
+  }
 
   // Número de orden secuencial PIT-XXXX (igual que el webhook de Stripe)
   const { data: lastOrder } = await supabaseAdmin
@@ -74,6 +97,7 @@ export default defineEventHandler(async (event) => {
   const orderNumber = `PIT-${nextNumber}`
 
   const itemsJson = items.map((it) => ({
+    product_id: it.product_id,
     name: it.name,
     quantity: it.quantity,
     price: Math.round(it.price * 100), // centavos
@@ -93,7 +117,10 @@ export default defineEventHandler(async (event) => {
       total,
       payment_status: paymentStatus,
       sales_channel: salesChannel,
-      shipping_address: {},
+      warehouse_id: warehouseId,
+      payment_method: paymentMethod,
+      payment_reference: paymentReference,
+      shipping_address: shippingAddress,
       notes: String(body.notes || '').trim() || null,
       paid_at: paymentStatus === 'paid' ? new Date().toISOString() : null,
     })
@@ -143,17 +170,26 @@ export default defineEventHandler(async (event) => {
       })
   }
 
-  // Descontar stock de los productos elegidos del catálogo
-  const catalogItems = items.filter((it) => it.product_id)
-  for (const it of catalogItems) {
-    const { error: stockError } = await supabaseAdmin.rpc('decrement_product_stock', {
-      p_id: it.product_id,
-      qty: it.quantity,
-    })
-    if (stockError) {
-      console.error('Error descontando stock de', it.product_id, stockError)
+  // Stock: solo Bodega Local descuenta inventario local. En Almacén Central
+  // el stock lo gobierna Envía Fulfillment (no se toca products.stock).
+  if (warehouseId === 'almacen_local') {
+    for (const it of items.filter((i) => i.product_id)) {
+      const { error: stockError } = await supabaseAdmin.rpc('decrement_location_stock', {
+        p_product_id: it.product_id,
+        p_location_id: 'almacen_local',
+        p_qty: it.quantity,
+      })
+      if (stockError) {
+        console.error('Error descontando stock local de', it.product_id, stockError)
+      }
     }
   }
 
-  return { success: true, order }
+  // Envía Fulfillment: solo central + pagado (el helper valida las condiciones).
+  let fulfillment = null
+  if (order && order.id) {
+    fulfillment = await maybeCreateEnviaFulfillmentOrder(order.id)
+  }
+
+  return { success: true, order, fulfillment }
 })

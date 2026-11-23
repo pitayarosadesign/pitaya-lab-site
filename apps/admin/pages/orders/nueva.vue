@@ -105,6 +105,67 @@
             </div>
           </div>
 
+          <!-- Origen del stock y método de pago -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Almacén de origen</label>
+              <select v-model="form.warehouseId"
+                class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400">
+                <option value="almacen_central">🏢 Almacén Central - Envía Fulfillment</option>
+                <option value="almacen_local">📍 Bodega Local - Gestión externa</option>
+              </select>
+              <p class="text-[11px] text-gray-400 mt-1">Central dispara Envía Fulfillment al pagar; Local solo descuenta stock local.</p>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Método de pago</label>
+              <select v-model="form.paymentMethod"
+                class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400">
+                <option value="clip">💳 Link de pago Clip</option>
+                <option value="spei">🏦 Transferencia SPEI</option>
+                <option value="cash">💵 Efectivo / Contra entrega</option>
+                <option value="stripe">🛒 Stripe</option>
+              </select>
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-medium text-gray-600 mb-1">Referencia de pago</label>
+              <input v-model="form.paymentReference" type="text" placeholder="Folio Clip o clave de rastreo SPEI (opcional)"
+                class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400" />
+            </div>
+          </div>
+
+          <!-- Dirección de envío -->
+          <div>
+            <p class="text-xs font-medium text-gray-600 mb-2">Dirección de envío</p>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              <div class="col-span-2 sm:col-span-1">
+                <label class="block text-xs font-medium text-gray-500 mb-1">Código Postal</label>
+                <input v-model="form.postalCode" type="text" maxlength="5" inputmode="numeric" placeholder="00000"
+                  class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400" />
+                <p v-if="Number(form.shippingCost) > 0 && !/^\d{5}$/.test(form.postalCode)" class="text-[11px] text-amber-600 mt-1">Obligatorio cuando hay envío</p>
+              </div>
+              <div class="col-span-2">
+                <label class="block text-xs font-medium text-gray-500 mb-1">Calle y número</label>
+                <input v-model="form.street" type="text" placeholder="Calle y número"
+                  class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400" />
+              </div>
+              <div class="col-span-2">
+                <label class="block text-xs font-medium text-gray-500 mb-1">Colonia</label>
+                <input v-model="form.district" type="text" placeholder="Colonia"
+                  class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400" />
+              </div>
+              <div class="col-span-2 sm:col-span-3">
+                <label class="block text-xs font-medium text-gray-500 mb-1">Ciudad</label>
+                <input v-model="form.city" type="text" placeholder="Ciudad"
+                  class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400" />
+              </div>
+              <div class="col-span-2 sm:col-span-2">
+                <label class="block text-xs font-medium text-gray-500 mb-1">Estado</label>
+                <input v-model="form.state" type="text" placeholder="Ej. Jalisco"
+                  class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400" />
+              </div>
+            </div>
+          </div>
+
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Notas</label>
             <textarea v-model="form.notes" rows="2" placeholder="Opcional"
@@ -145,6 +206,14 @@ const form = reactive({
   shippingCost: 0,
   paymentStatus: 'paid',
   status: 'confirmed',
+  warehouseId: 'almacen_central',
+  paymentMethod: 'clip',
+  paymentReference: '',
+  postalCode: '',
+  street: '',
+  district: '',
+  city: '',
+  state: '',
   notes: '',
 })
 
@@ -194,6 +263,13 @@ async function save() {
     return
   }
 
+  const shippingCost = Number(form.shippingCost) || 0
+  const postalCode = String(form.postalCode || '').replace(/\D/g, '').slice(0, 5)
+  if (shippingCost > 0 && !/^\d{5}$/.test(postalCode)) {
+    alert('El código postal (5 dígitos) es obligatorio cuando hay costo de envío.')
+    return
+  }
+
   saving.value = true
   try {
     const res = await $fetch('/api/orders/create', {
@@ -204,9 +280,17 @@ async function save() {
         customerPhone: form.customerPhone,
         customerEmail: form.customerEmail,
         items: validItems,
-        shippingCost: form.shippingCost,
+        shippingCost,
         paymentStatus: form.paymentStatus,
         status: form.status,
+        warehouseId: form.warehouseId,
+        paymentMethod: form.paymentMethod,
+        paymentReference: form.paymentReference,
+        postalCode,
+        street: form.street,
+        district: form.district,
+        city: form.city,
+        state: form.state,
         notes: form.notes,
       },
     })

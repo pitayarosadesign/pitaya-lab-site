@@ -38,6 +38,11 @@ export default defineNuxtConfig({
     stripeSecretKey: process.env.STRIPE_SECRET_KEY || '',
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
     skydropxApiKey: process.env.SKYDROPX_API_KEY || '',
+    enviaFulfillmentToken: process.env.ENVIA_FULFILLMENT_TOKEN || '',
+    enviaFulfillmentApiBase: process.env.ENVIA_FULFILLMENT_API_BASE || 'https://apifulfillment.envia.com',
+    enviaFulfillmentCompanyId: process.env.ENVIA_FULFILLMENT_COMPANY_ID || '',
+    enviaFulfillmentWarehouseId: process.env.ENVIA_FULFILLMENT_WAREHOUSE_ID || '',
+    enviaFulfillmentShopId: process.env.ENVIA_FULFILLMENT_SHOP_ID || '',
   },
 
   modules: [],

@@ -140,6 +140,45 @@ ue <template>
           <p class="text-gray-700 mt-0.5">{{ order.admin_notes }}</p>
         </div>
 
+        <!-- Pago y almacén (ventas manuales) -->
+        <div v-if="order.payment_method || order.warehouse_id !== 'almacen_central' || order.sales_channel !== 'tienda_online'" class="bg-white rounded-2xl border border-gray-200 p-6">
+          <h3 class="text-sm font-bold text-gray-900 mb-3">💳 Pago y almacén</h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex items-center justify-between">
+              <span class="text-gray-500">Estado</span>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" :class="paymentBadge(order.payment_status)">
+                {{ paymentLabel(order.payment_status) }}
+              </span>
+            </div>
+            <div v-if="order.payment_method" class="flex items-center justify-between">
+              <span class="text-gray-500">Método</span>
+              <span class="font-medium text-gray-900">{{ paymentMethodLabel(order.payment_method) }}</span>
+            </div>
+            <div v-if="order.payment_reference" class="flex items-center justify-between">
+              <span class="text-gray-500">Referencia</span>
+              <span class="font-mono text-gray-900">{{ order.payment_reference }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-gray-500">Almacén</span>
+              <span class="font-medium text-gray-900">{{ warehouseLabel(order.warehouse_id) }}</span>
+            </div>
+            <div v-if="order.envia_fulfillment_order_id" class="flex items-center justify-between">
+              <span class="text-gray-500">Envía Fulfillment</span>
+              <span class="font-mono text-gray-900">#{{ order.envia_fulfillment_order_id }}</span>
+            </div>
+          </div>
+
+          <button
+            v-if="order.payment_status !== 'paid'"
+            type="button"
+            @click="markAsPaid"
+            :disabled="changingStatus"
+            class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-2 rounded-lg transition-colors disabled:opacity-50"
+          >
+            {{ changingStatus ? 'Guardando...' : '✓ Marcar pago como Pagado' }}
+          </button>
+        </div>
+
         <!-- Dirección de envío -->
         <div class="bg-white rounded-2xl border border-gray-200 p-6">
           <h3 class="text-sm font-bold text-gray-900 mb-3">🚚 Dirección de envío</h3>
@@ -311,17 +350,18 @@ const shippingAddress = computed(() => {
     try { data = JSON.parse(data) } catch { return null }
   }
 
-  // Stripe guarda el domicilio anidado en `address`; versiones anteriores lo guardaban plano
+  // Stripe guarda el domicilio anidado en `address`; las ventas manuales usan
+  // claves planas camelCase (postalCode, street, district).
   const addr = data.address || data
   return {
     name: data.name || addr.name || '',
     phone: data.phone || addr.phone || '',
-    line1: addr.line1 || '',
+    line1: addr.line1 || addr.street || '',
     line2: addr.line2 || '',
     city: addr.city || data.city || '',
     state: addr.state || data.state || '',
-    postal_code: addr.postal_code || data.postal_code || '',
-    neighborhood: data.neighborhood || addr.neighborhood || '',
+    postal_code: addr.postal_code || data.postal_code || data.postalCode || '',
+    neighborhood: data.neighborhood || addr.neighborhood || data.district || '',
     cp_validation: data.cp_validation || data.geocoded || null,
   }
 })
@@ -424,6 +464,26 @@ async function changeStatus(status) {
   }
 }
 
+async function markAsPaid() {
+  changingStatus.value = true
+  try {
+    const res = await $fetch(`/api/orders/${order.value.id}`, {
+      method: 'PUT',
+      body: { payment_status: 'paid' },
+    })
+    order.value = res?.order || order.value
+    if (res?.fulfillment?.error) {
+      alert('✅ Marcado como pagado. ' + res.fulfillment.error)
+    } else {
+      alert('✅ Pago marcado como Pagado')
+    }
+  } catch (e) {
+    alert('Error al marcar pago: ' + e.message)
+  } finally {
+    changingStatus.value = false
+  }
+}
+
 async function sendTrackingNotification() {
   if (!order.value.tracking_number) return
   sendingNotification.value = true
@@ -514,6 +574,24 @@ function paymentLabel(status) {
 
 function paymentBadge(status) {
   return status === 'paid' ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'
+}
+
+function paymentMethodLabel(method) {
+  const labels = {
+    clip: 'Link de pago Clip',
+    spei: 'Transferencia SPEI',
+    cash: 'Efectivo / Contra entrega',
+    stripe: 'Stripe',
+  }
+  return labels[method] || method || '—'
+}
+
+function warehouseLabel(id) {
+  const labels = {
+    almacen_central: 'Almacén Central - Envía Fulfillment',
+    almacen_local: 'Bodega Local - Gestión externa',
+  }
+  return labels[id] || id || '—'
 }
 
 function orderTypeLabel(type) {
