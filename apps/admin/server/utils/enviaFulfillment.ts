@@ -89,3 +89,46 @@ export async function createEnviaFulfillmentOrder(payload: any): Promise<any> {
     body: payload,
   })
 }
+
+export async function getEnviaFulfillmentShopId(): Promise<string> {
+  const config = useRuntimeConfig()
+  if (config.enviaFulfillmentShopId) return String(config.enviaFulfillmentShopId)
+  // Fallback: shopId de la tienda local de Pitaya Lab (ver DEEPCOPILOT.md).
+  return '4060'
+}
+
+export async function listEnviaFulfillmentShopProducts(shopId?: string): Promise<any[]> {
+  const companyId = await getEnviaFulfillmentCompanyId()
+  const sid = shopId || (await getEnviaFulfillmentShopId())
+  const all: any[] = []
+  let page = 1
+  while (page <= 50) {
+    const res = await enviaFulfillmentFetch<any>(
+      `/company/${companyId}/client/shop/${sid}/products?page=${page}`
+    )
+    const arr = Array.isArray(res) ? res : res?.products || res?.data || res?.items || []
+    if (!arr.length) break
+    all.push(...arr)
+    page++
+  }
+  return all
+}
+
+export async function listEnviaFulfillmentInventory(): Promise<any[]> {
+  const companyId = await getEnviaFulfillmentCompanyId()
+  const warehouseId = await getEnviaFulfillmentWarehouseId()
+  const res = await enviaFulfillmentFetch<any>(
+    `/company/${companyId}/warehouse/inventory?warehouseId=${warehouseId}`
+  )
+  if (Array.isArray(res)) return res
+  return res?.products || res?.data || res?.items || res?.inventory || []
+}
+
+export async function createEnviaFulfillmentProduct(payload: any): Promise<any> {
+  const companyId = await getEnviaFulfillmentCompanyId()
+  const shopId = await getEnviaFulfillmentShopId()
+  return enviaFulfillmentFetch<any>(`/company/${companyId}/client/product/shop/${shopId}`, {
+    method: 'POST',
+    body: payload,
+  })
+}

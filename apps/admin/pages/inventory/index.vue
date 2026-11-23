@@ -11,6 +11,13 @@
         >
           📋 Movimientos
         </NuxtLink>
+        <button
+          @click="registerMissingEnvia"
+          :disabled="enviaRegistering"
+          class="px-4 py-2 rounded-lg border border-primary-200 text-primary-700 text-sm font-medium hover:bg-primary-50 transition-colors disabled:opacity-50"
+        >
+          {{ enviaRegistering ? 'Registrando…' : '🔄 Registrar en Envía' }}
+        </button>
         <NuxtLink to="/inventory/adjust"
           class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors"
         >
@@ -224,6 +231,9 @@ const showTransferModal = ref(false)
 const transferToLocation = ref('')
 const transferReason = ref('exhibition')
 const transferNote = ref('')
+
+// Registro automático de productos faltantes en Envía Fulfillment
+const enviaRegistering = ref(false)
 const transferQtys = ref({})
 
 const allSelected = computed(() => {
@@ -390,6 +400,31 @@ async function executeTransfer() {
     alert('Error: ' + (e.data?.message || e.message))
   } finally {
     savingTransfer.value = false
+  }
+}
+
+async function registerMissingEnvia() {
+  if (enviaRegistering.value) return
+  enviaRegistering.value = true
+  try {
+    // 1) Dry-run: solo calcular faltantes.
+    const plan = await $fetch('/api/inventory/envia-register-missing', { method: 'POST', body: { dryRun: true } })
+    const count = plan?.count ?? 0
+    if (!count) {
+      alert('No hay productos faltantes: todos los SKUs ya están en Envía.')
+      return
+    }
+    const skus = (plan?.products || []).map(p => p.sku).join(', ')
+    const proceed = confirm(`Se registrarán ${count} producto(s) en Envía Fulfillment:\n\n${skus}\n\n¿Continuar?`)
+    if (!proceed) return
+
+    // 2) Registro real.
+    const result = await $fetch('/api/inventory/envia-register-missing', { method: 'POST', body: { dryRun: false } })
+    alert(`Registro completo: ${result.created} creado(s), ${result.failed} con error.`)
+  } catch (e) {
+    alert('Error al registrar en Envía: ' + (e?.data?.message || e?.message || e))
+  } finally {
+    enviaRegistering.value = false
   }
 }
 
