@@ -508,6 +508,62 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // Descuenta la unidad vendida del stock vendible online (variante → el trigger
+  // 042 recalcula products.stock). La fuente física (Jalisco vs CDMX) la decide
+  // el operador después; por eso la orden queda en pending_fulfillment.
+  async function decrementOnlineStock(orderNumber: string, items: any[]) {
+    for (const item of items || []) {
+      const qty = Math.max(1, Number(item?.quantity) || 1)
+
+      if (item?.variantId) {
+        const { data: v } = await supabaseAdmin
+          .from('product_variants')
+          .select('stock')
+          .eq('id', item.variantId)
+          .single()
+        const next = Math.max(0, (Number(v?.stock) || 0) - qty)
+        const { error } = await supabaseAdmin
+          .from('product_variants')
+          .update({ stock: next })
+          .eq('id', item.variantId)
+        if (error) {
+          console.error(`[Shipping] Error descontando stock online (${orderNumber}, variante ${item.variantId}): ${error.message}`)
+        }
+        continue
+      }
+
+      const productId = item?.id || item?.product_id
+      if (!productId) continue
+
+      // Producto vendido sin variante: descuenta su variante espejo/única activa.
+      const { data: pv } = await supabaseAdmin
+        .from('product_variants')
+        .select('id, sku')
+        .eq('product_id', productId)
+        .eq('is_active', true)
+      const mirror = (pv || []).find((v: any) => v.sku && String(v.sku) === String(item.sku || ''))
+        || (pv || [])[0]
+
+      if (mirror) {
+        const { data: v } = await supabaseAdmin
+          .from('product_variants')
+          .select('stock')
+          .eq('id', mirror.id)
+          .single()
+        const next = Math.max(0, (Number(v?.stock) || 0) - qty)
+        await supabaseAdmin.from('product_variants').update({ stock: next }).eq('id', mirror.id)
+      } else {
+        const { data: p } = await supabaseAdmin
+          .from('products')
+          .select('stock')
+          .eq('id', productId)
+          .single()
+        const next = Math.max(0, (Number(p?.stock) || 0) - qty)
+        await supabaseAdmin.from('products').update({ stock: next }).eq('id', productId)
+      }
+    }
+  }
+
   // Crea la orden en Envía Fulfillment solo para los productos con `envia_variant_id`.
   // Los recuerdos (hechos a mano) no tienen variantId y se excluyen.
   async function createEnviaFulfillmentForOrder(
@@ -517,6 +573,30 @@ export default defineEventHandler(async (event) => {
     session: Stripe.Checkout.Session,
     cpValidation: any,
   ) {
+    // Feature flag ENVIA_FULFILLMENT_ENABLED: en false se omite Envía y se
+    // despacha local desde Jalisco (se marca local_pending y se descuenta stock).
+    if (String(config.enviaFulfillmentEnabled || 'false') !== 'true') {
+      const { data: existing } = await supabaseAdmin
+        .from('orders')
+        .select('fulfillment_status')
+        .eq('id', orderId)
+        .single()
+
+      if (existing?.fulfillment_status === 'pending_fulfillment') {
+        return null // ya procesado en un reintento previo del webhook
+      }
+
+      console.log(`[Shipping] Envia Fulfillment desactivado: orden ${orderNumber} marcada como pending_fulfillment`)
+
+      await supabaseAdmin
+        .from('orders')
+        .update({ fulfillment_status: 'pending_fulfillment' })
+        .eq('id', orderId)
+
+      await decrementOnlineStock(orderNumber, items)
+      return null
+    }
+
     try {
       const list = items || []
       const productIds = [...new Set(list.filter(i => i.id && !i.variantId).map(i => i.id))]

@@ -33,6 +33,14 @@ export default defineEventHandler(async (event) => {
     const primaryImage = images.find(img => img.is_primary) || images[0]
     const variants = product.product_variants || []
 
+    // Stock local (Jalisco) del producto; se suma a la disponibilidad. A nivel
+    // variante se aplica a la variante representativa (única activa o espejo).
+    const localStock = (await getLocalStockMap(supabase, [product.id])).get(product.id) || 0
+    const activeVariants = variants.filter(v => v.is_active)
+    const representativeVariant = activeVariants.length === 1
+      ? activeVariants[0]
+      : activeVariants.find(v => v.sku && String(v.sku) === String(product.sku)) || activeVariants[0]
+
     return {
       product: {
         id: product.id,
@@ -67,7 +75,7 @@ export default defineEventHandler(async (event) => {
             colorHex: v.color_hex,
             price: v.price,
             compareAtPrice: v.compare_at_price,
-            stock: v.stock,
+            stock: (Number(v.stock) || 0) + (v.id === representativeVariant?.id ? localStock : 0),
             isActive: v.is_active,
             // Campos del modelo flexible de variantes (dimensiones)
             optionType1: v.option_type_1 || null,
@@ -88,7 +96,7 @@ export default defineEventHandler(async (event) => {
             } : null,
           }
         }),
-        stock: product.stock,
+        stock: (Number(product.stock) || 0) + localStock,
         trackInventory: product.track_inventory,
         allowBackorder: product.allow_backorder,
         isFeatured: product.is_featured,

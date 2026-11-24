@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
       const productIds = [...new Set(stockItems.filter((i: any) => !i.variantId).map((i: any) => i.id))]
       const variantIds = [...new Set(stockItems.filter((i: any) => i.variantId).map((i: any) => i.variantId))]
 
-      const stockMap = new Map<string, { name?: string; stock: number }>()
+      const stockMap = new Map<string, { name?: string; stock: number; productId?: string }>()
 
       if (productIds.length) {
         const { data: prodRows } = await supabaseAdmin
@@ -49,16 +49,25 @@ export default defineEventHandler(async (event) => {
       if (variantIds.length) {
         const { data: varRows } = await supabaseAdmin
           .from('product_variants')
-          .select('id, name, stock')
+          .select('id, name, stock, product_id')
           .in('id', variantIds)
-        for (const v of varRows || []) stockMap.set(`v:${v.id}`, v)
+        for (const v of varRows || []) stockMap.set(`v:${v.id}`, { ...v, productId: v.product_id })
       }
+
+      // Stock local (Jalisco) por producto, sumado a la disponibilidad online.
+      const allProductIds = [...new Set([
+        ...productIds,
+        ...Array.from(stockMap.values()).map(r => r.productId).filter(Boolean),
+      ])]
+      const localStockMap = await getLocalStockMap(supabaseAdmin, allProductIds)
 
       for (const item of stockItems) {
         const row: any = item.variantId
           ? stockMap.get(`v:${item.variantId}`)
           : stockMap.get(`p:${item.id}`)
-        const available = row ? (Number(row.stock) || 0) : 0
+        const productId = item.variantId ? row?.productId : item.id
+        const localStock = localStockMap.get(productId) || 0
+        const available = (row ? (Number(row.stock) || 0) : 0) + localStock
         if (Number(item.quantity) > available) {
           const name = row?.name || item.name
           throw createError({

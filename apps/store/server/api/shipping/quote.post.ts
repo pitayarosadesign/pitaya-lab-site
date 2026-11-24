@@ -186,8 +186,11 @@ export default defineEventHandler(async (event) => {
     }
   })
 
+  // Origen parametrizable por .env (SHIPPING_ORIGIN_ZIP; por defecto Zapopan 45236).
+  const origin = { ...ORIGIN, postalCode: config.shippingOriginZip || ORIGIN.postalCode }
+
   const payload = {
-    origin: ORIGIN,
+    origin,
     destination,
     packages,
     settings: { currency: 'MXN' },

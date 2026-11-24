@@ -43,6 +43,7 @@ export default defineNuxtConfig({
     enviaFulfillmentCompanyId: process.env.ENVIA_FULFILLMENT_COMPANY_ID || '',
     enviaFulfillmentWarehouseId: process.env.ENVIA_FULFILLMENT_WAREHOUSE_ID || '',
     enviaFulfillmentShopId: process.env.ENVIA_FULFILLMENT_SHOP_ID || '',
+    enviaFulfillmentEnabled: process.env.ENVIA_FULFILLMENT_ENABLED || 'false',
   },
 
   modules: [],

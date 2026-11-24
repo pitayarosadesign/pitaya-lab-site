@@ -72,6 +72,8 @@ export default defineNuxtConfig({
     enviaFulfillmentCompanyId: process.env.ENVIA_FULFILLMENT_COMPANY_ID || '',
     enviaFulfillmentWarehouseId: process.env.ENVIA_FULFILLMENT_WAREHOUSE_ID || '',
     enviaFulfillmentShopId: process.env.ENVIA_FULFILLMENT_SHOP_ID || '',
+    enviaFulfillmentEnabled: process.env.ENVIA_FULFILLMENT_ENABLED || 'false',
+    shippingOriginZip: process.env.SHIPPING_ORIGIN_ZIP || '45236',
     resendApiKey: process.env.RESEND_API_KEY || '',
     // 📊 Meta Conversions API (token de acceso; secreto, solo servidor)
     metaCapiToken: process.env.META_CAPI_ACCESS_TOKEN || process.env.FACEBOOK_PIXEL_ID || '',

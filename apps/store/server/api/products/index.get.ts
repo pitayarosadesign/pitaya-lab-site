@@ -64,6 +64,9 @@ export default defineEventHandler(async (event) => {
 
     if (error) throw error
 
+    // Stock local (Jalisco) por producto, para sumarlo a la disponibilidad.
+    const localStockMap = await getLocalStockMap(supabase, (products || []).map(p => p.id))
+
     // Formatear respuesta
     const formatted = (products || []).map(p => {
       const images = p.product_images || []
@@ -115,7 +118,7 @@ export default defineEventHandler(async (event) => {
         })),
         fragrances,
         variantImageByFragrance,
-        stock: p.stock,
+        stock: (Number(p.stock) || 0) + (localStockMap.get(p.id) || 0),
         isFeatured: p.is_featured,
         badge: p.badge || null,
         prepDaysMin: p.prep_days_min ?? p.product_categories?.prep_days_min ?? null,

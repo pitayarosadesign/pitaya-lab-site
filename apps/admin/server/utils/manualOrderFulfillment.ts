@@ -37,6 +37,12 @@ async function readAdminNotes(supabase: any, orderId: string): Promise<string> {
 
 export async function maybeCreateEnviaFulfillmentOrder(orderId: string) {
   const config = useRuntimeConfig()
+
+  // Feature flag: con Envía Fulfillment desactivado no se crean órdenes en Envía.
+  if (String(config.enviaFulfillmentEnabled || 'false') !== 'true') {
+    console.log('[Shipping] Envia Fulfillment desactivado: no se crea orden manual en Envía')
+    return null
+  }
   const supabase = createClient(
     config.public.supabaseUrl,
     config.supabaseServiceKey,
