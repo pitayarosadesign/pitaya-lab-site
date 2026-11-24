@@ -5,6 +5,14 @@ import { createSkydropxAddressTemplate } from '../../utils/skydropx'
 import { validatePostalCode } from '../../utils/postalCode'
 import { createEnviaFulfillmentOrder, getEnviaFulfillmentWarehouseId } from '../../utils/enviaFulfillment'
 
+// Extrae una pista de tamaño ("125ml", "250ml", "450g", …) para emparejar items
+// vendidos sin variante con la variante correcta cuando hay varias por tamaño.
+function extractSizeHint(text: string): string | null {
+  const m = (text || '').match(/(\d{2,4})\s*(ml|g|gr|l|oz|kg|cl)/i)
+  if (!m) return null
+  return `${m[1]}${m[2].toLowerCase().replace('gr', 'g')}`
+}
+
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
 
@@ -510,8 +518,9 @@ export default defineEventHandler(async (event) => {
     cpValidation: any,
   ) {
     try {
-      const productIds = [...new Set((items || []).filter(i => i.id && !i.variantId).map(i => i.id))]
-      const variantIds = [...new Set((items || []).filter(i => i.variantId).map(i => i.variantId))]
+      const list = items || []
+      const productIds = [...new Set(list.filter(i => i.id && !i.variantId).map(i => i.id))]
+      const variantIds = [...new Set(list.filter(i => i.variantId).map(i => i.variantId))]
 
       const variantMap = new Map<string, number | null>()
       if (productIds.length) {
@@ -523,17 +532,58 @@ export default defineEventHandler(async (event) => {
         for (const v of data || []) variantMap.set(v.id, v.envia_variant_id)
       }
 
+      // Items vendidos sin variante (variantId null) cuyo envia_variant_id vive
+      // en la variante y no en el producto: resuelve la variante activa correcta.
+      const productVariantMap = new Map<string, number | null>()
+      const withoutVariant = productIds.filter(pid => !variantMap.get(pid))
+      if (withoutVariant.length) {
+        const { data: variants } = await supabaseAdmin
+          .from('product_variants')
+          .select('id, sku, name, product_id, envia_variant_id')
+          .in('product_id', withoutVariant)
+          .eq('is_active', true)
+
+        const byProduct = new Map<string, any[]>()
+        for (const v of variants || []) {
+          if (!v.envia_variant_id) continue
+          byProduct.set(v.product_id, [...(byProduct.get(v.product_id) || []), v])
+        }
+
+        for (const item of list) {
+          if (item.variantId || !item.id) continue
+          if (variantMap.get(item.id)) continue // ya mapeado a nivel producto
+          const candidates = byProduct.get(item.id) || []
+          if (candidates.length === 1) {
+            productVariantMap.set(item.id, candidates[0].envia_variant_id)
+          } else if (candidates.length > 1) {
+            const hint = extractSizeHint(item.name)
+            const match = hint
+              ? candidates.find(v => extractSizeHint(`${v.name || ''} ${v.sku || ''}`) === hint)
+              : null
+            if (match) productVariantMap.set(item.id, match.envia_variant_id)
+          }
+        }
+      }
+
+      const skipped: string[] = []
       const products: any[] = []
-      for (const item of items || []) {
+      for (const item of list) {
         const key = item.variantId || item.id
-        const enviaVariantId = variantMap.get(key)
-        if (!enviaVariantId) continue
+        const enviaVariantId = variantMap.get(key) ?? productVariantMap.get(item.id)
+        if (!enviaVariantId) {
+          skipped.push(item.name || key)
+          continue
+        }
         products.push({
           variantId: enviaVariantId,
           quantity: Number(item.quantity) || 1,
           price: Number(((Number(item.price) || 0) / 100).toFixed(2)),
           discount: 0,
         })
+      }
+
+      if (skipped.length) {
+        console.warn(`⚠️ Orden ${orderNumber}: items sin envia_variant_id omitidos → ${skipped.join(' | ')}`)
       }
 
       if (products.length === 0) {
