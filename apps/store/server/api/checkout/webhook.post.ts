@@ -591,6 +591,14 @@ export default defineEventHandler(async (event) => {
         return null
       }
 
+      // Método de envío hacia Envía: "punto-post" cuando el cliente eligió
+      // recoger en sucursal Punto Post, "standard" para envío a domicilio.
+      const pickupBranch = (session.metadata?.pickup_branch || '').trim()
+      const isPuntoPost = !!pickupBranch || /punto\s?post|recoge/i.test(session.metadata?.shipping_method || '')
+      const enviaComments = isPuntoPost
+        ? `PUNTO POST: ${pickupBranch || session.metadata?.shipping_method || 'Sucursal por confirmar'}`.trim()
+        : ''
+
       const payload: any = {
         warehouseId: Number(await getEnviaFulfillmentWarehouseId()),
         orderIdentifier: orderNumber,
@@ -599,6 +607,8 @@ export default defineEventHandler(async (event) => {
         currency: 'MXN',
         email: session.customer_details?.email || session.customer_email || '',
         products,
+        shippingMethod: isPuntoPost ? 'punto-post' : 'standard',
+        comments: enviaComments,
         shippingAddress: buildEnviaShippingAddress(session, cpValidation),
       }
       const shopId = config.enviaFulfillmentShopId

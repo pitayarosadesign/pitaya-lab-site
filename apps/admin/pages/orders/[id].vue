@@ -41,6 +41,13 @@ ue <template>
               </p>
             </div>
           </div>
+
+          <div v-if="isPuntoPost" class="mt-4 bg-fuchsia-50 border border-fuchsia-200 rounded-xl px-4 py-3">
+            <p class="inline-flex items-center gap-1 text-xs font-bold text-fuchsia-700 uppercase tracking-wider">
+              📍 PUNTO POST
+            </p>
+            <p class="text-sm text-gray-800 mt-1">{{ pickupBranch }}</p>
+          </div>
         </div>
 
         <!-- Productos -->
@@ -368,6 +375,20 @@ const shippingAddress = computed(() => {
 
 const isB2B = computed(() =>
   order.value?.order_type === 'wholesale' || order.value?.order_type === 'event'
+)
+
+const pickupBranch = computed(() => {
+  const raw = order.value?.shipping_address
+  if (!raw) return ''
+  let data = raw
+  if (typeof data === 'string') {
+    try { data = JSON.parse(data) } catch { return '' }
+  }
+  return data.pickup_branch || ''
+})
+
+const isPuntoPost = computed(() =>
+  !!pickupBranch.value || /punto\s?post|recoge/i.test(order.value?.shipping_method || '')
 )
 
 const storeUrlForLinks = useRuntimeConfig().public.storeUrl || 'https://www.pitayalab.com.mx'

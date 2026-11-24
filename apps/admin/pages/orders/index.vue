@@ -88,6 +88,14 @@
               <NuxtLink :to="`/orders/${order.id}`" class="font-mono text-sm font-medium text-primary-600 hover:text-primary-700">
                 {{ order.order_number }}
               </NuxtLink>
+              <div v-if="isPuntoPost(order)" class="mt-1">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200">
+                  📍 PUNTO POST
+                </span>
+                <p v-if="order.shipping_address?.pickup_branch" class="text-[11px] text-gray-500 mt-0.5">
+                  {{ order.shipping_address.pickup_branch }}
+                </p>
+              </div>
             </td>
             <td class="px-6 py-4">
               <p class="text-sm font-medium text-gray-900">{{ order.customer_name || '—' }}</p>
@@ -263,5 +271,9 @@ function channelBadge(channel) {
     otro: 'bg-gray-50 text-gray-600 border border-gray-200',
   }
   return colors[channel] || colors.otro
+}
+
+function isPuntoPost(order) {
+  return !!(order?.shipping_address?.pickup_branch) || /punto\s?post|recoge/i.test(order?.shipping_method || '')
 }
 </script>
