@@ -27,14 +27,15 @@ export default defineEventHandler(async (event) => {
       .select('id, name, sku, stock')
       .order('name')
 
-    const { data: stores } = await supabaseAdmin
-      .from('commerce_stores')
-      .select('id, name, is_active')
+    // Ubicaciones físicas para movimientos (Almacén Central, Bodega Local, …).
+    const { data: locations } = await supabaseAdmin
+      .from('inventory_locations')
+      .select('id, name')
       .order('name')
 
     return {
       products: products || [],
-      locations: stores || [],
+      locations: locations || [],
     }
   } catch (e) {
     throw createError({ statusCode: 500, message: e.message })

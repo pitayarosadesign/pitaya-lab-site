@@ -83,7 +83,7 @@
           >
             <option value="">Seleccionar ubicación...</option>
             <option value="almacen_central">🏭 Almacén Central</option>
-            <option v-for="loc in locations" :key="loc.id" :value="loc.id">🏪 {{ loc.name }}</option>
+            <option v-for="loc in movementLocations" :key="loc.id" :value="loc.id">🏪 {{ loc.name }}</option>
           </select>
         </div>
 
@@ -98,7 +98,7 @@
           >
             <option value="">Seleccionar ubicación...</option>
             <option value="almacen_central">🏭 Almacén Central</option>
-            <option v-for="loc in locations" :key="loc.id" :value="loc.id">🏪 {{ loc.name }}</option>
+            <option v-for="loc in movementLocations" :key="loc.id" :value="loc.id">🏪 {{ loc.name }}</option>
           </select>
         </div>
 
@@ -177,6 +177,12 @@ const saving = ref(false)
 const products = ref([])
 const selectedProduct = ref(null)
 const locations = ref([])
+
+// Ubicaciones para movimientos manuales: excluye Central (ya va fijo en el
+// selector) y Reservado Web (lo gestiona el checkout automáticamente).
+const movementLocations = computed(() =>
+  locations.value.filter((l) => !['almacen_central', 'web_reserved'].includes(l.id))
+)
 
 const form = reactive({
   productId: route.query.product || '',
